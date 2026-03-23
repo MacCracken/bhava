@@ -478,9 +478,37 @@ fn test_preset_mood_baseline() {
     let guy_baseline = derive_mood_baseline(&guy.profile);
     let tron_baseline = derive_mood_baseline(&tron.profile);
 
-    // Guy should have higher joy baseline than T.Ron
     assert!(
         guy_baseline.joy > tron_baseline.joy,
         "Guy should be happier at rest than T.Ron"
     );
+}
+
+// --- Live sentiment monitor ---
+
+#[test]
+fn test_monitor_streaming_with_mood() {
+    use bhava::monitor::SentimentMonitor;
+    let mut monitor = SentimentMonitor::new(0.5);
+    let mut state = EmotionalState::new();
+
+    // Simulate streaming response
+    monitor.feed_and_apply("I love this project! ", &mut state);
+    monitor.feed_and_apply("The code is terrible.", &mut state);
+
+    let summary = monitor.summary();
+    assert_eq!(summary.sentence_count, 2);
+    assert!(summary.positive_count >= 1);
+    assert!(summary.negative_count >= 1);
+    // Monitor should have captured both sentences
+    assert_eq!(monitor.sentence_count(), 2);
+}
+
+// --- BhavaStore trait is object-safe ---
+
+#[test]
+fn test_bhava_store_trait_object_safe() {
+    use bhava::store::BhavaStore;
+    // This compiles only if BhavaStore is object-safe
+    fn _accept_store(_store: &dyn BhavaStore) {}
 }

@@ -128,4 +128,11 @@ mod tests {
         assert_send::<BhavaError>();
         assert_sync::<BhavaError>();
     }
+
+    #[test]
+    fn test_storage_error() {
+        let e = BhavaError::Storage("connection refused".into());
+        assert!(e.to_string().contains("connection refused"));
+        assert!(e.to_string().contains("storage error"));
+    }
 }

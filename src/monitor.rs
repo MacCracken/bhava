@@ -94,15 +94,15 @@ impl SentimentMonitor {
     ///
     /// Analyzes any remaining text that didn't end with sentence punctuation.
     pub fn flush(&mut self) -> Vec<SentimentResult> {
-        let mut results = Vec::new();
-        let text = self.buffer.trim().to_string();
-        self.buffer.clear();
-        if !text.is_empty() {
-            let result = sentiment::analyze_with_config(&text, &self.config);
-            self.results.push(result.clone());
-            results.push(result);
+        let trimmed_is_empty = self.buffer.trim().is_empty();
+        if trimmed_is_empty {
+            self.buffer.clear();
+            return Vec::new();
         }
-        results
+        let result = sentiment::analyze_with_config(self.buffer.trim(), &self.config);
+        self.buffer.clear();
+        self.results.push(result.clone());
+        vec![result]
     }
 
     /// Apply a sentiment result to an emotional state using this monitor's scale.
