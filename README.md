@@ -91,8 +91,12 @@ let full_prompt = compose_identity_prompt(&identity);
 ## Documentation
 
 - [Architecture Overview](docs/architecture/overview.md) — module map, data flows, design principles
+- [Mathematical Reference](docs/architecture/math.md) — all algorithms and formulas
+- [Usage Guide](docs/guides/usage.md) — patterns, philosophy, code examples
+- [Testing Guide](docs/guides/testing.md) — 484 tests, 77 benchmarks, testing patterns
 - [Threat Model](docs/development/threat-model.md) — attack surface, mitigations, privilege model
-- [Testing Guide](docs/guides/testing.md) — 417 tests, 66 benchmarks, testing patterns
+- [Dependency Watch](docs/development/dependency-watch.md) — dependency tracking and upgrade notes
+- [ADRs](docs/adr/) — architectural decision records
 - [Contributing](CONTRIBUTING.md) — workflow, code style, testing requirements
 - [Security Policy](SECURITY.md) — reporting, supported versions
 
