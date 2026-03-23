@@ -97,7 +97,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - name: Run benchmarks
-        run: cargo bench --bench benchmarks --no-fail-fast
+        run: cargo bench --bench benchmarks --all-features --no-fail-fast
       - name: Upload benchmark artifacts
         uses: actions/upload-artifact@v4
         with:
