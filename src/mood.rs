@@ -1905,4 +1905,180 @@ mod tests {
         let prompt = compose_mood_prompt(&s);
         assert!(prompt.contains("calm"));
     }
+
+    // --- Action Tendencies ---
+
+    #[test]
+    fn test_action_tendency_positive() {
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, 0.8);
+        m.set(Emotion::Trust, 0.5);
+        match action_tendency(&m) {
+            ActionTendency::Approach { intensity } => assert!(intensity > 0.1),
+            other => panic!("expected Approach, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_action_tendency_frustrated() {
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Frustration, 0.8);
+        m.set(Emotion::Dominance, 0.5);
+        m.set(Emotion::Arousal, 0.6);
+        match action_tendency(&m) {
+            ActionTendency::Confront { intensity } => assert!(intensity > 0.1),
+            other => panic!("expected Confront, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_action_tendency_withdraw() {
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, -0.8);
+        m.set(Emotion::Arousal, -0.5);
+        match action_tendency(&m) {
+            ActionTendency::Withdraw { intensity } => assert!(intensity > 0.1),
+            other => panic!("expected Withdraw, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn test_action_tendency_neutral() {
+        let m = MoodVector::neutral();
+        assert!(matches!(action_tendency(&m), ActionTendency::Neutral));
+    }
+
+    // --- Emotional Contagion ---
+
+    #[test]
+    fn test_contagion_basic() {
+        let mut sender = MoodVector::neutral();
+        sender.set(Emotion::Joy, 0.8);
+        let sp = ContagionParams {
+            expressiveness: 0.8,
+            susceptibility: 0.0,
+        };
+        let rp = ContagionParams {
+            expressiveness: 0.0,
+            susceptibility: 0.8,
+        };
+        let delta = compute_contagion(&sender, &sp, &rp, 0.7);
+        assert!(delta.joy > 0.0);
+    }
+
+    #[test]
+    fn test_contagion_rival_inverts() {
+        let mut sender = MoodVector::neutral();
+        sender.set(Emotion::Joy, 0.8);
+        let sp = ContagionParams {
+            expressiveness: 0.8,
+            susceptibility: 0.0,
+        };
+        let rp = ContagionParams {
+            expressiveness: 0.0,
+            susceptibility: 0.8,
+        };
+        let delta = compute_contagion(&sender, &sp, &rp, -0.5);
+        assert!(delta.joy < 0.0); // rival's joy → receiver's sadness
+    }
+
+    #[test]
+    fn test_contagion_zero_affinity() {
+        let mut sender = MoodVector::neutral();
+        sender.set(Emotion::Joy, 0.8);
+        let sp = ContagionParams::default();
+        let rp = ContagionParams::default();
+        let delta = compute_contagion(&sender, &sp, &rp, 0.0);
+        assert!(delta.joy.abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_group_mood_single() {
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, 0.6);
+        let result = group_mood(&[&m]);
+        assert!((result.joy - 0.6).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_group_mood_average() {
+        let mut a = MoodVector::neutral();
+        a.set(Emotion::Joy, 0.8);
+        let mut b = MoodVector::neutral();
+        b.set(Emotion::Joy, 0.2);
+        let result = group_mood(&[&a, &b]);
+        assert!((result.joy - 0.5).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_group_mood_empty() {
+        let result = group_mood(&[]);
+        assert!(result.intensity() < f32::EPSILON);
+    }
+
+    #[cfg(feature = "traits")]
+    #[test]
+    fn test_contagion_from_personality() {
+        let mut profile = crate::traits::PersonalityProfile::new("warm");
+        profile.set_trait(
+            crate::traits::TraitKind::Warmth,
+            crate::traits::TraitLevel::Highest,
+        );
+        profile.set_trait(
+            crate::traits::TraitKind::Empathy,
+            crate::traits::TraitLevel::Highest,
+        );
+        let params = contagion_from_personality(&profile);
+        assert!(params.expressiveness > 0.5);
+        assert!(params.susceptibility > 0.5);
+    }
+
+    // --- Adaptive Baselines ---
+
+    #[test]
+    fn test_adaptive_baseline_new() {
+        let core = MoodVector::neutral();
+        let ab = AdaptiveBaseline::new(core);
+        assert!(ab.drift() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_adaptive_baseline_adapts() {
+        let core = MoodVector::neutral();
+        let mut ab = AdaptiveBaseline::new(core);
+        let mut positive = MoodVector::neutral();
+        positive.set(Emotion::Joy, 0.8);
+        // Adapt many times toward positive mood
+        for _ in 0..100 {
+            ab.adapt(&positive);
+        }
+        assert!(
+            ab.adapted.joy > 0.0,
+            "baseline should shift toward positive"
+        );
+        assert!(ab.drift() > 0.0);
+    }
+
+    #[test]
+    fn test_adaptive_baseline_recovery() {
+        let core = MoodVector::neutral();
+        let mut ab = AdaptiveBaseline::new(core);
+        ab.adapted.joy = 0.5; // artificially shift
+        // Recovery pulls back toward core (0.0)
+        for _ in 0..200 {
+            ab.adapt(&MoodVector::neutral());
+        }
+        assert!(
+            ab.adapted.joy.abs() < 0.1,
+            "baseline should recover toward core"
+        );
+    }
+
+    #[test]
+    fn test_adaptive_baseline_serde() {
+        let ab = AdaptiveBaseline::new(MoodVector::neutral());
+        let json = serde_json::to_string(&ab).unwrap();
+        let ab2: AdaptiveBaseline = serde_json::from_str(&json).unwrap();
+        assert!((ab2.adaptation_rate - ab.adaptation_rate).abs() < f32::EPSILON);
+    }
 }

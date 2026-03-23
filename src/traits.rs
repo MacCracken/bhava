@@ -2048,4 +2048,113 @@ mod tests {
         assert!(parse_trait_kind("nonexistent").is_none());
         assert!(parse_trait_level("ultra").is_none());
     }
+
+    // --- OCEAN Conversion ---
+
+    #[test]
+    fn test_to_ocean_balanced() {
+        let p = PersonalityProfile::new("neutral");
+        let o = p.to_ocean();
+        // All balanced → near zero across all dimensions
+        assert!(o.openness.abs() < 0.1);
+        assert!(o.conscientiousness.abs() < 0.1);
+        assert!(o.extraversion.abs() < 0.1);
+        assert!(o.agreeableness.abs() < 0.1);
+        assert!(o.neuroticism.abs() < 0.1);
+    }
+
+    #[test]
+    fn test_to_ocean_warm_creative() {
+        let mut p = PersonalityProfile::new("warm");
+        p.set_trait(TraitKind::Warmth, TraitLevel::Highest);
+        p.set_trait(TraitKind::Creativity, TraitLevel::Highest);
+        p.set_trait(TraitKind::Curiosity, TraitLevel::Highest);
+        let o = p.to_ocean();
+        assert!(o.openness > 0.3, "creative+curious should be high openness");
+        assert!(o.extraversion > 0.1, "warm should boost extraversion");
+    }
+
+    #[test]
+    fn test_to_ocean_skeptical_impatient() {
+        let mut p = PersonalityProfile::new("neurotic");
+        p.set_trait(TraitKind::Skepticism, TraitLevel::Highest);
+        p.set_trait(TraitKind::Patience, TraitLevel::Lowest);
+        p.set_trait(TraitKind::Confidence, TraitLevel::Lowest);
+        let o = p.to_ocean();
+        assert!(
+            o.neuroticism > 0.0,
+            "skeptical+impatient should be neurotic"
+        );
+    }
+
+    #[test]
+    fn test_profile_from_ocean_roundtrip_direction() {
+        // High openness should produce high creativity/curiosity
+        let ocean = OceanScores {
+            openness: 0.8,
+            conscientiousness: 0.0,
+            extraversion: 0.0,
+            agreeableness: 0.0,
+            neuroticism: 0.0,
+        };
+        let p = profile_from_ocean("test", &ocean);
+        assert!(p.get_trait(TraitKind::Creativity) >= TraitLevel::High);
+        assert!(p.get_trait(TraitKind::Curiosity) >= TraitLevel::High);
+    }
+
+    #[test]
+    fn test_ocean_serde() {
+        let ocean = OceanScores {
+            openness: 0.5,
+            conscientiousness: -0.3,
+            extraversion: 0.7,
+            agreeableness: 0.2,
+            neuroticism: -0.4,
+        };
+        let json = serde_json::to_string(&ocean).unwrap();
+        let o2: OceanScores = serde_json::from_str(&json).unwrap();
+        assert!((o2.openness - 0.5).abs() < f32::EPSILON);
+    }
+
+    // --- Personality Entropy / Extremity ---
+
+    #[test]
+    fn test_entropy_all_balanced() {
+        let p = PersonalityProfile::new("neutral");
+        let e = personality_entropy(&p);
+        assert!(e < 0.01, "all balanced should be zero entropy");
+    }
+
+    #[test]
+    fn test_entropy_mixed() {
+        let mut p = PersonalityProfile::new("mixed");
+        p.set_trait(TraitKind::Humor, TraitLevel::Highest);
+        p.set_trait(TraitKind::Warmth, TraitLevel::Lowest);
+        p.set_trait(TraitKind::Precision, TraitLevel::High);
+        let e = personality_entropy(&p);
+        assert!(e > 0.1, "mixed profile should have positive entropy");
+    }
+
+    #[test]
+    fn test_extremity_all_balanced() {
+        let p = PersonalityProfile::new("neutral");
+        assert!(personality_extremity(&p) < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_extremity_all_highest() {
+        let mut p = PersonalityProfile::new("extreme");
+        for &kind in TraitKind::ALL {
+            p.set_trait(kind, TraitLevel::Highest);
+        }
+        assert!((personality_extremity(&p) - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_extremity_range() {
+        let mut p = PersonalityProfile::new("mixed");
+        p.set_trait(TraitKind::Humor, TraitLevel::Highest);
+        let e = personality_extremity(&p);
+        assert!((0.0..=1.0).contains(&e));
+    }
 }

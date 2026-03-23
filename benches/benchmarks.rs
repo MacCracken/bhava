@@ -203,6 +203,81 @@ fn bench_mood_operations(c: &mut Criterion) {
         use bhava::mood::{MoodState, mood_tone_guide};
         b.iter(|| mood_tone_guide(black_box(MoodState::Euphoric)))
     });
+    group.bench_function("action_tendency", |b| {
+        use bhava::mood::action_tendency;
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, 0.7);
+        m.set(Emotion::Trust, 0.4);
+        b.iter(|| action_tendency(black_box(&m)))
+    });
+    group.bench_function("contagion", |b| {
+        use bhava::mood::{ContagionParams, compute_contagion};
+        let mut sender = MoodVector::neutral();
+        sender.set(Emotion::Joy, 0.8);
+        sender.set(Emotion::Frustration, 0.3);
+        let sp = ContagionParams {
+            expressiveness: 0.7,
+            susceptibility: 0.0,
+        };
+        let rp = ContagionParams {
+            expressiveness: 0.0,
+            susceptibility: 0.6,
+        };
+        b.iter(|| compute_contagion(black_box(&sender), black_box(&sp), black_box(&rp), 0.5))
+    });
+    group.bench_function("adaptive_baseline_adapt", |b| {
+        use bhava::mood::AdaptiveBaseline;
+        let mut positive = MoodVector::neutral();
+        positive.set(Emotion::Joy, 0.6);
+        b.iter_batched(
+            || AdaptiveBaseline::new(MoodVector::neutral()),
+            |mut ab| ab.adapt(black_box(&positive)),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.finish();
+}
+
+fn bench_appraisal(c: &mut Criterion) {
+    use bhava::appraisal::{Appraisal, appraise};
+    let mut group = c.benchmark_group("appraisal");
+
+    group.bench_function("positive_event", |b| {
+        let a = Appraisal::event("good news", 0.8);
+        b.iter(|| appraise(black_box(&a), None))
+    });
+    group.bench_function("complex_appraisal", |b| {
+        let a = Appraisal::event("rival sabotaged", -0.7)
+            .with_praise(-0.8)
+            .caused_by("rival");
+        b.iter(|| appraise(black_box(&a), Some(-0.5)))
+    });
+    group.finish();
+}
+
+fn bench_ocean(c: &mut Criterion) {
+    use bhava::traits::{
+        OceanScores, PersonalityProfile, TraitKind, TraitLevel, personality_entropy,
+        profile_from_ocean,
+    };
+    let mut group = c.benchmark_group("ocean");
+
+    let mut p = PersonalityProfile::new("test");
+    p.set_trait(TraitKind::Warmth, TraitLevel::Highest);
+    p.set_trait(TraitKind::Creativity, TraitLevel::High);
+
+    group.bench_function("to_ocean", |b| b.iter(|| black_box(&p).to_ocean()));
+    group.bench_function("from_ocean", |b| {
+        let o = OceanScores {
+            openness: 0.7,
+            conscientiousness: 0.3,
+            extraversion: 0.5,
+            agreeableness: 0.6,
+            neuroticism: -0.2,
+        };
+        b.iter(|| profile_from_ocean("test", black_box(&o)))
+    });
+    group.bench_function("entropy", |b| b.iter(|| personality_entropy(black_box(&p))));
     group.finish();
 }
 
@@ -560,6 +635,8 @@ criterion_group!(
     bench_sentiment,
     bench_archetype,
     bench_presets,
+    bench_appraisal,
+    bench_ocean,
     bench_spirit,
     bench_relationship,
     bench_markdown,
