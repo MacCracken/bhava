@@ -180,7 +180,11 @@ mod tests {
         for _ in 0..50 {
             s.tick(&stressed);
         }
-        assert!(s.load > 0.1, "load should increase under stress: {}", s.load);
+        assert!(
+            s.load > 0.1,
+            "load should increase under stress: {}",
+            s.load
+        );
     }
 
     #[test]
