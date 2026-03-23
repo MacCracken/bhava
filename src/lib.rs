@@ -15,6 +15,7 @@
 //! - [`presets`] — Built-in personality templates (BlueShirtGuy, T.Ron, Friday, Oracle, Scout)
 //! - [`spirit`] — Passions, inspirations, and pains — the animating force
 //! - [`relationship`] — Inter-entity affinity, trust, and interaction tracking
+//! - [`appraisal`] — OCC appraisal model — goal-aware emotion generation
 //! - [`monitor`] — Live sentiment monitoring for streaming text
 //! - [`ai`] — System prompt composition, sentiment feedback, and agent metadata
 //! - [`store`] — Storage trait for pluggable persistence backends
@@ -43,6 +44,9 @@ pub mod spirit;
 
 #[cfg(feature = "mood")]
 pub mod relationship;
+
+#[cfg(feature = "mood")]
+pub mod appraisal;
 
 #[cfg(feature = "sentiment")]
 pub mod monitor;

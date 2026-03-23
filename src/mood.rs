@@ -787,6 +787,224 @@ pub fn compose_mood_prompt(state: &EmotionalState) -> String {
     format!("## Current Mood: {}\n\n{}\n", mood_state, guide)
 }
 
+// --- Action Tendencies ---
+
+/// Behavioral impulse derived from current emotional state.
+///
+/// Tells consumers what the agent *wants to do* based on mood.
+/// Ported from WASABI (Affect Simulation for Agents with Believable Interactivity).
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub enum ActionTendency {
+    /// Positive engagement — seek interaction, share, help.
+    Approach { intensity: f32 },
+    /// Negative avoidance — retreat, disengage, flee.
+    Avoid { intensity: f32 },
+    /// Confrontational — challenge, argue, push back.
+    Confront { intensity: f32 },
+    /// Withdrawal — disengage, conserve energy, self-isolate.
+    Withdraw { intensity: f32 },
+    /// Protective — guard, defend, shield others.
+    Protect { intensity: f32 },
+    /// No strong impulse.
+    Neutral,
+}
+
+/// Derive the dominant action tendency from a mood vector.
+#[must_use]
+pub fn action_tendency(mood: &MoodVector) -> ActionTendency {
+    let joy = mood.joy;
+    let arousal = mood.arousal;
+    let dominance = mood.dominance;
+    let trust = mood.trust;
+    let frustration = mood.frustration;
+
+    // Approach: positive joy + trust
+    let approach = (joy * 0.5 + trust * 0.3 + arousal * 0.2).max(0.0);
+    // Avoid: negative trust + negative dominance
+    let avoid = (-trust * 0.4 - dominance * 0.3 + arousal * 0.2).max(0.0);
+    // Confront: frustration + dominance + arousal
+    let confront = (frustration * 0.4 + dominance * 0.3 + arousal * 0.3).max(0.0);
+    // Withdraw: negative joy + negative arousal
+    let withdraw = (-joy * 0.4 - arousal * 0.3 - dominance * 0.2).max(0.0);
+    // Protect: trust + dominance + negative frustration
+    let protect = (trust * 0.3 + dominance * 0.4 - frustration * 0.2).max(0.0);
+
+    let candidates = [
+        (approach, "approach"),
+        (avoid, "avoid"),
+        (confront, "confront"),
+        (withdraw, "withdraw"),
+        (protect, "protect"),
+    ];
+
+    let (max_val, max_label) = candidates
+        .iter()
+        .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal))
+        .unwrap();
+
+    if *max_val < 0.1 {
+        return ActionTendency::Neutral;
+    }
+
+    match *max_label {
+        "approach" => ActionTendency::Approach {
+            intensity: *max_val,
+        },
+        "avoid" => ActionTendency::Avoid {
+            intensity: *max_val,
+        },
+        "confront" => ActionTendency::Confront {
+            intensity: *max_val,
+        },
+        "withdraw" => ActionTendency::Withdraw {
+            intensity: *max_val,
+        },
+        "protect" => ActionTendency::Protect {
+            intensity: *max_val,
+        },
+        _ => ActionTendency::Neutral,
+    }
+}
+
+// --- Emotional Contagion ---
+
+/// Parameters controlling how strongly an entity broadcasts and receives emotions.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContagionParams {
+    /// How strongly this entity broadcasts emotions (0.0–1.0).
+    pub expressiveness: f32,
+    /// How easily this entity catches emotions (0.0–1.0).
+    pub susceptibility: f32,
+}
+
+impl Default for ContagionParams {
+    fn default() -> Self {
+        Self {
+            expressiveness: 0.5,
+            susceptibility: 0.5,
+        }
+    }
+}
+
+/// Derive contagion parameters from a personality profile.
+#[cfg(feature = "traits")]
+#[must_use]
+pub fn contagion_from_personality(profile: &crate::traits::PersonalityProfile) -> ContagionParams {
+    use crate::traits::TraitKind;
+    let warmth = profile.get_trait(TraitKind::Warmth).normalized();
+    let empathy = profile.get_trait(TraitKind::Empathy).normalized();
+    let confidence = profile.get_trait(TraitKind::Confidence).normalized();
+    let skepticism = profile.get_trait(TraitKind::Skepticism).normalized();
+
+    ContagionParams {
+        expressiveness: (warmth * 0.4 + confidence * 0.3 + 0.5).clamp(0.0, 1.0),
+        susceptibility: (empathy * 0.5 - skepticism * 0.3 + 0.5).clamp(0.0, 1.0),
+    }
+}
+
+/// Compute emotional contagion from a sender to a receiver.
+///
+/// Returns a mood delta to apply to the receiver's emotional state.
+/// The delta is modulated by sender expressiveness, receiver susceptibility,
+/// and the relationship affinity between them.
+#[must_use]
+pub fn compute_contagion(
+    sender_mood: &MoodVector,
+    sender_params: &ContagionParams,
+    receiver_params: &ContagionParams,
+    affinity: f32,
+) -> MoodVector {
+    let strength = sender_params.expressiveness * receiver_params.susceptibility * affinity.abs();
+    let sign = if affinity >= 0.0 { 1.0 } else { -1.0 }; // rivals invert
+
+    let mut delta = MoodVector::neutral();
+    for &e in Emotion::ALL {
+        let val = sender_mood.get(e) * strength * sign;
+        delta.set(e, val);
+    }
+    delta
+}
+
+/// Compute the group emotional centroid (average mood of a group).
+#[must_use]
+pub fn group_mood(members: &[&MoodVector]) -> MoodVector {
+    if members.is_empty() {
+        return MoodVector::neutral();
+    }
+    let mut sum = MoodVector::neutral();
+    for m in members {
+        for &e in Emotion::ALL {
+            sum.set(e, sum.get(e) + m.get(e));
+        }
+    }
+    let n = members.len() as f32;
+    for &e in Emotion::ALL {
+        sum.set(e, sum.get(e) / n);
+    }
+    sum
+}
+
+// --- Adaptive Baselines ---
+
+/// Adaptive baseline that drifts based on accumulated emotional experience.
+///
+/// Models the "hedonic treadmill": sustained positive experiences raise the
+/// baseline; sustained negative experiences lower it. The baseline recovers
+/// toward the core (trait-derived) baseline over time.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdaptiveBaseline {
+    /// Core baseline derived from personality traits (never changes).
+    pub core: MoodVector,
+    /// Current effective baseline (drifts with experience).
+    pub adapted: MoodVector,
+    /// How fast the baseline shifts toward recent mood (0.001–0.05).
+    pub adaptation_rate: f32,
+    /// How fast the baseline recovers toward core (hedonic treadmill) (0.01–0.1).
+    pub recovery_rate: f32,
+}
+
+impl AdaptiveBaseline {
+    /// Create from a core baseline.
+    #[must_use]
+    pub fn new(core: MoodVector) -> Self {
+        Self {
+            adapted: core.clone(),
+            core,
+            adaptation_rate: 0.01,
+            recovery_rate: 0.05,
+        }
+    }
+
+    /// Update the adaptive baseline based on recent mood.
+    ///
+    /// Call periodically (e.g., once per session or every N interactions).
+    pub fn adapt(&mut self, recent_mood: &MoodVector) {
+        // Shift toward recent mood
+        self.adapted = self.adapted.blend(recent_mood, self.adaptation_rate);
+        // Pull back toward core (hedonic treadmill)
+        self.adapted = self.adapted.blend(&self.core, self.recovery_rate);
+    }
+
+    /// Get the current effective baseline.
+    #[must_use]
+    pub fn current(&self) -> &MoodVector {
+        &self.adapted
+    }
+
+    /// How far the adapted baseline has drifted from core.
+    #[must_use]
+    pub fn drift(&self) -> f32 {
+        let dj = self.adapted.joy - self.core.joy;
+        let da = self.adapted.arousal - self.core.arousal;
+        let dd = self.adapted.dominance - self.core.dominance;
+        let dt = self.adapted.trust - self.core.trust;
+        let di = self.adapted.interest - self.core.interest;
+        let df = self.adapted.frustration - self.core.frustration;
+        (dj * dj + da * da + dd * dd + dt * dt + di * di + df * df).sqrt()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
