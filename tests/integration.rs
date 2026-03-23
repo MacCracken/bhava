@@ -1,10 +1,15 @@
 //! Integration tests — cross-module behavior.
 
-use bhava::archetype::{IdentityContent, IdentityLayer, compose_identity_prompt};
-use bhava::mood::{Emotion, EmotionalState};
+use bhava::archetype::{
+    CrewMember, IdentityContent, IdentityLayer, ValidationRules, compose_crew_prompt,
+    compose_identity_prompt, get_template,
+};
+use bhava::mood::{
+    Emotion, EmotionalState, MoodHistory, MoodState, mood_trait_influence, trigger_praised,
+};
 use bhava::presets::{get_preset, list_presets};
 use bhava::sentiment;
-use bhava::traits::{PersonalityProfile, TraitKind, TraitLevel};
+use bhava::traits::{PersonalityProfile, TraitGroup, TraitKind, TraitLevel};
 
 // --- preset → prompt composition ---
 
@@ -224,4 +229,160 @@ fn test_sentiment_result_serde_preserves_emotions() {
     assert_eq!(restored.emotions.len(), result.emotions.len());
     assert!((restored.valence - result.valence).abs() < 0.01);
     assert_eq!(restored.matched_keywords, result.matched_keywords);
+}
+
+// --- v0.2: trait groups + compatibility ---
+
+#[test]
+fn test_preset_group_averages() {
+    let guy = get_preset("blue-shirt-guy").unwrap();
+    let tron = get_preset("t-ron").unwrap();
+    // Guy should have higher social average than T.Ron
+    assert!(
+        guy.profile.group_average(TraitGroup::Social)
+            > tron.profile.group_average(TraitGroup::Social)
+    );
+}
+
+#[test]
+fn test_blend_presets() {
+    let guy = get_preset("blue-shirt-guy").unwrap();
+    let tron = get_preset("t-ron").unwrap();
+    let blended = guy.profile.blend(&tron.profile, 0.5);
+    // Blended warmth should be between Guy's Highest and T.Ron's Low
+    let warmth = blended.get_trait(TraitKind::Warmth);
+    assert!(warmth > TraitLevel::Low);
+    assert!(warmth < TraitLevel::Highest);
+}
+
+#[test]
+fn test_compatibility_same_group_presets() {
+    let guy = get_preset("blue-shirt-guy").unwrap();
+    let oracle = get_preset("oracle").unwrap();
+    let tron = get_preset("t-ron").unwrap();
+    // Guy and Oracle are both warm/patient — higher social compatibility than Guy+T.Ron
+    assert!(
+        guy.profile
+            .group_compatibility(&oracle.profile, TraitGroup::Social)
+            > guy
+                .profile
+                .group_compatibility(&tron.profile, TraitGroup::Social)
+    );
+}
+
+// --- v0.3: triggers → classify → history ---
+
+#[test]
+fn test_trigger_classify_history_pipeline() {
+    let mut state = EmotionalState::new();
+    let mut history = MoodHistory::new(10);
+
+    // Record calm baseline
+    history.record(state.snapshot());
+    assert_eq!(state.classify(), MoodState::Calm);
+
+    // Apply praise trigger
+    state.apply_trigger(&trigger_praised());
+    history.record(state.snapshot());
+
+    // Should now be in a positive state
+    let latest = history.latest_state().unwrap();
+    assert!(
+        latest == MoodState::Content || latest == MoodState::Euphoric,
+        "expected positive state, got {latest}"
+    );
+
+    // Deviation trend should be escalating
+    assert!(history.deviation_trend() > 0.0);
+}
+
+// --- v0.3: mood influence on traits ---
+
+#[test]
+fn test_mood_influences_trait_expression() {
+    let mut state = EmotionalState::new();
+    state.stimulate(Emotion::Frustration, 0.8);
+
+    // Frustrated mood should boost directness and reduce patience
+    let directness_boost = mood_trait_influence(&state.mood, TraitKind::Directness);
+    let patience_penalty = mood_trait_influence(&state.mood, TraitKind::Patience);
+    assert!(directness_boost > 0.0);
+    assert!(patience_penalty < 0.0);
+}
+
+// --- v0.4: sentiment negation → mood ---
+
+#[test]
+fn test_negated_sentiment_drives_mood() {
+    let result = sentiment::analyze("This is not good at all.");
+    let mut state = EmotionalState::new();
+    for (emotion, intensity) in &result.emotions {
+        state.stimulate(*emotion, *intensity);
+    }
+    // "not good" should produce negative/neutral mood
+    assert!(state.mood.joy <= 0.0);
+}
+
+#[test]
+fn test_sentence_analysis_mixed_mood() {
+    let doc = sentiment::analyze_sentences("I love this! But I hate the bugs.");
+    assert_eq!(doc.sentences.len(), 2);
+    assert!(doc.sentences[0].sentiment.is_positive());
+    assert!(doc.sentences[1].sentiment.is_negative());
+}
+
+// --- v0.5: templates + validation ---
+
+#[test]
+fn test_all_templates_pass_default_validation() {
+    use bhava::archetype::list_templates;
+    let rules = ValidationRules::default();
+    for name in list_templates() {
+        let template = get_template(name).unwrap();
+        let content = template.apply();
+        assert!(
+            content.is_valid(&rules),
+            "{name} template fails default validation"
+        );
+    }
+}
+
+#[test]
+fn test_guardian_template_passes_strict_validation() {
+    let content = get_template("guardian").unwrap().apply();
+    let rules = ValidationRules::strict();
+    assert!(content.is_valid(&rules));
+}
+
+// --- v0.5: crew with presets ---
+
+#[test]
+fn test_crew_from_presets() {
+    let members: Vec<CrewMember> = list_presets()
+        .iter()
+        .map(|id| {
+            let p = get_preset(id).unwrap();
+            CrewMember {
+                name: p.name.to_string(),
+                identity: p.identity,
+            }
+        })
+        .collect();
+    let prompt = compose_crew_prompt(&members);
+    assert!(prompt.contains("Crew (5 members)"));
+    assert!(prompt.contains("### BlueShirtGuy"));
+    assert!(prompt.contains("### T.Ron"));
+}
+
+// --- v0.5: merge identities ---
+
+#[test]
+fn test_merge_preset_identities() {
+    let guy = get_preset("blue-shirt-guy").unwrap();
+    let tron = get_preset("t-ron").unwrap();
+    let merged = guy.identity.merge(&tron.identity, "\n\n");
+    // Both had Soul and Spirit, so merged should contain both
+    let soul = merged.get(IdentityLayer::Soul).unwrap();
+    assert!(soul.contains("Guy"));
+    assert!(soul.contains("T.Ron"));
 }

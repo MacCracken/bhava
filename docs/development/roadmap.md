@@ -20,14 +20,14 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 - Mood influence on trait expression (e.g., high frustration amplifies directness)
 - Named emotional states (calm, agitated, euphoric) from mood vector thresholds
 
-## v0.4 — Sentiment Depth
+## v0.4 — Sentiment Depth (done)
 
 - Negation handling ("not good" → negative)
 - Intensity modifiers ("very good" → stronger positive)
 - Configurable lexicons (add domain-specific keywords)
 - Sentence-level analysis (per-sentence valence, not just document-level)
 
-## v0.5 — Archetype Expansion
+## v0.5 — Archetype Expansion (done)
 
 - Layer validation (required fields, content length bounds)
 - Archetype templates (predefined layer structures for common patterns)

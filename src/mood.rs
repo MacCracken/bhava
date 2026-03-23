@@ -227,15 +227,13 @@ impl EmotionalState {
 
     /// Current mood intensity (distance from baseline).
     pub fn deviation(&self) -> f32 {
-        let diff = MoodVector {
-            joy: self.mood.joy - self.baseline.joy,
-            arousal: self.mood.arousal - self.baseline.arousal,
-            dominance: self.mood.dominance - self.baseline.dominance,
-            trust: self.mood.trust - self.baseline.trust,
-            interest: self.mood.interest - self.baseline.interest,
-            frustration: self.mood.frustration - self.baseline.frustration,
-        };
-        diff.intensity()
+        let dj = self.mood.joy - self.baseline.joy;
+        let da = self.mood.arousal - self.baseline.arousal;
+        let dd = self.mood.dominance - self.baseline.dominance;
+        let dt = self.mood.trust - self.baseline.trust;
+        let di = self.mood.interest - self.baseline.interest;
+        let df = self.mood.frustration - self.baseline.frustration;
+        (dj * dj + da * da + dd * dd + dt * dt + di * di + df * df).sqrt()
     }
 
     /// Classify the current mood into a named emotional state.

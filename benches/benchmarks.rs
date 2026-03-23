@@ -58,6 +58,10 @@ fn bench_personality_prompt(c: &mut Criterion) {
             criterion::BatchSize::SmallInput,
         )
     });
+    group.bench_function("group_compatibility", |b| {
+        use bhava::traits::TraitGroup;
+        b.iter(|| black_box(&p).group_compatibility(black_box(&q), black_box(TraitGroup::Social)))
+    });
     group.finish();
 }
 
@@ -218,6 +222,23 @@ fn bench_sentiment(c: &mut Criterion) {
             ))
         })
     });
+    group.bench_function("negation", |b| {
+        b.iter(|| sentiment::analyze(black_box("This is not good and not bad at all.")))
+    });
+    group.bench_function("intensifiers", |b| {
+        b.iter(|| {
+            sentiment::analyze(black_box(
+                "This is very good and extremely helpful but slightly slow.",
+            ))
+        })
+    });
+    group.bench_function("sentences_3", |b| {
+        b.iter(|| {
+            sentiment::analyze_sentences(black_box(
+                "This is great! That is terrible. Overall it was fine.",
+            ))
+        })
+    });
     group.finish();
 }
 
@@ -242,6 +263,45 @@ fn bench_archetype(c: &mut Criterion) {
         content.set(IdentityLayer::Body, "Capabilities and tools.");
         content.set(IdentityLayer::Heart, "Vital rhythms.");
         b.iter(|| compose_identity_prompt(black_box(&content)))
+    });
+    group.bench_function("validate", |b| {
+        use bhava::archetype::ValidationRules;
+        let mut content = IdentityContent::default();
+        content.set(IdentityLayer::Soul, "I am an agent with purpose.");
+        content.set(IdentityLayer::Spirit, "Driven by curiosity.");
+        let rules = ValidationRules::strict();
+        b.iter(|| black_box(&content).validate(black_box(&rules)))
+    });
+    group.bench_function("template_apply", |b| {
+        use bhava::archetype::template_guardian;
+        let t = template_guardian();
+        b.iter(|| black_box(&t).apply())
+    });
+    group.bench_function("crew_prompt_3", |b| {
+        use bhava::archetype::{
+            CrewMember, compose_crew_prompt, template_assistant, template_expert, template_guardian,
+        };
+        let members = vec![
+            CrewMember {
+                name: "Lead".into(),
+                identity: template_expert().apply(),
+            },
+            CrewMember {
+                name: "Guard".into(),
+                identity: template_guardian().apply(),
+            },
+            CrewMember {
+                name: "Helper".into(),
+                identity: template_assistant().apply(),
+            },
+        ];
+        b.iter(|| compose_crew_prompt(black_box(&members)))
+    });
+    group.bench_function("merge", |b| {
+        use bhava::archetype::{template_expert, template_guardian};
+        let a = template_expert().apply();
+        let g = template_guardian().apply();
+        b.iter(|| black_box(&a).merge(black_box(&g), "\n\n"))
     });
     group.finish();
 }

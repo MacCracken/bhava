@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.5.0] - 2026-03-22
+
+### Added
+- archetype: `ValidationRules` with `required_layers`, `max_layer_length`, `min_layer_length`; `ValidationRules::strict()` preset (Soul+Spirit, 10-2000 chars)
+- archetype: `IdentityContent::validate()` and `is_valid()` — returns typed `ValidationError` variants (MissingRequired, TooLong, TooShort)
+- archetype: `IdentityContent::clear()` — remove content for a layer
+- archetype: `IdentityContent::merge()` — combine two identities with separator for overlapping layers
+- archetype: 4 archetype templates: `template_assistant()` (2 layers), `template_expert()` (3), `template_creative()` (4), `template_guardian()` (5)
+- archetype: `ArchetypeTemplate` with `apply()` to produce `IdentityContent`; `list_templates()`, `get_template()`
+- archetype: `CrewMember` struct and `compose_crew_prompt()` for multi-agent identity composition
+- 22 new tests for v0.5 features (298 total)
+- 3 new benchmarks: validate, template_apply, crew_prompt_3 (48 total)
+
+## [0.4.0] - 2026-03-22
+
+### Added
+- sentiment: Negation handling — "not", "no", "never", "neither", "nor", "hardly", "barely" flip the next keyword's sentiment
+- sentiment: Intensity modifiers — "very" (1.5x), "extremely" (2.0x), "really" (1.4x), "slightly" (0.3x), etc. scale keyword contribution
+- sentiment: `SentimentConfig` for configurable lexicons — `extra_positive`, `extra_negative`, `extra_trust`, `extra_curiosity`, `extra_frustration` extend built-in lists
+- sentiment: `analyze_with_config()` — analyze with custom lexicon configuration
+- sentiment: `analyze_sentences()` / `analyze_sentences_with_config()` — per-sentence analysis with `DocumentResult` containing aggregate + per-sentence `SentenceResult`
+- sentiment: `SentenceResult`, `DocumentResult` types with serde support
+- 27 new tests for v0.4 features (276 total)
+- 3 new benchmarks: negation, intensifiers, sentences_3 (45 total)
+
+### Changed
+- sentiment: `analyze()` now handles negation and intensity modifiers (backwards-compatible — same results for text without negators/modifiers)
+
+### Optimized
+- traits: `PersonalityProfile` internal storage changed from `HashMap<TraitKind, TraitLevel>` to `[TraitLevel; 11]` fixed array — 4-30x faster across all profile operations, zero heap allocation for trait data
+- traits: Added `TraitKind::index()` and `TraitKind::COUNT` for O(1) array-indexed access
+- mood: `MoodHistory` changed from `Vec` to `VecDeque` for O(1) ring buffer operations
+- mood: `apply_trigger()` batches nudges and updates timestamp once instead of per-response
+
 ## [0.3.0] - 2026-03-22
 
 ### Added

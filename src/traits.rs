@@ -659,6 +659,9 @@ impl PersonalityProfile {
     /// Returns the number of traits that changed.
     pub fn mutate_toward(&mut self, target: &PersonalityProfile, rate: f32) -> usize {
         let rate = rate.clamp(0.0, 1.0);
+        if rate < f32::EPSILON {
+            return 0;
+        }
         let mut changed = 0;
         for &kind in TraitKind::ALL {
             let current = self.get_trait(kind).numeric();
@@ -669,15 +672,15 @@ impl PersonalityProfile {
             let diff = goal - current;
             // Scale by rate: at low rates, move at most 1 step; at high rates, can jump further
             let steps = ((diff as f32 * rate).round() as i8).clamp(-4, 4);
-            if steps == 0 && diff != 0 {
-                // Ensure at least 1 step in the right direction when there's a difference
+            if steps == 0 {
+                // At very low rate, ensure at least 1 step in the right direction
                 let step = if diff > 0 { 1 } else { -1 };
                 let new_val = (current + step).clamp(-2, 2);
                 if let Ok(level) = TraitLevel::from_numeric(new_val) {
                     self.set_trait(kind, level);
                     changed += 1;
                 }
-            } else if steps != 0 {
+            } else {
                 let new_val = (current + steps).clamp(-2, 2);
                 if let Ok(level) = TraitLevel::from_numeric(new_val) {
                     self.set_trait(kind, level);
@@ -1372,5 +1375,17 @@ mod tests {
 
         a.mutate_toward(&target, 0.1);
         assert_eq!(a.get_trait(TraitKind::Humor), TraitLevel::High);
+    }
+
+    #[test]
+    fn test_mutate_toward_zero_rate_is_noop() {
+        let mut a = PersonalityProfile::new("a");
+        a.set_trait(TraitKind::Humor, TraitLevel::Lowest);
+        let mut target = PersonalityProfile::new("target");
+        target.set_trait(TraitKind::Humor, TraitLevel::Highest);
+
+        let changed = a.mutate_toward(&target, 0.0);
+        assert_eq!(changed, 0);
+        assert_eq!(a.get_trait(TraitKind::Humor), TraitLevel::Lowest);
     }
 }

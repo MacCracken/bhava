@@ -6,88 +6,96 @@
 
 | | Run 1 | Run 2 | Run 3 | 
 |---|---|---|---|
-| **Date** | `2026-03-23T05:19:33Z` | `2026-03-23T05:31:56Z` | `2026-03-23T05:39:52Z` | 
-| **Commit** | `3e0eef7` | `3e0eef7` | `3e0eef7` | 
+| **Date** | `2026-03-23T06:04:39Z` | `2026-03-23T06:15:52Z` | `2026-03-23T06:30:34Z` | 
+| **Commit** | `a3a4e49` | `a3a4e49` | `a3a4e49` | 
 | **Toolchain** | `rustc 1.93.0 (254b59607 2026-01-19)` | `rustc 1.93.0 (254b59607 2026-01-19)` | `rustc 1.93.0 (254b59607 2026-01-19)` | 
 
 ## Results
 
 ### traits
 
-| Benchmark | `3e0eef7` | `3e0eef7` | `3e0eef7` | Δ first→last |
+| Benchmark | `a3a4e49` | `a3a4e49` | `a3a4e49` | Δ first→last |
 |-----------|------|------|------|------|
-| behavior_lookup | 1.91 ns | 1.91 ns | 1.91 ns | — |
-| level_name | 1.70 ns | 1.70 ns | 1.70 ns | — |
-| level_from_numeric | 6.59 ns | 6.59 ns | 6.59 ns | — |
+| behavior_lookup | 1.76 ns | 1.76 ns | 1.76 ns | — |
+| level_name | 1.77 ns | 1.77 ns | 1.77 ns | — |
+| level_from_numeric | 6.57 ns | 6.57 ns | 6.57 ns | — |
 
 ### personality
 
-| Benchmark | `3e0eef7` | `3e0eef7` | `3e0eef7` | Δ first→last |
+| Benchmark | `a3a4e49` | `a3a4e49` | `a3a4e49` | Δ first→last |
 |-----------|------|------|------|------|
-| compose_prompt | 41.53 ns | 41.53 ns | 41.53 ns | — |
-| behavioral_instructions | 22.60 ns | 22.60 ns | 22.60 ns | — |
-| active_traits | 16.68 ns | 16.68 ns | 16.68 ns | — |
-| distance | 8.92 ns | 8.92 ns | 8.92 ns | — |
-| compatibility | 10.91 ns | 10.91 ns | 10.91 ns | — |
-| blend | 82.05 ns | 82.05 ns | 82.05 ns | — |
-| group_average | 3.50 ns | 3.50 ns | 3.50 ns | — |
-| mutate_toward | 37.20 ns | 37.20 ns | 37.20 ns | — |
+| compose_prompt | 37.14 ns | 37.14 ns | 37.14 ns | — |
+| behavioral_instructions | 18.47 ns | 18.47 ns | 18.47 ns | — |
+| active_traits | 17.05 ns | 17.05 ns | 17.05 ns | — |
+| distance | 9.05 ns | 9.05 ns | 9.05 ns | — |
+| compatibility | 11.09 ns | 11.09 ns | 11.09 ns | — |
+| blend | 83.38 ns | 83.38 ns | 83.38 ns | — |
+| group_average | 3.38 ns | 3.38 ns | 3.38 ns | — |
+| mutate_toward | 36.75 ns | 36.75 ns | 36.75 ns | — |
+| group_compatibility | 6.29 ns | 6.29 ns | 6.29 ns | — |
 
 ### mood
 
-| Benchmark | `3e0eef7` | `3e0eef7` | `3e0eef7` | Δ first→last |
+| Benchmark | `a3a4e49` | `a3a4e49` | `a3a4e49` | Δ first→last |
 |-----------|------|------|------|------|
-| stimulate | 48.23 ns | 48.23 ns | 48.23 ns | — |
-| intensity | 1.67 ns | 1.67 ns | 1.67 ns | — |
-| blend | 2.59 ns | 2.59 ns | 2.59 ns | — |
-| decay | 263.90 ps | 263.90 ps | 263.90 ps | — |
-| dominant_emotion | 1.92 ns | 1.92 ns | 1.92 ns | — |
-| nudge | 1.21 ns | 1.21 ns | 1.21 ns | — |
-| deviation | 2.29 ns | 2.29 ns | 2.29 ns | — |
-| apply_decay | 36.22 ns | 36.22 ns | 36.22 ns | — |
-| classify | 3.99 ns | 3.99 ns | 3.99 ns | — |
-| apply_trigger | 49.44 ns | 49.44 ns | 49.44 ns | — |
-| snapshot | 8.22 ns | 8.22 ns | 8.22 ns | — |
-| mood_trait_influence | 1.01 ns | 1.01 ns | 1.01 ns | — |
-| history_record | 29.00 ns | 29.00 ns | 29.00 ns | — |
-| history_deviation_trend | 27.74 ns | 27.74 ns | 27.74 ns | — |
+| stimulate | 47.32 ns | 47.32 ns | 47.32 ns | — |
+| intensity | 1.66 ns | 1.66 ns | 1.66 ns | — |
+| blend | 2.55 ns | 2.55 ns | 2.55 ns | — |
+| decay | 263.10 ps | 263.10 ps | 263.10 ps | — |
+| dominant_emotion | 2.03 ns | 2.03 ns | 2.03 ns | — |
+| nudge | 1.20 ns | 1.20 ns | 1.20 ns | — |
+| deviation | 2.30 ns | 2.30 ns | 2.30 ns | — |
+| apply_decay | 36.37 ns | 36.37 ns | 36.37 ns | — |
+| classify | 4.03 ns | 4.03 ns | 4.03 ns | — |
+| apply_trigger | 48.94 ns | 48.94 ns | 48.94 ns | — |
+| snapshot | 8.28 ns | 8.28 ns | 8.28 ns | — |
+| mood_trait_influence | 1.02 ns | 1.02 ns | 1.02 ns | — |
+| history_record | 29.76 ns | 29.76 ns | 29.76 ns | — |
+| history_deviation_trend | 27.95 ns | 27.95 ns | 27.95 ns | — |
 
 ### sentiment
 
-| Benchmark | `3e0eef7` | `3e0eef7` | `3e0eef7` | Δ first→last |
+| Benchmark | `a3a4e49` | `a3a4e49` | `a3a4e49` | Δ first→last |
 |-----------|------|------|------|------|
-| positive_short | 102.76 ns | 102.76 ns | 102.76 ns | — |
-| negative_medium | 241.66 ns | 241.66 ns | 241.66 ns | — |
-| neutral_long | 238.96 ns | 238.96 ns | 238.96 ns | — |
-| mixed_emotions | 249.67 ns | 249.67 ns | 249.67 ns | — |
-| keyword_dense | 523.06 ns | 523.06 ns | 523.06 ns | — |
+| positive_short | 120.53 ns | 120.53 ns | 120.53 ns | — |
+| negative_medium | 294.59 ns | 294.59 ns | 294.59 ns | — |
+| neutral_long | 317.99 ns | 317.99 ns | 317.99 ns | — |
+| mixed_emotions | 319.87 ns | 319.87 ns | 319.87 ns | — |
+| keyword_dense | 557.48 ns | 557.48 ns | 557.48 ns | — |
+| negation | 176.99 ns | 176.99 ns | 176.99 ns | — |
+| intensifiers | 247.15 ns | 247.15 ns | 247.15 ns | — |
+| sentences_3 | 469.30 ns | 469.30 ns | 469.30 ns | — |
 
 ### archetype
 
-| Benchmark | `3e0eef7` | `3e0eef7` | `3e0eef7` | Δ first→last |
+| Benchmark | `a3a4e49` | `a3a4e49` | `a3a4e49` | Δ first→last |
 |-----------|------|------|------|------|
-| compose_preamble | 205.40 ns | 205.40 ns | 205.40 ns | — |
-| compose_identity_2_layers | 329.86 ns | 329.86 ns | 329.86 ns | — |
-| compose_identity_5_layers | 429.00 ns | 429.00 ns | 429.00 ns | — |
+| compose_preamble | 205.63 ns | 205.63 ns | 205.63 ns | — |
+| compose_identity_2_layers | 265.88 ns | 265.88 ns | 265.88 ns | — |
+| compose_identity_5_layers | 371.69 ns | 371.69 ns | 371.69 ns | — |
+| validate | 11.58 ns | 11.58 ns | 11.58 ns | — |
+| template_apply | 65.51 ns | 65.51 ns | 65.51 ns | — |
+| crew_prompt_3 | 639.87 ns | 639.87 ns | 639.87 ns | — |
+| merge | 282.79 ns | 282.79 ns | 282.79 ns | — |
 
 ### presets
 
-| Benchmark | `3e0eef7` | `3e0eef7` | `3e0eef7` | Δ first→last |
+| Benchmark | `a3a4e49` | `a3a4e49` | `a3a4e49` | Δ first→last |
 |-----------|------|------|------|------|
-| get_preset | 54.71 ns | 54.71 ns | 54.71 ns | — |
-| list_presets | 468.80 ps | 468.80 ps | 468.80 ps | — |
-| preset_full_prompt | 628.19 ns | 628.19 ns | 628.19 ns | — |
+| get_preset | 59.61 ns | 59.61 ns | 59.61 ns | — |
+| list_presets | 485.10 ps | 485.10 ps | 485.10 ps | — |
+| preset_full_prompt | 661.46 ns | 661.46 ns | 661.46 ns | — |
 
 ### serde
 
-| Benchmark | `3e0eef7` | `3e0eef7` | `3e0eef7` | Δ first→last |
+| Benchmark | `a3a4e49` | `a3a4e49` | `a3a4e49` | Δ first→last |
 |-----------|------|------|------|------|
-| personality_serialize | 699.06 ns | 699.06 ns | 699.06 ns | — |
-| personality_deserialize | 836.98 ns | 836.98 ns | 836.98 ns | — |
-| mood_serialize | 128.25 ns | 128.25 ns | 128.25 ns | — |
-| mood_deserialize | 170.11 ns | 170.11 ns | 170.11 ns | — |
-| emotional_state_serialize | 567.76 ns | 567.76 ns | 567.76 ns | — |
-| emotional_state_deserialize | 598.61 ns | 598.61 ns | 598.61 ns | — |
+| personality_serialize | 687.20 ns | 687.20 ns | 687.20 ns | — |
+| personality_deserialize | 804.87 ns | 804.87 ns | 804.87 ns | — |
+| mood_serialize | 129.50 ns | 129.50 ns | 129.50 ns | — |
+| mood_deserialize | 170.21 ns | 170.21 ns | 170.21 ns | — |
+| emotional_state_serialize | 571.67 ns | 571.67 ns | 571.67 ns | — |
+| emotional_state_deserialize | 572.74 ns | 572.74 ns | 572.74 ns | — |
 
 ---
 
