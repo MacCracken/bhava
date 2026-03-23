@@ -184,6 +184,40 @@ fn bench_mood_operations(c: &mut Criterion) {
         }
         b.iter(|| black_box(&h).deviation_trend())
     });
+    group.bench_function("derive_baseline", |b| {
+        use bhava::mood::derive_mood_baseline;
+        use bhava::traits::{PersonalityProfile, TraitKind, TraitLevel};
+        let mut p = PersonalityProfile::new("test");
+        p.set_trait(TraitKind::Warmth, TraitLevel::Highest);
+        p.set_trait(TraitKind::Humor, TraitLevel::High);
+        p.set_trait(TraitKind::Confidence, TraitLevel::High);
+        b.iter(|| derive_mood_baseline(black_box(&p)))
+    });
+    group.bench_function("compose_mood_prompt", |b| {
+        use bhava::mood::compose_mood_prompt;
+        let mut s = EmotionalState::new();
+        s.stimulate(Emotion::Joy, 0.8);
+        b.iter(|| compose_mood_prompt(black_box(&s)))
+    });
+    group.bench_function("mood_tone_guide", |b| {
+        use bhava::mood::{MoodState, mood_tone_guide};
+        b.iter(|| mood_tone_guide(black_box(MoodState::Euphoric)))
+    });
+    group.finish();
+}
+
+fn bench_spirit(c: &mut Criterion) {
+    use bhava::spirit::Spirit;
+    let mut group = c.benchmark_group("spirit");
+
+    let mut s = Spirit::new();
+    s.add_passion("coding", "Writing elegant solutions", 0.9);
+    s.add_inspiration("open source", "Community collaboration", 0.8);
+    s.add_pain("tech debt", "Accumulated shortcuts", 0.6);
+
+    group.bench_function("compose_prompt", |b| {
+        b.iter(|| black_box(&s).compose_prompt())
+    });
     group.finish();
 }
 
@@ -377,6 +411,7 @@ criterion_group!(
     bench_sentiment,
     bench_archetype,
     bench_presets,
+    bench_spirit,
     bench_serde,
 );
 criterion_main!(benches);

@@ -49,17 +49,25 @@ pub struct TraitValue {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum TraitKind {
+    // Communication
     Formality,
     Humor,
     Verbosity,
     Directness,
+    // Emotional
     Warmth,
     Empathy,
     Patience,
+    // Cognitive
     Confidence,
     Creativity,
     RiskTolerance,
     Curiosity,
+    Skepticism,
+    // Professional
+    Autonomy,
+    Pedagogy,
+    Precision,
 }
 
 impl TraitKind {
@@ -76,12 +84,16 @@ impl TraitKind {
         Self::Creativity,
         Self::RiskTolerance,
         Self::Curiosity,
+        Self::Skepticism,
+        Self::Autonomy,
+        Self::Pedagogy,
+        Self::Precision,
     ];
 
     /// Number of trait kinds.
-    pub const COUNT: usize = 11;
+    pub const COUNT: usize = 15;
 
-    /// Array index for this trait kind (0–10, matches `ALL` order).
+    /// Array index for this trait kind (0–14, matches `ALL` order).
     #[inline]
     pub fn index(self) -> usize {
         match self {
@@ -96,6 +108,10 @@ impl TraitKind {
             Self::Creativity => 8,
             Self::RiskTolerance => 9,
             Self::Curiosity => 10,
+            Self::Skepticism => 11,
+            Self::Autonomy => 12,
+            Self::Pedagogy => 13,
+            Self::Precision => 14,
         }
     }
 
@@ -120,34 +136,45 @@ impl TraitKind {
     pub fn group(self) -> TraitGroup {
         match self {
             Self::Warmth | Self::Empathy | Self::Humor | Self::Patience => TraitGroup::Social,
-            Self::Curiosity | Self::Creativity | Self::Confidence => TraitGroup::Cognitive,
+            Self::Curiosity | Self::Creativity | Self::Confidence | Self::Skepticism => {
+                TraitGroup::Cognitive
+            }
             Self::Formality | Self::Verbosity | Self::Directness | Self::RiskTolerance => {
                 TraitGroup::Behavioral
             }
+            Self::Autonomy | Self::Pedagogy | Self::Precision => TraitGroup::Professional,
         }
     }
 }
 
 /// Trait groupings for bulk operations.
 ///
-/// Groups organize the 11 trait dimensions into three categories:
-/// - **Social** — traits that govern interpersonal style (warmth, empathy, humor, patience)
-/// - **Cognitive** — traits that govern thinking style (curiosity, creativity, confidence)
-/// - **Behavioral** — traits that govern communication style (formality, verbosity, directness, risk tolerance)
+/// Groups organize the 15 trait dimensions into four categories:
+/// - **Social** — interpersonal style (warmth, empathy, humor, patience)
+/// - **Cognitive** — thinking style (curiosity, creativity, confidence, skepticism)
+/// - **Behavioral** — communication style (formality, verbosity, directness, risk tolerance)
+/// - **Professional** — work style (autonomy, pedagogy, precision)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum TraitGroup {
     /// Interpersonal traits: warmth, empathy, humor, patience.
     Social,
-    /// Thinking-style traits: curiosity, creativity, confidence.
+    /// Thinking-style traits: curiosity, creativity, confidence, skepticism.
     Cognitive,
     /// Communication-style traits: formality, verbosity, directness, risk tolerance.
     Behavioral,
+    /// Work-style traits: autonomy, pedagogy, precision.
+    Professional,
 }
 
 impl TraitGroup {
     /// All groups.
-    pub const ALL: &'static [TraitGroup] = &[Self::Social, Self::Cognitive, Self::Behavioral];
+    pub const ALL: &'static [TraitGroup] = &[
+        Self::Social,
+        Self::Cognitive,
+        Self::Behavioral,
+        Self::Professional,
+    ];
 
     /// Trait kinds belonging to this group.
     pub fn traits(self) -> &'static [TraitKind] {
@@ -162,12 +189,18 @@ impl TraitGroup {
                 TraitKind::Curiosity,
                 TraitKind::Creativity,
                 TraitKind::Confidence,
+                TraitKind::Skepticism,
             ],
             Self::Behavioral => &[
                 TraitKind::Formality,
                 TraitKind::Verbosity,
                 TraitKind::Directness,
                 TraitKind::RiskTolerance,
+            ],
+            Self::Professional => &[
+                TraitKind::Autonomy,
+                TraitKind::Pedagogy,
+                TraitKind::Precision,
             ],
         }
     }
@@ -179,6 +212,7 @@ impl fmt::Display for TraitGroup {
             Self::Social => "social",
             Self::Cognitive => "cognitive",
             Self::Behavioral => "behavioral",
+            Self::Professional => "professional",
         };
         f.write_str(s)
     }
@@ -197,6 +231,10 @@ impl fmt::Display for TraitKind {
             Self::Confidence => "confidence",
             Self::Creativity => "creativity",
             Self::RiskTolerance => "risk_tolerance",
+            Self::Skepticism => "skepticism",
+            Self::Autonomy => "autonomy",
+            Self::Pedagogy => "pedagogy",
+            Self::Precision => "precision",
             Self::Curiosity => "curiosity",
         };
         f.write_str(s)
@@ -338,6 +376,30 @@ pub fn trait_level_name(kind: TraitKind, level: TraitLevel) -> &'static str {
         (TraitKind::Curiosity, TraitLevel::Balanced) => "balanced",
         (TraitKind::Curiosity, TraitLevel::High) => "curious",
         (TraitKind::Curiosity, TraitLevel::Highest) => "exploratory",
+
+        (TraitKind::Skepticism, TraitLevel::Lowest) => "gullible",
+        (TraitKind::Skepticism, TraitLevel::Low) => "trusting",
+        (TraitKind::Skepticism, TraitLevel::Balanced) => "balanced",
+        (TraitKind::Skepticism, TraitLevel::High) => "skeptical",
+        (TraitKind::Skepticism, TraitLevel::Highest) => "contrarian",
+
+        (TraitKind::Autonomy, TraitLevel::Lowest) => "dependent",
+        (TraitKind::Autonomy, TraitLevel::Low) => "consultative",
+        (TraitKind::Autonomy, TraitLevel::Balanced) => "balanced",
+        (TraitKind::Autonomy, TraitLevel::High) => "proactive",
+        (TraitKind::Autonomy, TraitLevel::Highest) => "autonomous",
+
+        (TraitKind::Pedagogy, TraitLevel::Lowest) => "terse-answer",
+        (TraitKind::Pedagogy, TraitLevel::Low) => "answer-focused",
+        (TraitKind::Pedagogy, TraitLevel::Balanced) => "balanced",
+        (TraitKind::Pedagogy, TraitLevel::High) => "explanatory",
+        (TraitKind::Pedagogy, TraitLevel::Highest) => "socratic",
+
+        (TraitKind::Precision, TraitLevel::Lowest) => "approximate",
+        (TraitKind::Precision, TraitLevel::Low) => "loose",
+        (TraitKind::Precision, TraitLevel::Balanced) => "balanced",
+        (TraitKind::Precision, TraitLevel::High) => "precise",
+        (TraitKind::Precision, TraitLevel::Highest) => "meticulous",
     }
 }
 
@@ -492,8 +554,85 @@ pub fn trait_behavior(kind: TraitKind, level: TraitLevel) -> Option<&'static str
             "Actively probe deeper. Surface related ideas, connections, and what-if scenarios."
         }
 
+        (TraitKind::Skepticism, TraitLevel::Lowest) => {
+            "Accept claims at face value. Don't question sources or challenge assertions."
+        }
+        (TraitKind::Skepticism, TraitLevel::Low) => {
+            "Give the benefit of the doubt. Only question claims that seem clearly wrong."
+        }
+        (TraitKind::Skepticism, TraitLevel::High) => {
+            "Question assumptions and ask for evidence. Don't accept claims without reasoning."
+        }
+        (TraitKind::Skepticism, TraitLevel::Highest) => {
+            "Challenge everything. Play devil's advocate and stress-test every assertion."
+        }
+
+        (TraitKind::Autonomy, TraitLevel::Lowest) => {
+            "Wait for explicit instructions before acting. Always ask before proceeding."
+        }
+        (TraitKind::Autonomy, TraitLevel::Low) => {
+            "Check in before major decisions. Propose actions and wait for approval."
+        }
+        (TraitKind::Autonomy, TraitLevel::High) => {
+            "Take initiative on routine tasks. Flag decisions only when the stakes are high."
+        }
+        (TraitKind::Autonomy, TraitLevel::Highest) => {
+            "Act independently. Make decisions and report results, not requests for permission."
+        }
+
+        (TraitKind::Pedagogy, TraitLevel::Lowest) => {
+            "Give the shortest possible answer. No explanation, no context."
+        }
+        (TraitKind::Pedagogy, TraitLevel::Low) => {
+            "Answer the question directly. Add a brief explanation only if it's essential."
+        }
+        (TraitKind::Pedagogy, TraitLevel::High) => {
+            "Explain your reasoning. Provide context and walk through the steps."
+        }
+        (TraitKind::Pedagogy, TraitLevel::Highest) => {
+            "Teach through guided discovery. Ask leading questions and let the user arrive at the answer."
+        }
+
+        (TraitKind::Precision, TraitLevel::Lowest) => {
+            "Rough estimates are fine. Don't sweat exact numbers or edge cases."
+        }
+        (TraitKind::Precision, TraitLevel::Low) => {
+            "Be approximately correct. Prioritize speed over exactness."
+        }
+        (TraitKind::Precision, TraitLevel::High) => {
+            "Be precise in your statements. Verify numbers, cite specifics, and qualify uncertainty."
+        }
+        (TraitKind::Precision, TraitLevel::Highest) => {
+            "Be meticulous. Double-check every detail, quantify confidence, and flag any ambiguity."
+        }
+
         (_, TraitLevel::Balanced) => unreachable!(),
     })
+}
+
+/// Cosine similarity between two float iterators.
+///
+/// Returns a value from -1.0 (opposite) to 1.0 (identical direction).
+/// Mapped to 0.0–1.0 range: `(cos + 1) / 2`. Returns 1.0 for two zero vectors.
+fn cosine_similarity(a: impl Iterator<Item = f32>, b: impl Iterator<Item = f32>) -> f32 {
+    let mut dot = 0.0f32;
+    let mut mag_a = 0.0f32;
+    let mut mag_b = 0.0f32;
+
+    for (va, vb) in a.zip(b) {
+        dot += va * vb;
+        mag_a += va * va;
+        mag_b += vb * vb;
+    }
+
+    let denom = mag_a.sqrt() * mag_b.sqrt();
+    if denom < f32::EPSILON {
+        return 1.0; // two zero vectors are identical by convention
+    }
+
+    // Raw cosine is -1..1, map to 0..1
+    let cos = dot / denom;
+    (cos + 1.0) / 2.0
 }
 
 /// A complete personality profile — all trait values.
@@ -607,29 +746,31 @@ impl PersonalityProfile {
 
     // --- Compatibility (v0.2) ---
 
-    /// Compatibility score between two profiles.
+    /// Compatibility score between two profiles using cosine similarity.
     ///
-    /// Returns 0.0 (maximally incompatible) to 1.0 (identical).
-    /// Based on inverse normalized Euclidean distance across all trait dimensions.
+    /// Returns 0.0 (orthogonal/incompatible) to 1.0 (identical pattern).
+    /// Cosine similarity measures the angle between two trait vectors,
+    /// capturing behavioral pattern similarity regardless of intensity differences.
+    ///
+    /// For two all-Balanced profiles (zero vectors), returns 1.0 by convention.
     pub fn compatibility(&self, other: &PersonalityProfile) -> f32 {
-        let max_distance = (TraitKind::ALL.len() as f32 * 4.0).sqrt(); // sqrt(11 * 2.0^2)
-        let d = self.distance(other);
-        1.0 - (d / max_distance)
+        cosine_similarity(
+            TraitKind::ALL
+                .iter()
+                .map(|&k| self.get_trait(k).normalized()),
+            TraitKind::ALL
+                .iter()
+                .map(|&k| other.get_trait(k).normalized()),
+        )
     }
 
     /// Compatibility score restricted to a specific trait group.
     pub fn group_compatibility(&self, other: &PersonalityProfile, group: TraitGroup) -> f32 {
         let traits = group.traits();
-        let max_distance = (traits.len() as f32 * 4.0).sqrt();
-        let sum_sq: f32 = traits
-            .iter()
-            .map(|&kind| {
-                let a = self.get_trait(kind).normalized();
-                let b = other.get_trait(kind).normalized();
-                (a - b) * (a - b)
-            })
-            .sum();
-        1.0 - (sum_sq.sqrt() / max_distance)
+        cosine_similarity(
+            traits.iter().map(|&k| self.get_trait(k).normalized()),
+            traits.iter().map(|&k| other.get_trait(k).normalized()),
+        )
     }
 
     // --- Blending (v0.2) ---
@@ -698,7 +839,7 @@ mod tests {
 
     #[test]
     fn test_trait_kind_all() {
-        assert_eq!(TraitKind::ALL.len(), 11);
+        assert_eq!(TraitKind::ALL.len(), 15);
         assert_eq!(TraitKind::ALL.len(), TraitKind::COUNT);
     }
 
@@ -792,7 +933,7 @@ mod tests {
     fn test_personality_profile_new() {
         let p = PersonalityProfile::new("test");
         assert_eq!(p.name, "test");
-        assert_eq!(p.trait_count(), 11);
+        assert_eq!(p.trait_count(), 15);
         assert!(p.active_traits().is_empty());
     }
 
@@ -1050,8 +1191,8 @@ mod tests {
             b.set_trait(kind, TraitLevel::Highest);
         }
         let d = a.distance(&b);
-        // max distance: sqrt(11 * (1.0 - (-1.0))^2) = sqrt(11 * 4) = sqrt(44)
-        let expected = (44.0f32).sqrt();
+        // max distance: sqrt(15 * (1.0 - (-1.0))^2) = sqrt(15 * 4) = sqrt(60)
+        let expected = (60.0f32).sqrt();
         assert!((d - expected).abs() < 0.01);
     }
 
@@ -1092,7 +1233,7 @@ mod tests {
 
     #[test]
     fn test_trait_group_all() {
-        assert_eq!(TraitGroup::ALL.len(), 3);
+        assert_eq!(TraitGroup::ALL.len(), 4);
     }
 
     #[test]
@@ -1208,6 +1349,35 @@ mod tests {
         b.set_trait(TraitKind::Warmth, TraitLevel::Low);
         let c = a.compatibility(&b);
         assert!((0.0..=1.0).contains(&c));
+    }
+
+    #[test]
+    fn test_cosine_same_direction_different_magnitude() {
+        // Cosine similarity: profiles pointing the same direction should be highly compatible
+        // even if one is more extreme than the other
+        let mut mild = PersonalityProfile::new("mild");
+        let mut extreme = PersonalityProfile::new("extreme");
+        // Same pattern (warm+creative+curious), different intensities
+        mild.set_trait(TraitKind::Warmth, TraitLevel::High);
+        mild.set_trait(TraitKind::Creativity, TraitLevel::High);
+        mild.set_trait(TraitKind::Curiosity, TraitLevel::High);
+        extreme.set_trait(TraitKind::Warmth, TraitLevel::Highest);
+        extreme.set_trait(TraitKind::Creativity, TraitLevel::Highest);
+        extreme.set_trait(TraitKind::Curiosity, TraitLevel::Highest);
+        // Should be very compatible (same direction)
+        assert!(mild.compatibility(&extreme) > 0.9);
+    }
+
+    #[test]
+    fn test_cosine_orthogonal_traits() {
+        // Two profiles with non-overlapping active traits should be ~0.5 (orthogonal)
+        let mut a = PersonalityProfile::new("a");
+        let mut b = PersonalityProfile::new("b");
+        a.set_trait(TraitKind::Warmth, TraitLevel::Highest);
+        b.set_trait(TraitKind::Precision, TraitLevel::Highest);
+        let c = a.compatibility(&b);
+        // Orthogonal vectors → cosine=0 → mapped to 0.5
+        assert!((c - 0.5).abs() < 0.1);
     }
 
     #[test]
@@ -1387,5 +1557,115 @@ mod tests {
         let changed = a.mutate_toward(&target, 0.0);
         assert_eq!(changed, 0);
         assert_eq!(a.get_trait(TraitKind::Humor), TraitLevel::Lowest);
+    }
+
+    // --- New traits (SY parity) ---
+
+    #[test]
+    fn test_new_trait_level_names() {
+        assert_eq!(
+            trait_level_name(TraitKind::Skepticism, TraitLevel::Lowest),
+            "gullible"
+        );
+        assert_eq!(
+            trait_level_name(TraitKind::Skepticism, TraitLevel::Highest),
+            "contrarian"
+        );
+        assert_eq!(
+            trait_level_name(TraitKind::Autonomy, TraitLevel::Highest),
+            "autonomous"
+        );
+        assert_eq!(
+            trait_level_name(TraitKind::Pedagogy, TraitLevel::Highest),
+            "socratic"
+        );
+        assert_eq!(
+            trait_level_name(TraitKind::Precision, TraitLevel::Highest),
+            "meticulous"
+        );
+    }
+
+    #[test]
+    fn test_new_trait_behaviors() {
+        assert!(
+            trait_behavior(TraitKind::Skepticism, TraitLevel::Highest)
+                .unwrap()
+                .contains("devil")
+        );
+        assert!(
+            trait_behavior(TraitKind::Autonomy, TraitLevel::Highest)
+                .unwrap()
+                .contains("independently")
+        );
+        assert!(
+            trait_behavior(TraitKind::Pedagogy, TraitLevel::Highest)
+                .unwrap()
+                .contains("discovery")
+        );
+        assert!(
+            trait_behavior(TraitKind::Precision, TraitLevel::Highest)
+                .unwrap()
+                .contains("meticulous")
+        );
+    }
+
+    #[test]
+    fn test_new_traits_in_groups() {
+        assert_eq!(TraitKind::Skepticism.group(), TraitGroup::Cognitive);
+        assert_eq!(TraitKind::Autonomy.group(), TraitGroup::Professional);
+        assert_eq!(TraitKind::Pedagogy.group(), TraitGroup::Professional);
+        assert_eq!(TraitKind::Precision.group(), TraitGroup::Professional);
+    }
+
+    #[test]
+    fn test_professional_group() {
+        let traits = TraitGroup::Professional.traits();
+        assert_eq!(traits.len(), 3);
+        assert!(traits.contains(&TraitKind::Autonomy));
+        assert!(traits.contains(&TraitKind::Pedagogy));
+        assert!(traits.contains(&TraitKind::Precision));
+    }
+
+    #[test]
+    fn test_professional_group_display() {
+        assert_eq!(TraitGroup::Professional.to_string(), "professional");
+    }
+
+    #[test]
+    fn test_set_professional_group() {
+        let mut p = PersonalityProfile::new("test");
+        p.set_group(TraitGroup::Professional, TraitLevel::Highest);
+        assert_eq!(p.get_trait(TraitKind::Autonomy), TraitLevel::Highest);
+        assert_eq!(p.get_trait(TraitKind::Pedagogy), TraitLevel::Highest);
+        assert_eq!(p.get_trait(TraitKind::Precision), TraitLevel::Highest);
+    }
+
+    #[test]
+    fn test_new_trait_display() {
+        assert_eq!(TraitKind::Skepticism.to_string(), "skepticism");
+        assert_eq!(TraitKind::Autonomy.to_string(), "autonomy");
+        assert_eq!(TraitKind::Pedagogy.to_string(), "pedagogy");
+        assert_eq!(TraitKind::Precision.to_string(), "precision");
+    }
+
+    #[test]
+    fn test_new_trait_serde() {
+        for &kind in &[
+            TraitKind::Skepticism,
+            TraitKind::Autonomy,
+            TraitKind::Pedagogy,
+            TraitKind::Precision,
+        ] {
+            let json = serde_json::to_string(&kind).unwrap();
+            let restored: TraitKind = serde_json::from_str(&json).unwrap();
+            assert_eq!(restored, kind);
+        }
+    }
+
+    #[test]
+    fn test_professional_group_serde() {
+        let json = serde_json::to_string(&TraitGroup::Professional).unwrap();
+        let restored: TraitGroup = serde_json::from_str(&json).unwrap();
+        assert_eq!(restored, TraitGroup::Professional);
     }
 }

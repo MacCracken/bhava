@@ -525,8 +525,248 @@ pub fn mood_trait_influence(mood: &MoodVector, trait_kind: crate::traits::TraitK
         TraitKind::RiskTolerance => {
             mood.dominance * 0.3 + mood.arousal * 0.2 - mood.frustration * 0.2
         }
+        TraitKind::Skepticism => -mood.trust * 0.4 + mood.frustration * 0.2,
+        TraitKind::Autonomy => mood.dominance * 0.4 + mood.arousal * 0.2,
+        TraitKind::Pedagogy => mood.interest * 0.3 + mood.joy * 0.2 - mood.frustration * 0.2,
+        TraitKind::Precision => -mood.arousal * 0.3 + mood.dominance * 0.2,
     }
     .clamp(-1.0, 1.0)
+}
+
+// --- Trait-to-Mood Baseline (SY parity) ---
+
+/// Valence/arousal modifier for a single trait level.
+#[cfg(feature = "traits")]
+struct TraitMoodModifier {
+    valence: f32,
+    arousal: f32,
+}
+
+/// Get the valence/arousal contribution of a trait at a given level.
+///
+/// Ported from SecureYeoman's TRAIT_VALUE_MODIFIERS.
+#[cfg(feature = "traits")]
+fn trait_mood_modifier(
+    kind: crate::traits::TraitKind,
+    level: crate::traits::TraitLevel,
+) -> TraitMoodModifier {
+    use crate::traits::{TraitKind as TK, TraitLevel as TL};
+    let (v, a) = match (kind, level) {
+        (TK::Formality, TL::Lowest) => (0.05, 0.15),
+        (TK::Formality, TL::Low) => (0.05, 0.05),
+        (TK::Formality, TL::High) => (-0.05, -0.1),
+        (TK::Formality, TL::Highest) => (-0.05, -0.15),
+
+        (TK::Humor, TL::Lowest) => (-0.1, -0.1),
+        (TK::Humor, TL::Low) => (-0.05, -0.05),
+        (TK::Humor, TL::High) => (0.15, 0.1),
+        (TK::Humor, TL::Highest) => (0.2, 0.15),
+
+        (TK::Warmth, TL::Lowest) => (-0.25, -0.15),
+        (TK::Warmth, TL::Low) => (-0.1, -0.1),
+        (TK::Warmth, TL::High) => (0.2, 0.1),
+        (TK::Warmth, TL::Highest) => (0.3, 0.2),
+
+        (TK::Empathy, TL::Lowest) => (-0.15, -0.1),
+        (TK::Empathy, TL::Low) => (-0.05, -0.05),
+        (TK::Empathy, TL::High) => (0.1, 0.0),
+        (TK::Empathy, TL::Highest) => (0.15, -0.05),
+
+        (TK::Patience, TL::Lowest) => (-0.1, 0.15),
+        (TK::Patience, TL::Low) => (-0.05, 0.05),
+        (TK::Patience, TL::High) => (0.1, -0.1),
+        (TK::Patience, TL::Highest) => (0.15, -0.15),
+
+        (TK::Confidence, TL::Lowest) => (-0.15, -0.1),
+        (TK::Confidence, TL::Low) => (-0.05, -0.05),
+        (TK::Confidence, TL::High) => (0.1, 0.1),
+        (TK::Confidence, TL::Highest) => (0.15, 0.15),
+
+        (TK::Creativity, TL::Lowest) => (-0.05, -0.1),
+        (TK::Creativity, TL::Low) => (0.0, -0.05),
+        (TK::Creativity, TL::High) => (0.1, 0.1),
+        (TK::Creativity, TL::Highest) => (0.15, 0.15),
+
+        (TK::RiskTolerance, TL::Lowest) => (-0.1, -0.15),
+        (TK::RiskTolerance, TL::Low) => (-0.05, -0.05),
+        (TK::RiskTolerance, TL::High) => (0.05, 0.1),
+        (TK::RiskTolerance, TL::Highest) => (0.1, 0.2),
+
+        (TK::Curiosity, TL::Lowest) => (-0.05, -0.1),
+        (TK::Curiosity, TL::Low) => (0.0, -0.05),
+        (TK::Curiosity, TL::High) => (0.1, 0.1),
+        (TK::Curiosity, TL::Highest) => (0.15, 0.15),
+
+        (TK::Verbosity, TL::Lowest) => (0.0, -0.05),
+        (TK::Verbosity, TL::Low) => (0.0, -0.02),
+        (TK::Verbosity, TL::High) => (0.0, 0.05),
+        (TK::Verbosity, TL::Highest) => (0.0, 0.1),
+
+        (TK::Directness, TL::Lowest) => (0.0, -0.05),
+        (TK::Directness, TL::Low) => (0.0, -0.02),
+        (TK::Directness, TL::High) => (0.0, 0.05),
+        (TK::Directness, TL::Highest) => (-0.05, 0.1),
+
+        (TK::Skepticism, TL::Lowest) => (0.05, -0.05),
+        (TK::Skepticism, TL::Low) => (0.02, -0.02),
+        (TK::Skepticism, TL::High) => (-0.05, 0.05),
+        (TK::Skepticism, TL::Highest) => (-0.1, 0.1),
+
+        (TK::Autonomy, TL::Lowest) => (-0.05, -0.1),
+        (TK::Autonomy, TL::Low) => (-0.02, -0.05),
+        (TK::Autonomy, TL::High) => (0.05, 0.1),
+        (TK::Autonomy, TL::Highest) => (0.1, 0.15),
+
+        (TK::Pedagogy, TL::Lowest) => (0.0, -0.05),
+        (TK::Pedagogy, TL::Low) => (0.0, -0.02),
+        (TK::Pedagogy, TL::High) => (0.05, 0.05),
+        (TK::Pedagogy, TL::Highest) => (0.1, 0.1),
+
+        (TK::Precision, TL::Lowest) => (0.0, -0.05),
+        (TK::Precision, TL::Low) => (0.0, -0.02),
+        (TK::Precision, TL::High) => (-0.02, 0.05),
+        (TK::Precision, TL::Highest) => (-0.05, 0.1),
+
+        (_, TL::Balanced) => (0.0, 0.0),
+    };
+    TraitMoodModifier {
+        valence: v,
+        arousal: a,
+    }
+}
+
+/// Derive a mood baseline from a personality profile.
+///
+/// Each trait's level contributes valence and arousal modifiers. The baseline
+/// is the average of all contributions, producing the personality's natural
+/// emotional resting state.
+///
+/// Returns a `MoodVector` with `joy` set to the derived valence and `arousal`
+/// set to the derived arousal. Other dimensions are zero.
+#[cfg(feature = "traits")]
+pub fn derive_mood_baseline(profile: &crate::traits::PersonalityProfile) -> MoodVector {
+    use crate::traits::TraitKind;
+
+    let mut total_v = 0.0f32;
+    let mut total_a = 0.0f32;
+
+    for &kind in TraitKind::ALL {
+        let level = profile.get_trait(kind);
+        let m = trait_mood_modifier(kind, level);
+        total_v += m.valence;
+        total_a += m.arousal;
+    }
+
+    // Average across all traits
+    let count = TraitKind::COUNT as f32;
+    let base_v = (total_v / count).clamp(-1.0, 1.0);
+    let base_a = (total_a / count).clamp(-1.0, 1.0);
+
+    // Apply compound effects
+    let compound = compute_compound_effects(profile);
+    let final_v = (base_v + compound.0).clamp(-1.0, 1.0);
+    let final_a = (base_a + compound.1).clamp(-1.0, 1.0);
+
+    let mut baseline = MoodVector::neutral();
+    baseline.joy = final_v;
+    baseline.arousal = final_a;
+    baseline
+}
+
+// --- Compound Trait Effects (SY parity) ---
+
+/// Compute compound mood effects from trait combinations.
+///
+/// Returns (valence_delta, arousal_delta) from emergent trait interactions.
+/// For example, high warmth + high humor → "playful" (+0.1 valence, +0.1 arousal).
+#[cfg(feature = "traits")]
+fn compute_compound_effects(profile: &crate::traits::PersonalityProfile) -> (f32, f32) {
+    use crate::traits::{TraitKind as TK, TraitLevel as TL};
+
+    let mut v = 0.0f32;
+    let mut a = 0.0f32;
+
+    let get = |k: TK| profile.get_trait(k);
+    let high_or_above = |l: TL| l >= TL::High;
+    let low_or_below = |l: TL| l <= TL::Low;
+
+    // Playful: warm + funny
+    if high_or_above(get(TK::Warmth)) && high_or_above(get(TK::Humor)) {
+        v += 0.1;
+        a += 0.1;
+    }
+    // Nurturing: warm + empathetic
+    if high_or_above(get(TK::Warmth)) && high_or_above(get(TK::Empathy)) {
+        v += 0.1;
+        a -= 0.05;
+    }
+    // Mentoring: patient + pedagogical
+    if high_or_above(get(TK::Patience)) && high_or_above(get(TK::Pedagogy)) {
+        v += 0.1;
+        a -= 0.1;
+    }
+    // Driven: confident + autonomous
+    if high_or_above(get(TK::Confidence)) && high_or_above(get(TK::Autonomy)) {
+        v += 0.05;
+        a += 0.15;
+    }
+    // Guarded: skeptical + cold
+    if high_or_above(get(TK::Skepticism)) && low_or_below(get(TK::Warmth)) {
+        v -= 0.1;
+        a += 0.05;
+    }
+    // Anxious: low confidence + low risk tolerance
+    if low_or_below(get(TK::Confidence)) && low_or_below(get(TK::RiskTolerance)) {
+        v -= 0.15;
+        a += 0.1;
+    }
+    // Investigative: curious + precise
+    if high_or_above(get(TK::Curiosity)) && high_or_above(get(TK::Precision)) {
+        v += 0.05;
+        a += 0.05;
+    }
+
+    (v, a)
+}
+
+// --- Mood Tone Guides (SY parity) ---
+
+/// Get a prompt-injectable tone guide for a named mood state.
+///
+/// These are short behavioral instructions that can be injected into LLM
+/// system prompts to color the agent's communication style based on current mood.
+pub fn mood_tone_guide(state: MoodState) -> &'static str {
+    match state {
+        MoodState::Euphoric => {
+            "Speak with enthusiasm and unbridled joy. Be effusive and celebratory."
+        }
+        MoodState::Content => "Be relaxed and satisfied. Communicate with gentle warmth.",
+        MoodState::Calm => "Speak with measured tranquility. Be steady and reassuring.",
+        MoodState::Melancholy => {
+            "Communicate with quiet thoughtfulness. Be reflective and subdued."
+        }
+        MoodState::Agitated => {
+            "Communicate with energy and urgency. Be animated and forward-leaning."
+        }
+        MoodState::Assertive => "Speak with authority and conviction. Be decisive and commanding.",
+        MoodState::Overwhelmed => {
+            "Communicate with caution and hesitation. Seek clarity before acting."
+        }
+        MoodState::Trusting => "Be open and collaborative. Share freely and assume good intent.",
+        MoodState::Guarded => "Be measured and careful. Verify before trusting. Keep things close.",
+        MoodState::Curious => "Be inquisitive and engaged. Ask questions and explore tangents.",
+        MoodState::Disengaged => "Be brief and perfunctory. Conserve energy for what matters.",
+        MoodState::Frustrated => "Be terse and impatient. Cut to the point. Tolerate no fluff.",
+    }
+}
+
+/// Compose a mood prompt fragment for injection into a system prompt.
+///
+/// Combines the current mood label with its tone guide.
+pub fn compose_mood_prompt(state: &EmotionalState) -> String {
+    let mood_state = state.classify();
+    let guide = mood_tone_guide(mood_state);
+    format!("## Current Mood: {}\n\n{}\n", mood_state, guide)
 }
 
 #[cfg(test)]
@@ -1300,5 +1540,133 @@ mod tests {
         let mut s = EmotionalState::new();
         s.apply_trigger(&t);
         assert!((s.mood.joy - 0.6).abs() < 0.01);
+    }
+
+    // --- Trait-to-mood baseline ---
+
+    #[cfg(feature = "traits")]
+    #[test]
+    fn test_derive_baseline_balanced_near_zero() {
+        let profile = crate::traits::PersonalityProfile::new("neutral");
+        let baseline = derive_mood_baseline(&profile);
+        // All balanced traits → near-zero baseline
+        assert!(baseline.joy.abs() < 0.01);
+        assert!(baseline.arousal.abs() < 0.01);
+    }
+
+    #[cfg(feature = "traits")]
+    #[test]
+    fn test_derive_baseline_warm_positive() {
+        let mut profile = crate::traits::PersonalityProfile::new("warm");
+        profile.set_trait(
+            crate::traits::TraitKind::Warmth,
+            crate::traits::TraitLevel::Highest,
+        );
+        profile.set_trait(
+            crate::traits::TraitKind::Humor,
+            crate::traits::TraitLevel::Highest,
+        );
+        let baseline = derive_mood_baseline(&profile);
+        assert!(
+            baseline.joy > 0.0,
+            "warm+funny should have positive valence"
+        );
+    }
+
+    #[cfg(feature = "traits")]
+    #[test]
+    fn test_derive_baseline_cold_negative() {
+        let mut profile = crate::traits::PersonalityProfile::new("cold");
+        profile.set_trait(
+            crate::traits::TraitKind::Warmth,
+            crate::traits::TraitLevel::Lowest,
+        );
+        profile.set_trait(
+            crate::traits::TraitKind::Empathy,
+            crate::traits::TraitLevel::Lowest,
+        );
+        let baseline = derive_mood_baseline(&profile);
+        assert!(
+            baseline.joy < 0.0,
+            "cold+detached should have negative valence"
+        );
+    }
+
+    #[cfg(feature = "traits")]
+    #[test]
+    fn test_derive_baseline_with_compound_effects() {
+        let mut profile = crate::traits::PersonalityProfile::new("playful");
+        profile.set_trait(
+            crate::traits::TraitKind::Warmth,
+            crate::traits::TraitLevel::Highest,
+        );
+        profile.set_trait(
+            crate::traits::TraitKind::Humor,
+            crate::traits::TraitLevel::Highest,
+        );
+
+        let mut baseline_profile = crate::traits::PersonalityProfile::new("just_warm");
+        baseline_profile.set_trait(
+            crate::traits::TraitKind::Warmth,
+            crate::traits::TraitLevel::Highest,
+        );
+
+        let playful = derive_mood_baseline(&profile);
+        let just_warm = derive_mood_baseline(&baseline_profile);
+        // Compound "playful" effect should boost valence beyond just warmth
+        assert!(playful.joy > just_warm.joy);
+    }
+
+    #[cfg(feature = "traits")]
+    #[test]
+    fn test_derive_baseline_clamped() {
+        use crate::traits::{TraitKind, TraitLevel};
+        let mut profile = crate::traits::PersonalityProfile::new("extreme");
+        for &kind in TraitKind::ALL {
+            profile.set_trait(kind, TraitLevel::Highest);
+        }
+        let baseline = derive_mood_baseline(&profile);
+        assert!(((-1.0)..=1.0).contains(&baseline.joy));
+        assert!(((-1.0)..=1.0).contains(&baseline.arousal));
+    }
+
+    // --- Mood tone guides ---
+
+    #[test]
+    fn test_mood_tone_guide_all_states() {
+        let states = [
+            MoodState::Calm,
+            MoodState::Content,
+            MoodState::Euphoric,
+            MoodState::Melancholy,
+            MoodState::Agitated,
+            MoodState::Assertive,
+            MoodState::Overwhelmed,
+            MoodState::Trusting,
+            MoodState::Guarded,
+            MoodState::Curious,
+            MoodState::Disengaged,
+            MoodState::Frustrated,
+        ];
+        for state in states {
+            let guide = mood_tone_guide(state);
+            assert!(!guide.is_empty(), "{state} has empty tone guide");
+        }
+    }
+
+    #[test]
+    fn test_compose_mood_prompt() {
+        let mut s = EmotionalState::new();
+        s.stimulate(Emotion::Joy, 0.8);
+        let prompt = compose_mood_prompt(&s);
+        assert!(prompt.contains("## Current Mood:"));
+        assert!(prompt.contains("euphoric") || prompt.contains("content"));
+    }
+
+    #[test]
+    fn test_compose_mood_prompt_calm() {
+        let s = EmotionalState::new();
+        let prompt = compose_mood_prompt(&s);
+        assert!(prompt.contains("calm"));
     }
 }

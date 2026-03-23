@@ -32,6 +32,9 @@ pub mod sentiment;
 #[cfg(feature = "presets")]
 pub mod presets;
 
+#[cfg(feature = "archetype")]
+pub mod spirit;
+
 #[cfg(feature = "ai")]
 pub mod ai;
 

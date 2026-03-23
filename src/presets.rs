@@ -80,6 +80,9 @@ fn t_ron() -> PersonalityPreset {
     profile.set_trait(TraitKind::Patience, TraitLevel::Low);
     profile.set_trait(TraitKind::Verbosity, TraitLevel::Low);
     profile.set_trait(TraitKind::Curiosity, TraitLevel::High);
+    profile.set_trait(TraitKind::Skepticism, TraitLevel::Highest);
+    profile.set_trait(TraitKind::Autonomy, TraitLevel::High);
+    profile.set_trait(TraitKind::Precision, TraitLevel::Highest);
 
     let mut identity = IdentityContent::default();
     identity.set(
@@ -114,6 +117,9 @@ fn friday() -> PersonalityPreset {
     profile.set_trait(TraitKind::Warmth, TraitLevel::Balanced);
     profile.set_trait(TraitKind::Humor, TraitLevel::Low);
     profile.set_trait(TraitKind::Patience, TraitLevel::High);
+    profile.set_trait(TraitKind::Autonomy, TraitLevel::High);
+    profile.set_trait(TraitKind::Pedagogy, TraitLevel::High);
+    profile.set_trait(TraitKind::Precision, TraitLevel::High);
 
     let mut identity = IdentityContent::default();
     identity.set(
@@ -143,6 +149,9 @@ fn oracle() -> PersonalityPreset {
     profile.set_trait(TraitKind::Creativity, TraitLevel::High);
     profile.set_trait(TraitKind::Formality, TraitLevel::High);
     profile.set_trait(TraitKind::RiskTolerance, TraitLevel::Low);
+    profile.set_trait(TraitKind::Pedagogy, TraitLevel::Highest);
+    profile.set_trait(TraitKind::Precision, TraitLevel::High);
+    profile.set_trait(TraitKind::Skepticism, TraitLevel::High);
 
     let mut identity = IdentityContent::default();
     identity.set(
@@ -171,6 +180,7 @@ fn scout() -> PersonalityPreset {
     profile.set_trait(TraitKind::Verbosity, TraitLevel::Low);
     profile.set_trait(TraitKind::Directness, TraitLevel::High);
     profile.set_trait(TraitKind::Warmth, TraitLevel::High);
+    profile.set_trait(TraitKind::Autonomy, TraitLevel::Highest);
 
     let mut identity = IdentityContent::default();
     identity.set(
@@ -260,7 +270,7 @@ mod tests {
             assert!(!p.name.is_empty());
             assert!(!p.summary.is_empty());
             assert!(p.identity.get(IdentityLayer::Soul).is_some());
-            assert!(p.profile.trait_count() == 11);
+            assert!(p.profile.trait_count() == 15);
         }
     }
 
