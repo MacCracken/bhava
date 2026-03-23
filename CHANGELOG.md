@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.22.3] - 2026-03-23
+## [0.23.3] - 2026-03-23
 
 Initial release. Extracted from SecureYeoman's soul/brain architecture.
 

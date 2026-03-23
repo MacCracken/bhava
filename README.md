@@ -15,7 +15,7 @@ Shared personality and emotional state system for AI agents, game NPCs, and any 
 
 ```toml
 [dependencies]
-bhava = "0.22"
+bhava = "0.23"
 ```
 
 Default features: `traits`, `mood`, `archetype`, `sentiment`.
