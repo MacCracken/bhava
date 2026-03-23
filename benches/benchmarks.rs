@@ -41,6 +41,23 @@ fn bench_personality_prompt(c: &mut Criterion) {
     group.bench_function("distance", |b| {
         b.iter(|| black_box(&p).distance(black_box(&q)))
     });
+    group.bench_function("compatibility", |b| {
+        b.iter(|| black_box(&p).compatibility(black_box(&q)))
+    });
+    group.bench_function("blend", |b| {
+        b.iter(|| black_box(&p).blend(black_box(&q), 0.5))
+    });
+    group.bench_function("group_average", |b| {
+        use bhava::traits::TraitGroup;
+        b.iter(|| black_box(&p).group_average(black_box(TraitGroup::Social)))
+    });
+    group.bench_function("mutate_toward", |b| {
+        b.iter_batched(
+            || p.clone(),
+            |mut profile| profile.mutate_toward(black_box(&q), 0.3),
+            criterion::BatchSize::SmallInput,
+        )
+    });
     group.finish();
 }
 
@@ -105,6 +122,63 @@ fn bench_mood_operations(c: &mut Criterion) {
             },
             criterion::BatchSize::SmallInput,
         )
+    });
+    group.bench_function("classify", |b| {
+        let mut s = EmotionalState::new();
+        s.stimulate(Emotion::Joy, 0.8);
+        b.iter(|| black_box(&s).classify())
+    });
+    group.bench_function("apply_trigger", |b| {
+        use bhava::mood::trigger_praised;
+        let trigger = trigger_praised();
+        b.iter_batched(
+            || {
+                let mut s = EmotionalState::new();
+                s.stimulate(Emotion::Joy, 0.2);
+                s
+            },
+            |mut s| s.apply_trigger(black_box(&trigger)),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("snapshot", |b| {
+        let mut s = EmotionalState::new();
+        s.stimulate(Emotion::Joy, 0.5);
+        s.stimulate(Emotion::Frustration, 0.3);
+        b.iter(|| black_box(&s).snapshot())
+    });
+    group.bench_function("mood_trait_influence", |b| {
+        use bhava::mood::mood_trait_influence;
+        use bhava::traits::TraitKind;
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Frustration, 0.7);
+        m.set(Emotion::Joy, 0.3);
+        b.iter(|| mood_trait_influence(black_box(&m), black_box(TraitKind::Directness)))
+    });
+    group.bench_function("history_record", |b| {
+        use bhava::mood::MoodHistory;
+        b.iter_batched(
+            || {
+                let mut h = MoodHistory::new(100);
+                let s = EmotionalState::new();
+                for _ in 0..99 {
+                    h.record(s.snapshot());
+                }
+                (h, s)
+            },
+            |(mut h, s)| h.record(s.snapshot()),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("history_deviation_trend", |b| {
+        use bhava::mood::MoodHistory;
+        let mut h = MoodHistory::new(100);
+        let mut s = EmotionalState::new();
+        for i in 0..50 {
+            s.stimulate(Emotion::Joy, 0.01 * i as f32);
+            h.record(s.snapshot());
+        }
+        b.iter(|| black_box(&h).deviation_trend())
     });
     group.finish();
 }

@@ -1,6 +1,6 @@
 [package]
 name = "bhava"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.89"
 license = "GPL-3.0"
@@ -11,7 +11,7 @@ readme = "README.md"
 documentation = "https://docs.rs/bhava"
 keywords = ["emotion", "personality", "ai", "npc", "agent"]
 categories = ["game-engines", "simulation"]
-exclude = [".claude/", ".github/", "bench-history.csv", "benchmarks.md", "docs/", "scripts/"]
+exclude = [".claude/", ".github/", "bench-history.csv", "BENCHMARKS.md", "docs/", "scripts/"]
 
 [features]
 default = ["traits", "mood", "archetype", "sentiment"]
@@ -26,9 +26,7 @@ full = ["traits", "mood", "archetype", "sentiment", "presets", "ai"]
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 thiserror = "2"
-tracing = "0.1"
 chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "1", features = ["v4", "serde"] }
 
 # Optional (ai feature)
 reqwest = { version = "0.12", features = ["json"], optional = true }

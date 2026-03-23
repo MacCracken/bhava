@@ -5,10 +5,38 @@
 //! Derived from SecureYeoman's soul/trait-descriptions system.
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::fmt;
 
 use crate::error::{BhavaError, Result};
+
+/// Fixed-size trait array with HashMap-compatible serde.
+mod trait_array_serde {
+    use super::{TraitKind, TraitLevel};
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+    use std::collections::HashMap;
+
+    pub fn serialize<S: Serializer>(
+        arr: &[TraitLevel; TraitKind::COUNT],
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        let map: HashMap<TraitKind, TraitLevel> = TraitKind::ALL
+            .iter()
+            .map(|&k| (k, arr[k.index()]))
+            .collect();
+        map.serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<[TraitLevel; TraitKind::COUNT], D::Error> {
+        let map = HashMap::<TraitKind, TraitLevel>::deserialize(deserializer)?;
+        let mut arr = [TraitLevel::Balanced; TraitKind::COUNT];
+        for (&k, &v) in &map {
+            arr[k.index()] = v;
+        }
+        Ok(arr)
+    }
+}
 
 /// A personality trait with its current level.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -50,6 +78,27 @@ impl TraitKind {
         Self::Curiosity,
     ];
 
+    /// Number of trait kinds.
+    pub const COUNT: usize = 11;
+
+    /// Array index for this trait kind (0–10, matches `ALL` order).
+    #[inline]
+    pub fn index(self) -> usize {
+        match self {
+            Self::Formality => 0,
+            Self::Humor => 1,
+            Self::Verbosity => 2,
+            Self::Directness => 3,
+            Self::Warmth => 4,
+            Self::Empathy => 5,
+            Self::Patience => 6,
+            Self::Confidence => 7,
+            Self::Creativity => 8,
+            Self::RiskTolerance => 9,
+            Self::Curiosity => 10,
+        }
+    }
+
     /// The neutral/default level for this trait.
     pub fn default_level(self) -> TraitLevel {
         TraitLevel::Balanced
@@ -65,6 +114,73 @@ impl TraitKind {
             TraitLevel::High,
             TraitLevel::Highest,
         ]
+    }
+
+    /// Which group this trait belongs to.
+    pub fn group(self) -> TraitGroup {
+        match self {
+            Self::Warmth | Self::Empathy | Self::Humor | Self::Patience => TraitGroup::Social,
+            Self::Curiosity | Self::Creativity | Self::Confidence => TraitGroup::Cognitive,
+            Self::Formality | Self::Verbosity | Self::Directness | Self::RiskTolerance => {
+                TraitGroup::Behavioral
+            }
+        }
+    }
+}
+
+/// Trait groupings for bulk operations.
+///
+/// Groups organize the 11 trait dimensions into three categories:
+/// - **Social** — traits that govern interpersonal style (warmth, empathy, humor, patience)
+/// - **Cognitive** — traits that govern thinking style (curiosity, creativity, confidence)
+/// - **Behavioral** — traits that govern communication style (formality, verbosity, directness, risk tolerance)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[non_exhaustive]
+pub enum TraitGroup {
+    /// Interpersonal traits: warmth, empathy, humor, patience.
+    Social,
+    /// Thinking-style traits: curiosity, creativity, confidence.
+    Cognitive,
+    /// Communication-style traits: formality, verbosity, directness, risk tolerance.
+    Behavioral,
+}
+
+impl TraitGroup {
+    /// All groups.
+    pub const ALL: &'static [TraitGroup] = &[Self::Social, Self::Cognitive, Self::Behavioral];
+
+    /// Trait kinds belonging to this group.
+    pub fn traits(self) -> &'static [TraitKind] {
+        match self {
+            Self::Social => &[
+                TraitKind::Warmth,
+                TraitKind::Empathy,
+                TraitKind::Humor,
+                TraitKind::Patience,
+            ],
+            Self::Cognitive => &[
+                TraitKind::Curiosity,
+                TraitKind::Creativity,
+                TraitKind::Confidence,
+            ],
+            Self::Behavioral => &[
+                TraitKind::Formality,
+                TraitKind::Verbosity,
+                TraitKind::Directness,
+                TraitKind::RiskTolerance,
+            ],
+        }
+    }
+}
+
+impl fmt::Display for TraitGroup {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Self::Social => "social",
+            Self::Cognitive => "cognitive",
+            Self::Behavioral => "behavioral",
+        };
+        f.write_str(s)
     }
 }
 
@@ -112,6 +228,18 @@ impl TraitLevel {
     /// Normalized to -1.0..=1.0.
     pub fn normalized(self) -> f32 {
         self.numeric() as f32 / 2.0
+    }
+
+    /// Snap a normalized float (-1.0..=1.0) to the nearest trait level.
+    pub fn from_normalized(v: f32) -> Self {
+        let n = (v * 2.0).round() as i8;
+        match n.clamp(-2, 2) {
+            -2 => Self::Lowest,
+            -1 => Self::Low,
+            0 => Self::Balanced,
+            1 => Self::High,
+            _ => Self::Highest,
+        }
     }
 
     /// Parse from numeric value.
@@ -369,57 +497,59 @@ pub fn trait_behavior(kind: TraitKind, level: TraitLevel) -> Option<&'static str
 }
 
 /// A complete personality profile — all trait values.
+///
+/// Internally uses a fixed-size array indexed by `TraitKind` for O(1) access
+/// and zero heap allocation for trait storage. Serializes as a map for
+/// human-readable JSON.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PersonalityProfile {
     pub name: String,
     pub description: Option<String>,
-    traits: HashMap<TraitKind, TraitLevel>,
+    #[serde(with = "trait_array_serde")]
+    traits: [TraitLevel; TraitKind::COUNT],
 }
 
 impl PersonalityProfile {
     /// Create a new profile with all traits at Balanced.
     pub fn new(name: impl Into<String>) -> Self {
-        let mut traits = HashMap::new();
-        for &kind in TraitKind::ALL {
-            traits.insert(kind, TraitLevel::Balanced);
-        }
         Self {
             name: name.into(),
             description: None,
-            traits,
+            traits: [TraitLevel::Balanced; TraitKind::COUNT],
         }
     }
 
     /// Set a trait level.
+    #[inline]
     pub fn set_trait(&mut self, kind: TraitKind, level: TraitLevel) {
-        self.traits.insert(kind, level);
+        self.traits[kind.index()] = level;
     }
 
     /// Get a trait level.
+    #[inline]
     pub fn get_trait(&self, kind: TraitKind) -> TraitLevel {
-        self.traits
-            .get(&kind)
-            .copied()
-            .unwrap_or(TraitLevel::Balanced)
+        self.traits[kind.index()]
     }
 
-    /// Get all non-balanced traits.
+    /// Get all non-balanced traits, in deterministic trait-kind order.
     pub fn active_traits(&self) -> Vec<TraitValue> {
-        self.traits
+        TraitKind::ALL
             .iter()
-            .filter(|(_, level)| **level != TraitLevel::Balanced)
-            .map(|(&kind, &level)| TraitValue {
+            .filter(|&&kind| self.traits[kind.index()] != TraitLevel::Balanced)
+            .map(|&kind| TraitValue {
                 trait_name: kind,
-                level,
+                level: self.traits[kind.index()],
             })
             .collect()
     }
 
     /// Generate behavioral instructions for this personality.
+    ///
+    /// Returns instructions in deterministic trait-kind order.
     pub fn behavioral_instructions(&self) -> Vec<&'static str> {
-        self.traits
+        TraitKind::ALL
             .iter()
-            .filter_map(|(&kind, &level)| trait_behavior(kind, level))
+            .filter_map(|&kind| trait_behavior(kind, self.traits[kind.index()]))
             .collect()
     }
 
@@ -429,7 +559,8 @@ impl PersonalityProfile {
         if instructions.is_empty() {
             return String::new();
         }
-        let mut prompt = String::from("## Personality\n\n");
+        let mut prompt = String::with_capacity(instructions.len() * 80 + 20);
+        prompt.push_str("## Personality\n\n");
         for instruction in &instructions {
             prompt.push_str("- ");
             prompt.push_str(instruction);
@@ -440,7 +571,7 @@ impl PersonalityProfile {
 
     /// Trait count (always 11).
     pub fn trait_count(&self) -> usize {
-        self.traits.len()
+        TraitKind::COUNT
     }
 
     /// Distance between two profiles (Euclidean in trait space).
@@ -455,6 +586,107 @@ impl PersonalityProfile {
             .sum();
         sum_sq.sqrt()
     }
+
+    // --- Trait Groups (v0.2) ---
+
+    /// Set all traits in a group to the same level.
+    pub fn set_group(&mut self, group: TraitGroup, level: TraitLevel) {
+        for &kind in group.traits() {
+            self.set_trait(kind, level);
+        }
+    }
+
+    /// Get the average normalized value for a trait group.
+    ///
+    /// Returns a value from -1.0 (all Lowest) to 1.0 (all Highest).
+    pub fn group_average(&self, group: TraitGroup) -> f32 {
+        let traits = group.traits();
+        let sum: f32 = traits.iter().map(|&k| self.get_trait(k).normalized()).sum();
+        sum / traits.len() as f32
+    }
+
+    // --- Compatibility (v0.2) ---
+
+    /// Compatibility score between two profiles.
+    ///
+    /// Returns 0.0 (maximally incompatible) to 1.0 (identical).
+    /// Based on inverse normalized Euclidean distance across all trait dimensions.
+    pub fn compatibility(&self, other: &PersonalityProfile) -> f32 {
+        let max_distance = (TraitKind::ALL.len() as f32 * 4.0).sqrt(); // sqrt(11 * 2.0^2)
+        let d = self.distance(other);
+        1.0 - (d / max_distance)
+    }
+
+    /// Compatibility score restricted to a specific trait group.
+    pub fn group_compatibility(&self, other: &PersonalityProfile, group: TraitGroup) -> f32 {
+        let traits = group.traits();
+        let max_distance = (traits.len() as f32 * 4.0).sqrt();
+        let sum_sq: f32 = traits
+            .iter()
+            .map(|&kind| {
+                let a = self.get_trait(kind).normalized();
+                let b = other.get_trait(kind).normalized();
+                (a - b) * (a - b)
+            })
+            .sum();
+        1.0 - (sum_sq.sqrt() / max_distance)
+    }
+
+    // --- Blending (v0.2) ---
+
+    /// Blend two profiles by weighted average.
+    ///
+    /// `t` controls the mix: 0.0 = fully `self`, 1.0 = fully `other`.
+    /// Trait levels are interpolated in normalized space and snapped to the nearest level.
+    pub fn blend(&self, other: &PersonalityProfile, t: f32) -> PersonalityProfile {
+        let t = t.clamp(0.0, 1.0);
+        let mut result = PersonalityProfile::new(format!("{}+{}", self.name, other.name));
+        for &kind in TraitKind::ALL {
+            let a = self.get_trait(kind).normalized();
+            let b = other.get_trait(kind).normalized();
+            let blended = a + (b - a) * t;
+            result.set_trait(kind, TraitLevel::from_normalized(blended));
+        }
+        result
+    }
+
+    // --- Mutation (v0.2) ---
+
+    /// Mutate this profile one step toward a target profile.
+    ///
+    /// `rate` controls how far to shift per step: 0.0 = no change, 1.0 = jump to target.
+    /// Each trait moves at most one level per call when rate < 0.5, preserving gradual drift.
+    /// Returns the number of traits that changed.
+    pub fn mutate_toward(&mut self, target: &PersonalityProfile, rate: f32) -> usize {
+        let rate = rate.clamp(0.0, 1.0);
+        let mut changed = 0;
+        for &kind in TraitKind::ALL {
+            let current = self.get_trait(kind).numeric();
+            let goal = target.get_trait(kind).numeric();
+            if current == goal {
+                continue;
+            }
+            let diff = goal - current;
+            // Scale by rate: at low rates, move at most 1 step; at high rates, can jump further
+            let steps = ((diff as f32 * rate).round() as i8).clamp(-4, 4);
+            if steps == 0 && diff != 0 {
+                // Ensure at least 1 step in the right direction when there's a difference
+                let step = if diff > 0 { 1 } else { -1 };
+                let new_val = (current + step).clamp(-2, 2);
+                if let Ok(level) = TraitLevel::from_numeric(new_val) {
+                    self.set_trait(kind, level);
+                    changed += 1;
+                }
+            } else if steps != 0 {
+                let new_val = (current + steps).clamp(-2, 2);
+                if let Ok(level) = TraitLevel::from_numeric(new_val) {
+                    self.set_trait(kind, level);
+                    changed += 1;
+                }
+            }
+        }
+        changed
+    }
 }
 
 #[cfg(test)]
@@ -464,6 +696,24 @@ mod tests {
     #[test]
     fn test_trait_kind_all() {
         assert_eq!(TraitKind::ALL.len(), 11);
+        assert_eq!(TraitKind::ALL.len(), TraitKind::COUNT);
+    }
+
+    #[test]
+    fn test_trait_kind_index() {
+        // Verify index matches ALL order
+        for (i, &kind) in TraitKind::ALL.iter().enumerate() {
+            assert_eq!(kind.index(), i, "{kind} has wrong index");
+        }
+    }
+
+    #[test]
+    fn test_trait_kind_index_unique() {
+        let mut seen = [false; TraitKind::COUNT];
+        for &kind in TraitKind::ALL {
+            assert!(!seen[kind.index()], "{kind} has duplicate index");
+            seen[kind.index()] = true;
+        }
     }
 
     #[test]
@@ -833,5 +1083,294 @@ mod tests {
             let restored: TraitLevel = serde_json::from_str(&json).unwrap();
             assert_eq!(restored, level);
         }
+    }
+
+    // --- v0.2: TraitGroup ---
+
+    #[test]
+    fn test_trait_group_all() {
+        assert_eq!(TraitGroup::ALL.len(), 3);
+    }
+
+    #[test]
+    fn test_trait_group_covers_all_traits() {
+        let mut covered = std::collections::HashSet::new();
+        for &group in TraitGroup::ALL {
+            for &kind in group.traits() {
+                covered.insert(kind);
+            }
+        }
+        for &kind in TraitKind::ALL {
+            assert!(covered.contains(&kind), "{kind} not in any group");
+        }
+    }
+
+    #[test]
+    fn test_trait_group_no_overlap() {
+        let mut seen = std::collections::HashSet::new();
+        for &group in TraitGroup::ALL {
+            for &kind in group.traits() {
+                assert!(seen.insert(kind), "{kind} in multiple groups");
+            }
+        }
+    }
+
+    #[test]
+    fn test_trait_kind_group_roundtrip() {
+        for &kind in TraitKind::ALL {
+            let group = kind.group();
+            assert!(
+                group.traits().contains(&kind),
+                "{kind} claims group {group} but group doesn't contain it"
+            );
+        }
+    }
+
+    #[test]
+    fn test_trait_group_display() {
+        assert_eq!(TraitGroup::Social.to_string(), "social");
+        assert_eq!(TraitGroup::Cognitive.to_string(), "cognitive");
+        assert_eq!(TraitGroup::Behavioral.to_string(), "behavioral");
+    }
+
+    #[test]
+    fn test_trait_group_serde() {
+        for &group in TraitGroup::ALL {
+            let json = serde_json::to_string(&group).unwrap();
+            let restored: TraitGroup = serde_json::from_str(&json).unwrap();
+            assert_eq!(restored, group);
+        }
+    }
+
+    #[test]
+    fn test_set_group() {
+        let mut p = PersonalityProfile::new("test");
+        p.set_group(TraitGroup::Social, TraitLevel::Highest);
+        assert_eq!(p.get_trait(TraitKind::Warmth), TraitLevel::Highest);
+        assert_eq!(p.get_trait(TraitKind::Empathy), TraitLevel::Highest);
+        assert_eq!(p.get_trait(TraitKind::Humor), TraitLevel::Highest);
+        assert_eq!(p.get_trait(TraitKind::Patience), TraitLevel::Highest);
+        // Other groups unchanged
+        assert_eq!(p.get_trait(TraitKind::Curiosity), TraitLevel::Balanced);
+    }
+
+    #[test]
+    fn test_group_average_balanced() {
+        let p = PersonalityProfile::new("test");
+        for &group in TraitGroup::ALL {
+            assert!(p.group_average(group).abs() < f32::EPSILON);
+        }
+    }
+
+    #[test]
+    fn test_group_average_extreme() {
+        let mut p = PersonalityProfile::new("test");
+        p.set_group(TraitGroup::Social, TraitLevel::Highest);
+        assert!((p.group_average(TraitGroup::Social) - 1.0).abs() < f32::EPSILON);
+    }
+
+    // --- v0.2: Compatibility ---
+
+    #[test]
+    fn test_compatibility_identical() {
+        let p = PersonalityProfile::new("a");
+        assert!((p.compatibility(&p) - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_compatibility_opposite() {
+        let mut a = PersonalityProfile::new("a");
+        let mut b = PersonalityProfile::new("b");
+        for &kind in TraitKind::ALL {
+            a.set_trait(kind, TraitLevel::Lowest);
+            b.set_trait(kind, TraitLevel::Highest);
+        }
+        assert!(a.compatibility(&b) < 0.01);
+    }
+
+    #[test]
+    fn test_compatibility_symmetric() {
+        let mut a = PersonalityProfile::new("a");
+        let mut b = PersonalityProfile::new("b");
+        a.set_trait(TraitKind::Humor, TraitLevel::High);
+        b.set_trait(TraitKind::Humor, TraitLevel::Low);
+        assert!((a.compatibility(&b) - b.compatibility(&a)).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_compatibility_range() {
+        let mut a = PersonalityProfile::new("a");
+        let mut b = PersonalityProfile::new("b");
+        a.set_trait(TraitKind::Warmth, TraitLevel::High);
+        b.set_trait(TraitKind::Warmth, TraitLevel::Low);
+        let c = a.compatibility(&b);
+        assert!((0.0..=1.0).contains(&c));
+    }
+
+    #[test]
+    fn test_group_compatibility_identical() {
+        let p = PersonalityProfile::new("a");
+        for &group in TraitGroup::ALL {
+            assert!(
+                (p.group_compatibility(&p, group) - 1.0).abs() < f32::EPSILON,
+                "{group} compatibility with self should be 1.0"
+            );
+        }
+    }
+
+    #[test]
+    fn test_group_compatibility_partial_match() {
+        let mut a = PersonalityProfile::new("a");
+        let mut b = PersonalityProfile::new("b");
+        // Same social traits, different cognitive
+        a.set_group(TraitGroup::Social, TraitLevel::High);
+        b.set_group(TraitGroup::Social, TraitLevel::High);
+        a.set_group(TraitGroup::Cognitive, TraitLevel::Highest);
+        b.set_group(TraitGroup::Cognitive, TraitLevel::Lowest);
+
+        assert!((a.group_compatibility(&b, TraitGroup::Social) - 1.0).abs() < f32::EPSILON);
+        assert!(a.group_compatibility(&b, TraitGroup::Cognitive) < 0.1);
+    }
+
+    // --- v0.2: Blending ---
+
+    #[test]
+    fn test_blend_zero() {
+        let mut a = PersonalityProfile::new("a");
+        a.set_trait(TraitKind::Humor, TraitLevel::Highest);
+        let b = PersonalityProfile::new("b");
+        let blended = a.blend(&b, 0.0);
+        assert_eq!(blended.get_trait(TraitKind::Humor), TraitLevel::Highest);
+    }
+
+    #[test]
+    fn test_blend_one() {
+        let a = PersonalityProfile::new("a");
+        let mut b = PersonalityProfile::new("b");
+        b.set_trait(TraitKind::Humor, TraitLevel::Highest);
+        let blended = a.blend(&b, 1.0);
+        assert_eq!(blended.get_trait(TraitKind::Humor), TraitLevel::Highest);
+    }
+
+    #[test]
+    fn test_blend_midpoint() {
+        let mut a = PersonalityProfile::new("a");
+        let mut b = PersonalityProfile::new("b");
+        a.set_trait(TraitKind::Humor, TraitLevel::Lowest); // -1.0
+        b.set_trait(TraitKind::Humor, TraitLevel::Highest); // 1.0
+        let blended = a.blend(&b, 0.5);
+        assert_eq!(blended.get_trait(TraitKind::Humor), TraitLevel::Balanced); // 0.0
+    }
+
+    #[test]
+    fn test_blend_name() {
+        let a = PersonalityProfile::new("alpha");
+        let b = PersonalityProfile::new("beta");
+        let blended = a.blend(&b, 0.5);
+        assert_eq!(blended.name, "alpha+beta");
+    }
+
+    #[test]
+    fn test_blend_clamps_t() {
+        let a = PersonalityProfile::new("a");
+        let mut b = PersonalityProfile::new("b");
+        b.set_trait(TraitKind::Humor, TraitLevel::Highest);
+        let blended = a.blend(&b, 5.0); // should clamp to 1.0
+        assert_eq!(blended.get_trait(TraitKind::Humor), TraitLevel::Highest);
+    }
+
+    // --- v0.2: from_normalized ---
+
+    #[test]
+    fn test_from_normalized() {
+        assert_eq!(TraitLevel::from_normalized(-1.0), TraitLevel::Lowest);
+        assert_eq!(TraitLevel::from_normalized(-0.5), TraitLevel::Low);
+        assert_eq!(TraitLevel::from_normalized(0.0), TraitLevel::Balanced);
+        assert_eq!(TraitLevel::from_normalized(0.5), TraitLevel::High);
+        assert_eq!(TraitLevel::from_normalized(1.0), TraitLevel::Highest);
+    }
+
+    #[test]
+    fn test_from_normalized_snaps() {
+        assert_eq!(TraitLevel::from_normalized(0.3), TraitLevel::High); // rounds to 1
+        assert_eq!(TraitLevel::from_normalized(-0.3), TraitLevel::Low); // rounds to -1
+        assert_eq!(TraitLevel::from_normalized(0.1), TraitLevel::Balanced); // rounds to 0
+    }
+
+    #[test]
+    fn test_from_normalized_clamps() {
+        assert_eq!(TraitLevel::from_normalized(5.0), TraitLevel::Highest);
+        assert_eq!(TraitLevel::from_normalized(-5.0), TraitLevel::Lowest);
+    }
+
+    // --- v0.2: Mutation ---
+
+    #[test]
+    fn test_mutate_toward_no_change_when_equal() {
+        let mut a = PersonalityProfile::new("a");
+        a.set_trait(TraitKind::Humor, TraitLevel::High);
+        let target = a.clone();
+        let changed = a.mutate_toward(&target, 0.5);
+        assert_eq!(changed, 0);
+    }
+
+    #[test]
+    fn test_mutate_toward_gradual() {
+        let mut a = PersonalityProfile::new("a");
+        a.set_trait(TraitKind::Humor, TraitLevel::Lowest);
+        let mut target = PersonalityProfile::new("target");
+        target.set_trait(TraitKind::Humor, TraitLevel::Highest);
+
+        // At low rate, should move one step
+        let changed = a.mutate_toward(&target, 0.1);
+        assert!(changed > 0);
+        assert_eq!(a.get_trait(TraitKind::Humor), TraitLevel::Low);
+    }
+
+    #[test]
+    fn test_mutate_toward_full_rate() {
+        let mut a = PersonalityProfile::new("a");
+        a.set_trait(TraitKind::Humor, TraitLevel::Lowest);
+        let mut target = PersonalityProfile::new("target");
+        target.set_trait(TraitKind::Humor, TraitLevel::Highest);
+
+        let _changed = a.mutate_toward(&target, 1.0);
+        assert_eq!(a.get_trait(TraitKind::Humor), TraitLevel::Highest);
+    }
+
+    #[test]
+    fn test_mutate_toward_multiple_traits() {
+        let mut a = PersonalityProfile::new("a");
+        let mut target = PersonalityProfile::new("target");
+        a.set_group(TraitGroup::Social, TraitLevel::Lowest);
+        target.set_group(TraitGroup::Social, TraitLevel::Highest);
+
+        let changed = a.mutate_toward(&target, 0.1);
+        assert_eq!(changed, 4); // all 4 social traits should move
+    }
+
+    #[test]
+    fn test_mutate_toward_converges() {
+        let mut a = PersonalityProfile::new("a");
+        a.set_trait(TraitKind::Humor, TraitLevel::Lowest);
+        let mut target = PersonalityProfile::new("target");
+        target.set_trait(TraitKind::Humor, TraitLevel::Highest);
+
+        // Repeated mutation at low rate should eventually reach target
+        for _ in 0..10 {
+            a.mutate_toward(&target, 0.3);
+        }
+        assert_eq!(a.get_trait(TraitKind::Humor), TraitLevel::Highest);
+    }
+
+    #[test]
+    fn test_mutate_toward_downward() {
+        let mut a = PersonalityProfile::new("a");
+        a.set_trait(TraitKind::Humor, TraitLevel::Highest);
+        let mut target = PersonalityProfile::new("target");
+        target.set_trait(TraitKind::Humor, TraitLevel::Lowest);
+
+        a.mutate_toward(&target, 0.1);
+        assert_eq!(a.get_trait(TraitKind::Humor), TraitLevel::High);
     }
 }

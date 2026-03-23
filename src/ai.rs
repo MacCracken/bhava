@@ -30,20 +30,20 @@ impl Default for HooshConfig {
     }
 }
 
+/// HTTP client for daimon agent registration and communication.
 pub struct DaimonClient {
     config: DaimonConfig,
     client: reqwest::Client,
 }
 
 impl DaimonClient {
-    pub fn new(config: DaimonConfig) -> Self {
-        Self {
-            config,
-            client: reqwest::Client::builder()
-                .timeout(std::time::Duration::from_secs(30))
-                .build()
-                .expect("failed to build HTTP client"),
-        }
+    /// Create a new client with the given config.
+    pub fn new(config: DaimonConfig) -> crate::error::Result<Self> {
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(30))
+            .build()
+            .map_err(crate::error::BhavaError::Network)?;
+        Ok(Self { config, client })
     }
 
     pub async fn register_agent(&self) -> crate::error::Result<String> {
@@ -107,7 +107,7 @@ mod tests {
 
     #[test]
     fn test_daimon_client_new() {
-        let client = DaimonClient::new(DaimonConfig::default());
+        let client = DaimonClient::new(DaimonConfig::default()).unwrap();
         assert_eq!(client.config.endpoint, "http://localhost:8090");
     }
 

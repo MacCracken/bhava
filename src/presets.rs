@@ -26,8 +26,8 @@ pub fn get_preset(id: &str) -> Option<PersonalityPreset> {
 }
 
 /// List all available preset IDs.
-pub fn list_presets() -> Vec<&'static str> {
-    vec!["blue-shirt-guy", "t-ron", "friday", "oracle", "scout"]
+pub fn list_presets() -> &'static [&'static str] {
+    &["blue-shirt-guy", "t-ron", "friday", "oracle", "scout"]
 }
 
 /// BlueShirtGuy — the eternally optimistic NPC from Free City.
@@ -334,7 +334,7 @@ mod tests {
     #[test]
     fn test_preset_ids_match_list() {
         let ids = list_presets();
-        for id in &ids {
+        for id in ids {
             let preset = get_preset(id).unwrap();
             assert_eq!(preset.id, *id);
         }

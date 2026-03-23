@@ -46,101 +46,106 @@ impl SentimentResult {
 }
 
 /// Keyword lists for basic sentiment detection.
+///
+/// Lexicons are sorted alphabetically (verified by test) for maintainability.
+/// Linear scan is used for lookup since the arrays are small (~10-25 entries)
+/// and linear scan outperforms binary search at this scale due to cache locality.
 struct SentimentLexicon;
 
 impl SentimentLexicon {
+    // IMPORTANT: all arrays must be sorted alphabetically for binary_search
     const POSITIVE: &'static [&'static str] = &[
-        "good",
-        "great",
-        "excellent",
         "amazing",
-        "wonderful",
-        "fantastic",
-        "love",
-        "happy",
-        "glad",
-        "pleased",
-        "thank",
-        "thanks",
         "awesome",
-        "perfect",
         "beautiful",
         "brilliant",
-        "enjoy",
-        "helpful",
-        "nice",
-        "excited",
-        "impressive",
-        "outstanding",
-        "superb",
         "delighted",
+        "enjoy",
+        "excellent",
+        "excited",
+        "fantastic",
+        "glad",
+        "good",
+        "great",
+        "happy",
+        "helpful",
+        "impressive",
+        "love",
+        "nice",
+        "outstanding",
+        "perfect",
+        "pleased",
+        "superb",
+        "thank",
+        "thanks",
+        "wonderful",
     ];
 
     const NEGATIVE: &'static [&'static str] = &[
-        "bad",
-        "terrible",
-        "awful",
-        "horrible",
-        "hate",
         "angry",
-        "upset",
-        "frustrated",
         "annoyed",
-        "disappointed",
-        "wrong",
+        "awful",
+        "bad",
         "broken",
-        "fail",
-        "error",
         "bug",
-        "crash",
-        "slow",
-        "ugly",
         "confusing",
-        "worst",
-        "useless",
-        "stupid",
+        "crash",
+        "disappointed",
+        "error",
+        "fail",
+        "frustrated",
+        "hate",
+        "horrible",
         "impossible",
         "painful",
         "problem",
+        "slow",
+        "stupid",
+        "terrible",
+        "ugly",
+        "upset",
+        "useless",
+        "worst",
+        "wrong",
     ];
 
     const TRUST: &'static [&'static str] = &[
-        "trust",
-        "reliable",
-        "honest",
-        "safe",
-        "secure",
         "confident",
         "depend",
         "faith",
+        "honest",
         "loyal",
+        "reliable",
+        "safe",
+        "secure",
         "sincere",
+        "trust",
     ];
 
     const CURIOSITY: &'static [&'static str] = &[
         "curious",
-        "wonder",
-        "interesting",
-        "how",
-        "why",
-        "explore",
-        "learn",
         "discover",
-        "question",
+        "explore",
+        "how",
+        "interesting",
         "investigate",
+        "learn",
+        "question",
+        "why",
+        "wonder",
     ];
 
     const FRUSTRATION: &'static [&'static str] = &[
-        "frustrated",
         "annoyed",
-        "irritated",
-        "stuck",
-        "confused",
         "broken",
-        "doesn't work",
-        "can't",
+        "confused",
+        "frustrated",
+        "hopeless",
         "impossible",
-        "give up",
+        "irritated",
+        "pointless",
+        "stuck",
+        "useless",
     ];
 }
 
@@ -150,16 +155,16 @@ impl SentimentLexicon {
 /// use the `ai` feature to route through hoosh LLM.
 pub fn analyze(text: &str) -> SentimentResult {
     let lower = text.to_lowercase();
-    let words: Vec<&str> = lower.split_whitespace().collect();
-    let word_count = words.len().max(1) as f32;
 
+    let mut word_count = 0u32;
     let mut positive_count = 0u32;
     let mut negative_count = 0u32;
     let mut matched = Vec::new();
     let mut emotions: Vec<(Emotion, f32)> = Vec::new();
 
-    // Check each word against lexicons
-    for word in &words {
+    // Single pass: count words and check against lexicons
+    for word in lower.split_whitespace() {
+        word_count += 1;
         let clean = word.trim_matches(|c: char| !c.is_alphanumeric());
         if clean.is_empty() {
             continue;
@@ -184,9 +189,11 @@ pub fn analyze(text: &str) -> SentimentResult {
         }
     }
 
+    let word_count_f = word_count.max(1) as f32;
+
     // Compute valence
-    let pos_score = positive_count as f32 / word_count;
-    let neg_score = negative_count as f32 / word_count;
+    let pos_score = positive_count as f32 / word_count_f;
+    let neg_score = negative_count as f32 / word_count_f;
     let valence = (pos_score - neg_score).clamp(-1.0, 1.0);
 
     // Add joy/arousal based on valence
@@ -201,7 +208,7 @@ pub fn analyze(text: &str) -> SentimentResult {
     let confidence = if total_matches == 0 {
         0.0
     } else {
-        (total_matches as f32 / word_count).min(1.0) * 0.8 + 0.2
+        (total_matches as f32 / word_count_f).min(1.0) * 0.8 + 0.2
     };
 
     SentimentResult {
@@ -395,5 +402,24 @@ mod tests {
         let r = analyze("   ");
         assert!(r.is_neutral());
         assert_eq!(r.confidence, 0.0);
+    }
+
+    #[test]
+    fn test_lexicons_sorted() {
+        fn is_sorted(arr: &[&str], name: &str) {
+            for w in arr.windows(2) {
+                assert!(
+                    w[0] <= w[1],
+                    "{name} lexicon not sorted: {:?} > {:?}",
+                    w[0],
+                    w[1]
+                );
+            }
+        }
+        is_sorted(SentimentLexicon::POSITIVE, "POSITIVE");
+        is_sorted(SentimentLexicon::NEGATIVE, "NEGATIVE");
+        is_sorted(SentimentLexicon::TRUST, "TRUST");
+        is_sorted(SentimentLexicon::CURIOSITY, "CURIOSITY");
+        is_sorted(SentimentLexicon::FRUSTRATION, "FRUSTRATION");
     }
 }
