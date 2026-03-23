@@ -91,4 +91,66 @@ impl EmotionalMemoryBank {
     pub fn is_empty(&self) -> bool {
         self.memories.is_empty()
     }
+
+    /// Recall memories biased by current mood (mood-congruent memory).
+    ///
+    /// Scores each memory by similarity to current mood × intensity,
+    /// returns the top N most congruent memories. Sad agents recall sad
+    /// memories; happy agents recall happy ones (Bower 1981).
+    #[must_use]
+    pub fn recall_congruent(
+        &self,
+        current_mood: &MoodVector,
+        top_n: usize,
+    ) -> Vec<&EmotionalMemory> {
+        let mut scored: Vec<(&EmotionalMemory, f32)> = self
+            .memories
+            .iter()
+            .map(|m| {
+                let similarity = mood_cosine(current_mood, &m.mood);
+                let score = similarity * m.intensity;
+                (m, score)
+            })
+            .collect();
+        scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        scored.into_iter().take(top_n).map(|(m, _)| m).collect()
+    }
+
+    /// Recall a specific memory with intensity biased by mood congruence.
+    ///
+    /// If the current mood matches the stored memory's mood, intensity is amplified.
+    /// If moods are incongruent, intensity is dampened.
+    #[must_use]
+    pub fn recall_biased(&self, tag: &str, current_mood: &MoodVector) -> Option<MoodVector> {
+        self.memories.iter().find(|m| m.tag == tag).map(|m| {
+            let congruence = mood_cosine(current_mood, &m.mood);
+            // Map congruence (-1..1) to amplification (0.5..1.5)
+            let amplifier = 0.5 + congruence.clamp(-1.0, 1.0) * 0.5;
+            let effective_intensity = (m.intensity * amplifier).clamp(0.0, 1.0);
+            let mut recalled = m.mood.clone();
+            for &e in Emotion::ALL {
+                recalled.set(e, recalled.get(e) * effective_intensity);
+            }
+            recalled
+        })
+    }
+}
+
+/// Cosine similarity between two mood vectors (-1.0 to 1.0).
+fn mood_cosine(a: &MoodVector, b: &MoodVector) -> f32 {
+    let mut dot = 0.0f32;
+    let mut mag_a = 0.0f32;
+    let mut mag_b = 0.0f32;
+    for &e in Emotion::ALL {
+        let va = a.get(e);
+        let vb = b.get(e);
+        dot += va * vb;
+        mag_a += va * va;
+        mag_b += vb * vb;
+    }
+    let denom = mag_a.sqrt() * mag_b.sqrt();
+    if denom < f32::EPSILON {
+        return 0.0;
+    }
+    dot / denom
 }

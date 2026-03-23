@@ -16,6 +16,9 @@
 //! - [`spirit`] — Passions, inspirations, and pains — the animating force
 //! - [`relationship`] — Inter-entity affinity, trust, and interaction tracking
 //! - [`appraisal`] — OCC appraisal model — goal-aware emotion generation
+//! - [`stress`] — Allostatic load / burnout modeling
+//! - [`regulation`] — Emotion regulation strategies (suppress, reappraise, distract)
+//! - [`growth`] — Experience-driven personality evolution
 //! - [`monitor`] — Live sentiment monitoring for streaming text
 //! - [`ai`] — System prompt composition, sentiment feedback, and agent metadata
 //! - [`store`] — Storage trait for pluggable persistence backends
@@ -47,6 +50,15 @@ pub mod relationship;
 
 #[cfg(feature = "mood")]
 pub mod appraisal;
+
+#[cfg(feature = "mood")]
+pub mod stress;
+
+#[cfg(feature = "mood")]
+pub mod regulation;
+
+#[cfg(all(feature = "mood", feature = "traits"))]
+pub mod growth;
 
 #[cfg(feature = "sentiment")]
 pub mod monitor;

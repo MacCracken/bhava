@@ -8,25 +8,27 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 ## v1.0
 
-### Tier 1 — High Value
+### Rhythms & Cycles
 
-- **Mood-congruent memory** — recall biased by current mood; sad agents dwell on sad memories, creating feedback loops (Bower 1981)
-- **Stress / allostatic load** — chronic accumulated emotional load with burnout thresholds, distinct from acute mood (McEwen 1998)
-- **Emotion regulation** — suppress, reappraise, distract strategies; felt vs expressed mood split; personality-driven defaults (Gross 1998)
-- **Experience-driven personality growth** — traits evolve from accumulated event pressure, not predetermined targets; appraisal events generate trait pressure
+- **Energy / fatigue system** — depletable/renewable resource distinct from stress; gates flow state, modulates regulation effectiveness, cognitive performance sigmoid (Banister fitness-fatigue model)
+- **Circadian rhythm** — 24-hour alertness/mood cycle with chronotype (morning/evening person); dual-cosine model with post-lunch dip; modulates baseline, decay rate, energy recovery
+- **Flow state detection** — threshold detector over mood dimensions (moderate arousal + high interest + low frustration + dominance); builds slowly, breaks instantly; performance bonus + fatigue reduction
+- **Ultradian rhythm** — 90-120 minute focus/rest cycles; modulates interest and arousal; interacts with circadian multiplicatively
+- **Seasonal rhythm** — long-period mood variation mapped to simulation seasons; sensitivity parameter for SAD-like effects
+- **Biorhythm cycles** — multiple overlapping sine waves at incommensurate periods for NPC individuation; deterministic but complex variation
 
-### Tier 2 — Good Value
+### Tier 2 — Behavioral Depth
 
-- **Emotional intelligence (EQ)** — perception, facilitation, understanding, management scores; modulates contagion, regulation, and appraisal effectiveness (Mayer-Salovey model)
-- **Cultural display rules** — expression amplification, de-amplification, masking, neutralization by cultural context (Matsumoto framework)
-- **Micro-expressions / emotional tells** — involuntary leaks of true emotion when suppressing; consumed by animation/dialogue systems (Ekman)
-- **Affective computing metrics** — emotional complexity, granularity, inertia, forecasting accuracy, regulation effectiveness
+- **Emotional intelligence (EQ)** — perception, facilitation, understanding, management scores (Mayer-Salovey model)
+- **Cultural display rules** — expression amplification, de-amplification, masking by cultural context (Matsumoto framework)
+- **Micro-expressions / emotional tells** — involuntary leaks of true emotion when suppressing (Ekman)
+- **Affective computing metrics** — emotional complexity, granularity, inertia, forecasting accuracy
 
 ### Tier 3 — SY Feature Parity
 
-- **Salience classification** — somatic marker urgency/importance scoring: urgency, error signal, user frustration, success, curiosity; composite weighted score (Damasio model, from SY brain/salience.ts)
-- **ACT-R activation math** — frequency × recency memory activation with Hebbian boost and salience weighting; improves emotional memory recall (from SY brain/activation.ts)
-- **Spatial proximity triggers** — location-based mood effects via proximity rules (enter/leave radius/zone); extends relationship + contagion systems (from SY simulation/spatial-engine.ts)
-- **Reasoning strategy selection** — personality-driven reasoning mode (chain_of_thought, reflexion, tree_of_thought, etc.); maps personality traits to preferred reasoning approach (from SY soul/strategy-storage.ts)
-- **Preference learning** — adaptive feedback patterns from conversation history; response length, code preference, style detection; feeds into experience-driven growth (from SY brain/preference-learner.ts)
-- **Active hours** — time-of-day personality activation with day-of-week scheduling and timezone support (from SY soul types)
+- **Salience classification** — somatic marker urgency/importance scoring (Damasio model)
+- **ACT-R activation math** — frequency × recency memory activation with Hebbian boost
+- **Spatial proximity triggers** — location-based mood effects via proximity rules
+- **Reasoning strategy selection** — personality-driven reasoning mode
+- **Preference learning** — adaptive feedback patterns from conversation history
+- **Active hours** — time-of-day personality activation with scheduling
