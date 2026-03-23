@@ -360,6 +360,51 @@ fn bench_presets(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_relationship(c: &mut Criterion) {
+    use bhava::relationship::RelationshipGraph;
+    let mut group = c.benchmark_group("relationship");
+
+    group.bench_function("record_interaction", |b| {
+        b.iter_batched(
+            RelationshipGraph::new,
+            |mut g| g.record_interaction("a", "b", 0.3, 0.1),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("decay_10", |b| {
+        b.iter_batched(
+            || {
+                let mut g = RelationshipGraph::new();
+                for i in 0..10 {
+                    g.record_interaction("a", &format!("b{i}"), 0.5, 0.3);
+                }
+                g
+            },
+            |mut g| g.decay_all(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.finish();
+}
+
+fn bench_markdown(c: &mut Criterion) {
+    use bhava::traits::{PersonalityProfile, TraitKind, TraitLevel};
+    let mut group = c.benchmark_group("markdown");
+
+    let mut p = PersonalityProfile::new("BenchBot");
+    p.description = Some("A benchmark personality".into());
+    p.set_trait(TraitKind::Humor, TraitLevel::Highest);
+    p.set_trait(TraitKind::Warmth, TraitLevel::High);
+    p.set_trait(TraitKind::Precision, TraitLevel::High);
+    let md = p.to_markdown();
+
+    group.bench_function("to_markdown", |b| b.iter(|| black_box(&p).to_markdown()));
+    group.bench_function("from_markdown", |b| {
+        b.iter(|| PersonalityProfile::from_markdown(black_box(&md)))
+    });
+    group.finish();
+}
+
 fn bench_serde(c: &mut Criterion) {
     use bhava::mood::{Emotion, EmotionalState, MoodVector};
     use bhava::traits::{PersonalityProfile, TraitKind, TraitLevel};
@@ -412,6 +457,8 @@ criterion_group!(
     bench_archetype,
     bench_presets,
     bench_spirit,
+    bench_relationship,
+    bench_markdown,
     bench_serde,
 );
 criterion_main!(benches);

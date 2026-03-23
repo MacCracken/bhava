@@ -130,10 +130,10 @@ impl Spirit {
         let mut s = String::with_capacity(512);
         s.push_str("Your Spirit is the animating force within you — the passions that drive you, the inspirations that illuminate your path, and the pains that ground your empathy.\n\n");
 
-        let active_passions: Vec<_> = self.passions.iter().filter(|p| p.is_active).collect();
-        if !active_passions.is_empty() {
+        let has_passions = self.passions.iter().any(|p| p.is_active);
+        if has_passions {
             s.push_str("### Passions\nWhat drives me:\n");
-            for p in &active_passions {
+            for p in self.passions.iter().filter(|p| p.is_active) {
                 let _ = writeln!(
                     s,
                     "- **{}** (intensity: {:.1}): {}",
@@ -143,11 +143,10 @@ impl Spirit {
             s.push('\n');
         }
 
-        let active_inspirations: Vec<_> =
-            self.inspirations.iter().filter(|i| i.is_active).collect();
-        if !active_inspirations.is_empty() {
+        let has_inspirations = self.inspirations.iter().any(|i| i.is_active);
+        if has_inspirations {
             s.push_str("### Inspirations\nWhat inspires me:\n");
-            for i in &active_inspirations {
+            for i in self.inspirations.iter().filter(|i| i.is_active) {
                 let _ = writeln!(
                     s,
                     "- **{}** (impact: {:.1}): {}",
@@ -157,10 +156,10 @@ impl Spirit {
             s.push('\n');
         }
 
-        let active_pains: Vec<_> = self.pains.iter().filter(|p| p.is_active).collect();
-        if !active_pains.is_empty() {
+        let has_pains = self.pains.iter().any(|p| p.is_active);
+        if has_pains {
             s.push_str("### Pain Points\nWhat causes me distress:\n");
-            for p in &active_pains {
+            for p in self.pains.iter().filter(|p| p.is_active) {
                 let _ = writeln!(
                     s,
                     "- **{}** (severity: {:.1}): {}",

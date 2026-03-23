@@ -8,11 +8,13 @@
 //!
 //! # Modules
 //!
-//! - [`traits`] — Personality trait spectrums (formality, humor, warmth, etc.)
-//! - [`mood`] — Emotional state vectors with time-based decay
-//! - [`archetype`] — Identity hierarchy (Soul/Spirit/Brain/Body/Heart)
-//! - [`sentiment`] — Basic emotion classification from text
-//! - [`presets`] — Built-in personality templates (BlueShirtGuy, T.Ron, etc.)
+//! - [`traits`] — 15-dimension personality spectrums with behavioral instructions
+//! - [`mood`] — Emotional state vectors with time-based decay, triggers, history, and mood-aware prompts
+//! - [`archetype`] — Identity hierarchy (Soul/Spirit/Brain/Body/Heart) with templates and validation
+//! - [`sentiment`] — Keyword-based sentiment analysis with negation, intensity modifiers, and sentence-level analysis
+//! - [`presets`] — Built-in personality templates (BlueShirtGuy, T.Ron, Friday, Oracle, Scout)
+//! - [`spirit`] — Passions, inspirations, and pains — the animating force
+//! - [`relationship`] — Inter-entity affinity, trust, and interaction tracking
 //! - [`error`] — Error types
 
 pub mod error;
@@ -34,6 +36,9 @@ pub mod presets;
 
 #[cfg(feature = "archetype")]
 pub mod spirit;
+
+#[cfg(feature = "mood")]
+pub mod relationship;
 
 #[cfg(feature = "ai")]
 pub mod ai;

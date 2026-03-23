@@ -381,8 +381,106 @@ fn test_merge_preset_identities() {
     let guy = get_preset("blue-shirt-guy").unwrap();
     let tron = get_preset("t-ron").unwrap();
     let merged = guy.identity.merge(&tron.identity, "\n\n");
-    // Both had Soul and Spirit, so merged should contain both
     let soul = merged.get(IdentityLayer::Soul).unwrap();
     assert!(soul.contains("Guy"));
     assert!(soul.contains("T.Ron"));
+}
+
+// --- Relationship graph ---
+
+#[test]
+fn test_relationship_interaction_flow() {
+    use bhava::relationship::RelationshipGraph;
+    let mut graph = RelationshipGraph::new();
+
+    // Build relationships over multiple interactions
+    graph.record_interaction("player", "npc_a", 0.2, 0.1);
+    graph.record_interaction("player", "npc_a", 0.2, 0.1);
+    graph.record_interaction("player", "npc_b", -0.3, -0.1);
+
+    assert_eq!(graph.allies("player").len(), 1);
+    assert_eq!(graph.rivals("player").len(), 1);
+    assert!(graph.average_affinity("player") > -0.1);
+}
+
+#[test]
+fn test_relationship_decay_over_time() {
+    use bhava::relationship::{Relationship, RelationshipGraph};
+    let mut graph = RelationshipGraph::new();
+    let mut r = Relationship::new("a", "b");
+    r.affinity = 0.8;
+    r.trust = 0.9;
+    r.decay_rate = 0.1;
+    graph.upsert(r);
+
+    // Multiple decay ticks
+    for _ in 0..20 {
+        graph.decay_all();
+    }
+
+    let rel = graph.get("a", "b").unwrap();
+    assert!(rel.affinity.abs() < 0.1, "affinity should decay toward 0");
+    assert!(
+        (rel.trust - 0.5).abs() < 0.1,
+        "trust should decay toward 0.5"
+    );
+}
+
+// --- Personality markdown serialization ---
+
+#[test]
+fn test_preset_markdown_roundtrip() {
+    for id in list_presets() {
+        let preset = get_preset(id).unwrap();
+        let md = preset.profile.to_markdown();
+        let restored = PersonalityProfile::from_markdown(&md).unwrap();
+        // Every trait should survive the roundtrip
+        for &kind in bhava::traits::TraitKind::ALL {
+            assert_eq!(
+                restored.get_trait(kind),
+                preset.profile.get_trait(kind),
+                "{id}: {kind} didn't roundtrip"
+            );
+        }
+    }
+}
+
+// --- Spirit + archetype composition ---
+
+#[test]
+fn test_spirit_into_identity() {
+    use bhava::spirit::Spirit;
+    let mut spirit = Spirit::new();
+    spirit.add_passion("helping", "Serving users effectively", 0.9);
+    spirit.add_pain("errors", "When things go wrong", 0.6);
+
+    let prompt = spirit.compose_prompt();
+    assert!(!prompt.is_empty());
+
+    // Spirit prompt can be set as the Spirit identity layer
+    let mut identity = IdentityContent::default();
+    identity.set(IdentityLayer::Soul, "I am an assistant.");
+    identity.set(IdentityLayer::Spirit, &prompt);
+
+    let full = compose_identity_prompt(&identity);
+    assert!(full.contains("### Spirit"));
+    assert!(full.contains("helping"));
+}
+
+// --- Mood baseline from preset ---
+
+#[test]
+fn test_preset_mood_baseline() {
+    use bhava::mood::derive_mood_baseline;
+    let guy = get_preset("blue-shirt-guy").unwrap();
+    let tron = get_preset("t-ron").unwrap();
+
+    let guy_baseline = derive_mood_baseline(&guy.profile);
+    let tron_baseline = derive_mood_baseline(&tron.profile);
+
+    // Guy should have higher joy baseline than T.Ron
+    assert!(
+        guy_baseline.joy > tron_baseline.joy,
+        "Guy should be happier at rest than T.Ron"
+    );
 }

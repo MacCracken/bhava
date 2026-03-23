@@ -831,6 +831,123 @@ impl PersonalityProfile {
         }
         changed
     }
+
+    // --- Serialization (SY parity) ---
+
+    /// Export personality to a portable markdown format.
+    pub fn to_markdown(&self) -> String {
+        use std::fmt::Write;
+        let mut md = String::with_capacity(512);
+        let _ = writeln!(md, "# {}", self.name);
+        if let Some(desc) = &self.description {
+            let _ = writeln!(md, "\n{desc}");
+        }
+        md.push_str("\n## Traits\n\n");
+        md.push_str("| Trait | Level | Name |\n");
+        md.push_str("|-------|-------|------|\n");
+        for &kind in TraitKind::ALL {
+            let level = self.get_trait(kind);
+            let name = trait_level_name(kind, level);
+            let _ = writeln!(md, "| {kind} | {level} | {name} |");
+        }
+        md
+    }
+
+    /// Import personality from markdown format.
+    ///
+    /// Expects the format produced by `to_markdown()`. Unrecognized traits
+    /// default to Balanced. Returns None if the name line is missing.
+    pub fn from_markdown(md: &str) -> Option<Self> {
+        let mut lines = md.lines();
+
+        // First line: "# Name"
+        let name_line = lines.next()?.trim();
+        let name = name_line.strip_prefix("# ")?.trim();
+        if name.is_empty() {
+            return None;
+        }
+
+        let mut profile = PersonalityProfile::new(name);
+        let mut in_description = false;
+        let mut description_lines: Vec<&str> = Vec::new();
+
+        for line in lines {
+            let trimmed = line.trim();
+
+            if trimmed == "## Traits" {
+                if !description_lines.is_empty() {
+                    profile.description = Some(description_lines.join("\n").trim().to_string());
+                }
+                in_description = false;
+                continue;
+            }
+
+            if trimmed.starts_with("| Trait") || trimmed.starts_with("|---") {
+                continue;
+            }
+
+            if trimmed.starts_with("| ") {
+                // Parse trait row: "| kind | level | name |"
+                let parts: Vec<&str> = trimmed.split('|').map(|s| s.trim()).collect();
+                if parts.len() >= 4 {
+                    let kind_str = parts[1];
+                    let level_str = parts[2];
+                    if let (Some(kind), Some(level)) =
+                        (parse_trait_kind(kind_str), parse_trait_level(level_str))
+                    {
+                        profile.set_trait(kind, level);
+                    }
+                }
+                continue;
+            }
+
+            if trimmed.starts_with("# ") {
+                continue; // skip header re-encounters
+            }
+
+            // Accumulate description lines (between name and ## Traits)
+            if !trimmed.is_empty() || in_description {
+                in_description = true;
+                description_lines.push(trimmed);
+            }
+        }
+
+        Some(profile)
+    }
+}
+
+/// Parse a trait kind from its display string.
+fn parse_trait_kind(s: &str) -> Option<TraitKind> {
+    match s {
+        "formality" => Some(TraitKind::Formality),
+        "humor" => Some(TraitKind::Humor),
+        "verbosity" => Some(TraitKind::Verbosity),
+        "directness" => Some(TraitKind::Directness),
+        "warmth" => Some(TraitKind::Warmth),
+        "empathy" => Some(TraitKind::Empathy),
+        "patience" => Some(TraitKind::Patience),
+        "confidence" => Some(TraitKind::Confidence),
+        "creativity" => Some(TraitKind::Creativity),
+        "risk_tolerance" => Some(TraitKind::RiskTolerance),
+        "curiosity" => Some(TraitKind::Curiosity),
+        "skepticism" => Some(TraitKind::Skepticism),
+        "autonomy" => Some(TraitKind::Autonomy),
+        "pedagogy" => Some(TraitKind::Pedagogy),
+        "precision" => Some(TraitKind::Precision),
+        _ => None,
+    }
+}
+
+/// Parse a trait level from its display string.
+fn parse_trait_level(s: &str) -> Option<TraitLevel> {
+    match s {
+        "lowest" => Some(TraitLevel::Lowest),
+        "low" => Some(TraitLevel::Low),
+        "balanced" => Some(TraitLevel::Balanced),
+        "high" => Some(TraitLevel::High),
+        "highest" => Some(TraitLevel::Highest),
+        _ => None,
+    }
 }
 
 #[cfg(test)]
@@ -1667,5 +1784,115 @@ mod tests {
         let json = serde_json::to_string(&TraitGroup::Professional).unwrap();
         let restored: TraitGroup = serde_json::from_str(&json).unwrap();
         assert_eq!(restored, TraitGroup::Professional);
+    }
+
+    // --- Markdown serialization ---
+
+    #[test]
+    fn test_to_markdown() {
+        let mut p = PersonalityProfile::new("TestBot");
+        p.description = Some("A test personality".into());
+        p.set_trait(TraitKind::Humor, TraitLevel::Highest);
+        let md = p.to_markdown();
+        assert!(md.contains("# TestBot"));
+        assert!(md.contains("A test personality"));
+        assert!(md.contains("| humor | highest | comedic |"));
+    }
+
+    #[test]
+    fn test_from_markdown_roundtrip() {
+        let mut p = PersonalityProfile::new("RoundTrip");
+        p.description = Some("Full roundtrip test".into());
+        p.set_trait(TraitKind::Humor, TraitLevel::Highest);
+        p.set_trait(TraitKind::Warmth, TraitLevel::Low);
+        p.set_trait(TraitKind::Precision, TraitLevel::High);
+
+        let md = p.to_markdown();
+        let restored = PersonalityProfile::from_markdown(&md).unwrap();
+        assert_eq!(restored.name, "RoundTrip");
+        assert_eq!(restored.description.as_deref(), Some("Full roundtrip test"));
+        assert_eq!(restored.get_trait(TraitKind::Humor), TraitLevel::Highest);
+        assert_eq!(restored.get_trait(TraitKind::Warmth), TraitLevel::Low);
+        assert_eq!(restored.get_trait(TraitKind::Precision), TraitLevel::High);
+        // Unset traits should be Balanced
+        assert_eq!(
+            restored.get_trait(TraitKind::Curiosity),
+            TraitLevel::Balanced
+        );
+    }
+
+    #[test]
+    fn test_from_markdown_missing_name() {
+        assert!(PersonalityProfile::from_markdown("no header").is_none());
+        assert!(PersonalityProfile::from_markdown("# ").is_none());
+    }
+
+    #[test]
+    fn test_from_markdown_no_description() {
+        let md = "# Simple\n\n## Traits\n\n| Trait | Level | Name |\n|-------|-------|------|\n| humor | high | witty |\n";
+        let p = PersonalityProfile::from_markdown(md).unwrap();
+        assert_eq!(p.name, "Simple");
+        assert!(p.description.is_none());
+        assert_eq!(p.get_trait(TraitKind::Humor), TraitLevel::High);
+    }
+
+    #[test]
+    fn test_markdown_all_presets_roundtrip() {
+        // Every trait for every preset should survive roundtrip
+        for &kind in TraitKind::ALL {
+            for &level in &[
+                TraitLevel::Lowest,
+                TraitLevel::Low,
+                TraitLevel::Balanced,
+                TraitLevel::High,
+                TraitLevel::Highest,
+            ] {
+                let mut p = PersonalityProfile::new("test");
+                p.set_trait(kind, level);
+                let md = p.to_markdown();
+                let restored = PersonalityProfile::from_markdown(&md).unwrap();
+                assert_eq!(
+                    restored.get_trait(kind),
+                    level,
+                    "{kind}/{level} failed roundtrip"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_trait_kind_all() {
+        for &kind in TraitKind::ALL {
+            let s = kind.to_string();
+            assert_eq!(
+                parse_trait_kind(&s),
+                Some(kind),
+                "parse_trait_kind failed for {s}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_parse_trait_level_all() {
+        for &level in &[
+            TraitLevel::Lowest,
+            TraitLevel::Low,
+            TraitLevel::Balanced,
+            TraitLevel::High,
+            TraitLevel::Highest,
+        ] {
+            let s = level.to_string();
+            assert_eq!(
+                parse_trait_level(&s),
+                Some(level),
+                "parse_trait_level failed for {s}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_parse_unknown() {
+        assert!(parse_trait_kind("nonexistent").is_none());
+        assert!(parse_trait_level("ultra").is_none());
     }
 }
