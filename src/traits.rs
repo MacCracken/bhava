@@ -607,4 +607,231 @@ mod tests {
         let p2: PersonalityProfile = serde_json::from_str(&json).unwrap();
         assert_eq!(p2.get_trait(TraitKind::Warmth), TraitLevel::High);
     }
+
+    #[test]
+    fn test_trait_kind_default_level() {
+        for &kind in TraitKind::ALL {
+            assert_eq!(kind.default_level(), TraitLevel::Balanced);
+        }
+    }
+
+    #[test]
+    fn test_trait_kind_levels() {
+        for &kind in TraitKind::ALL {
+            let levels = kind.levels();
+            assert_eq!(levels.len(), 5);
+            assert_eq!(levels[0], TraitLevel::Lowest);
+            assert_eq!(levels[4], TraitLevel::Highest);
+        }
+    }
+
+    #[test]
+    fn test_trait_kind_display_all() {
+        let names: Vec<String> = TraitKind::ALL.iter().map(|k| k.to_string()).collect();
+        assert!(names.contains(&"formality".to_string()));
+        assert!(names.contains(&"humor".to_string()));
+        assert!(names.contains(&"verbosity".to_string()));
+        assert!(names.contains(&"directness".to_string()));
+        assert!(names.contains(&"warmth".to_string()));
+        assert!(names.contains(&"empathy".to_string()));
+        assert!(names.contains(&"patience".to_string()));
+        assert!(names.contains(&"confidence".to_string()));
+        assert!(names.contains(&"creativity".to_string()));
+        assert!(names.contains(&"risk_tolerance".to_string()));
+        assert!(names.contains(&"curiosity".to_string()));
+    }
+
+    #[test]
+    fn test_trait_level_display() {
+        assert_eq!(TraitLevel::Lowest.to_string(), "lowest");
+        assert_eq!(TraitLevel::Low.to_string(), "low");
+        assert_eq!(TraitLevel::Balanced.to_string(), "balanced");
+        assert_eq!(TraitLevel::High.to_string(), "high");
+        assert_eq!(TraitLevel::Highest.to_string(), "highest");
+    }
+
+    #[test]
+    fn test_trait_level_numeric_all() {
+        assert_eq!(TraitLevel::Low.numeric(), -1);
+        assert_eq!(TraitLevel::High.numeric(), 1);
+    }
+
+    #[test]
+    fn test_trait_level_normalized_all() {
+        assert!((TraitLevel::Low.normalized() - (-0.5)).abs() < f32::EPSILON);
+        assert!((TraitLevel::High.normalized() - 0.5).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_trait_level_from_numeric_all_valid() {
+        assert_eq!(TraitLevel::from_numeric(-1).unwrap(), TraitLevel::Low);
+        assert_eq!(TraitLevel::from_numeric(1).unwrap(), TraitLevel::High);
+        assert_eq!(TraitLevel::from_numeric(2).unwrap(), TraitLevel::Highest);
+    }
+
+    #[test]
+    fn test_trait_level_from_numeric_invalid() {
+        assert!(TraitLevel::from_numeric(3).is_err());
+        assert!(TraitLevel::from_numeric(-3).is_err());
+        assert!(TraitLevel::from_numeric(100).is_err());
+    }
+
+    #[test]
+    fn test_trait_level_name_all_kinds() {
+        // Every trait kind should have a name for every level
+        for &kind in TraitKind::ALL {
+            for &level in kind.levels() {
+                let name = trait_level_name(kind, level);
+                assert!(!name.is_empty(), "{kind}/{level} has empty name");
+            }
+        }
+    }
+
+    #[test]
+    fn test_trait_level_name_balanced_always_balanced() {
+        for &kind in TraitKind::ALL {
+            assert_eq!(trait_level_name(kind, TraitLevel::Balanced), "balanced");
+        }
+    }
+
+    #[test]
+    fn test_trait_behavior_all_non_balanced_return_some() {
+        let non_balanced = [
+            TraitLevel::Lowest,
+            TraitLevel::Low,
+            TraitLevel::High,
+            TraitLevel::Highest,
+        ];
+        for &kind in TraitKind::ALL {
+            for &level in &non_balanced {
+                assert!(
+                    trait_behavior(kind, level).is_some(),
+                    "{kind}/{level} returned None"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_trait_behavior_text_nonempty() {
+        let non_balanced = [
+            TraitLevel::Lowest,
+            TraitLevel::Low,
+            TraitLevel::High,
+            TraitLevel::Highest,
+        ];
+        for &kind in TraitKind::ALL {
+            for &level in &non_balanced {
+                let text = trait_behavior(kind, level).unwrap();
+                assert!(text.len() > 10, "{kind}/{level} behavior too short");
+            }
+        }
+    }
+
+    #[test]
+    fn test_trait_value_struct() {
+        let tv = TraitValue {
+            trait_name: TraitKind::Humor,
+            level: TraitLevel::High,
+        };
+        assert_eq!(tv.trait_name, TraitKind::Humor);
+        assert_eq!(tv.level, TraitLevel::High);
+    }
+
+    #[test]
+    fn test_trait_value_serde() {
+        let tv = TraitValue {
+            trait_name: TraitKind::Warmth,
+            level: TraitLevel::Highest,
+        };
+        let json = serde_json::to_string(&tv).unwrap();
+        let tv2: TraitValue = serde_json::from_str(&json).unwrap();
+        assert_eq!(tv2.trait_name, TraitKind::Warmth);
+        assert_eq!(tv2.level, TraitLevel::Highest);
+    }
+
+    #[test]
+    fn test_personality_profile_description() {
+        let mut p = PersonalityProfile::new("test");
+        assert!(p.description.is_none());
+        p.description = Some("A test personality".into());
+        assert_eq!(p.description.as_deref(), Some("A test personality"));
+    }
+
+    #[test]
+    fn test_active_traits_returns_correct_values() {
+        let mut p = PersonalityProfile::new("test");
+        p.set_trait(TraitKind::Humor, TraitLevel::Highest);
+        p.set_trait(TraitKind::Warmth, TraitLevel::Low);
+        let active = p.active_traits();
+        assert_eq!(active.len(), 2);
+        assert!(
+            active
+                .iter()
+                .any(|t| t.trait_name == TraitKind::Humor && t.level == TraitLevel::Highest)
+        );
+        assert!(
+            active
+                .iter()
+                .any(|t| t.trait_name == TraitKind::Warmth && t.level == TraitLevel::Low)
+        );
+    }
+
+    #[test]
+    fn test_compose_prompt_bullet_count() {
+        let mut p = PersonalityProfile::new("test");
+        p.set_trait(TraitKind::Humor, TraitLevel::Highest);
+        p.set_trait(TraitKind::Warmth, TraitLevel::High);
+        p.set_trait(TraitKind::Directness, TraitLevel::Lowest);
+        let prompt = p.compose_prompt();
+        let bullet_count = prompt.lines().filter(|l| l.starts_with("- ")).count();
+        assert_eq!(bullet_count, 3);
+    }
+
+    #[test]
+    fn test_distance_max_extremes() {
+        let mut a = PersonalityProfile::new("a");
+        let mut b = PersonalityProfile::new("b");
+        for &kind in TraitKind::ALL {
+            a.set_trait(kind, TraitLevel::Lowest);
+            b.set_trait(kind, TraitLevel::Highest);
+        }
+        let d = a.distance(&b);
+        // max distance: sqrt(11 * (1.0 - (-1.0))^2) = sqrt(11 * 4) = sqrt(44)
+        let expected = (44.0f32).sqrt();
+        assert!((d - expected).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_serde_roundtrip_with_description() {
+        let mut p = PersonalityProfile::new("full");
+        p.description = Some("detailed".into());
+        p.set_trait(TraitKind::Curiosity, TraitLevel::Highest);
+        let json = serde_json::to_string(&p).unwrap();
+        let p2: PersonalityProfile = serde_json::from_str(&json).unwrap();
+        assert_eq!(p2.description.as_deref(), Some("detailed"));
+        assert_eq!(p2.get_trait(TraitKind::Curiosity), TraitLevel::Highest);
+    }
+
+    #[test]
+    fn test_trait_kind_serde() {
+        let json = serde_json::to_string(&TraitKind::RiskTolerance).unwrap();
+        let kind: TraitKind = serde_json::from_str(&json).unwrap();
+        assert_eq!(kind, TraitKind::RiskTolerance);
+    }
+
+    #[test]
+    fn test_trait_level_serde() {
+        for &level in &[
+            TraitLevel::Lowest,
+            TraitLevel::Low,
+            TraitLevel::Balanced,
+            TraitLevel::High,
+            TraitLevel::Highest,
+        ] {
+            let json = serde_json::to_string(&level).unwrap();
+            let restored: TraitLevel = serde_json::from_str(&json).unwrap();
+            assert_eq!(restored, level);
+        }
+    }
 }

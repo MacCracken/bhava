@@ -263,4 +263,97 @@ mod tests {
             assert!(p.profile.trait_count() == 11);
         }
     }
+
+    #[test]
+    fn test_oracle_is_wise() {
+        let p = get_preset("oracle").unwrap();
+        assert_eq!(
+            p.profile.get_trait(TraitKind::Patience),
+            TraitLevel::Highest
+        );
+        assert_eq!(
+            p.profile.get_trait(TraitKind::Curiosity),
+            TraitLevel::Highest
+        );
+        assert_eq!(p.profile.get_trait(TraitKind::Verbosity), TraitLevel::High);
+        assert_eq!(p.profile.get_trait(TraitKind::Formality), TraitLevel::High);
+    }
+
+    #[test]
+    fn test_scout_is_adventurous() {
+        let p = get_preset("scout").unwrap();
+        assert_eq!(
+            p.profile.get_trait(TraitKind::Curiosity),
+            TraitLevel::Highest
+        );
+        assert_eq!(
+            p.profile.get_trait(TraitKind::RiskTolerance),
+            TraitLevel::High
+        );
+        assert_eq!(p.profile.get_trait(TraitKind::Directness), TraitLevel::High);
+        assert_eq!(p.profile.get_trait(TraitKind::Warmth), TraitLevel::High);
+    }
+
+    #[test]
+    fn test_all_presets_have_active_traits() {
+        for id in list_presets() {
+            let p = get_preset(id).unwrap();
+            let active = p.profile.active_traits();
+            assert!(
+                active.len() >= 3,
+                "{id} has too few active traits: {}",
+                active.len()
+            );
+        }
+    }
+
+    #[test]
+    fn test_all_presets_have_description() {
+        for id in list_presets() {
+            let p = get_preset(id).unwrap();
+            assert!(
+                p.profile.description.is_some(),
+                "{id} missing profile description"
+            );
+        }
+    }
+
+    #[test]
+    fn test_all_presets_generate_identity_prompt() {
+        use crate::archetype::compose_identity_prompt;
+        for id in list_presets() {
+            let p = get_preset(id).unwrap();
+            let prompt = compose_identity_prompt(&p.identity);
+            assert!(
+                prompt.contains("### Soul"),
+                "{id} identity prompt missing Soul"
+            );
+        }
+    }
+
+    #[test]
+    fn test_preset_ids_match_list() {
+        let ids = list_presets();
+        for id in &ids {
+            let preset = get_preset(id).unwrap();
+            assert_eq!(preset.id, *id);
+        }
+    }
+
+    #[test]
+    fn test_blue_shirt_guy_identity_content() {
+        let p = get_preset("blue-shirt-guy").unwrap();
+        let soul = p.identity.get(IdentityLayer::Soul).unwrap();
+        assert!(soul.contains("Guy"));
+        let spirit = p.identity.get(IdentityLayer::Spirit).unwrap();
+        assert!(spirit.contains("belief"));
+    }
+
+    #[test]
+    fn test_tron_identity_content() {
+        let p = get_preset("t-ron").unwrap();
+        let soul = p.identity.get(IdentityLayer::Soul).unwrap();
+        assert!(soul.contains("T.Ron"));
+        assert!(soul.contains("security"));
+    }
 }

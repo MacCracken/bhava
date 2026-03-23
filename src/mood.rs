@@ -348,4 +348,203 @@ mod tests {
         assert!((m2.joy - 0.7).abs() < 0.01);
         assert!((m2.trust - (-0.3)).abs() < 0.01);
     }
+
+    #[test]
+    fn test_emotion_all() {
+        assert_eq!(Emotion::ALL.len(), 6);
+    }
+
+    #[test]
+    fn test_emotion_display_all() {
+        let names: Vec<String> = Emotion::ALL.iter().map(|e| e.to_string()).collect();
+        assert!(names.contains(&"joy".to_string()));
+        assert!(names.contains(&"arousal".to_string()));
+        assert!(names.contains(&"dominance".to_string()));
+        assert!(names.contains(&"trust".to_string()));
+        assert!(names.contains(&"interest".to_string()));
+        assert!(names.contains(&"frustration".to_string()));
+    }
+
+    #[test]
+    fn test_set_all_dimensions() {
+        let mut m = MoodVector::neutral();
+        for (i, &e) in Emotion::ALL.iter().enumerate() {
+            let val = (i as f32 + 1.0) * 0.15;
+            m.set(e, val);
+            assert!((m.get(e) - val).abs() < f32::EPSILON);
+        }
+    }
+
+    #[test]
+    fn test_nudge_clamps() {
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, 0.9);
+        m.nudge(Emotion::Joy, 0.5);
+        assert!((m.get(Emotion::Joy) - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_dominant_emotion_neutral() {
+        let m = MoodVector::neutral();
+        // When all zero, returns Joy (first checked)
+        let _ = m.dominant_emotion(); // just ensure no panic
+    }
+
+    #[test]
+    fn test_dominant_emotion_negative() {
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, -0.2);
+        m.set(Emotion::Frustration, -0.9);
+        assert_eq!(m.dominant_emotion(), Emotion::Frustration);
+    }
+
+    #[test]
+    fn test_decay_zero() {
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, 0.8);
+        m.decay(0.0);
+        assert!((m.get(Emotion::Joy) - 0.8).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_decay_full() {
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, 0.8);
+        m.set(Emotion::Trust, -0.5);
+        m.decay(1.0);
+        assert!(m.get(Emotion::Joy).abs() < f32::EPSILON);
+        assert!(m.get(Emotion::Trust).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_decay_clamps_factor() {
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, 0.8);
+        m.decay(5.0); // should clamp to 1.0
+        assert!(m.get(Emotion::Joy).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_blend_zero() {
+        let mut a = MoodVector::neutral();
+        a.set(Emotion::Joy, 0.5);
+        let b = MoodVector::neutral();
+        let c = a.blend(&b, 0.0);
+        assert!((c.joy - 0.5).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_blend_one() {
+        let a = MoodVector::neutral();
+        let mut b = MoodVector::neutral();
+        b.set(Emotion::Joy, 1.0);
+        let c = a.blend(&b, 1.0);
+        assert!((c.joy - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_blend_clamps_t() {
+        let a = MoodVector::neutral();
+        let mut b = MoodVector::neutral();
+        b.set(Emotion::Joy, 1.0);
+        let c = a.blend(&b, 5.0); // should clamp to 1.0
+        assert!((c.joy - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_intensity_multiple_dimensions() {
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, 0.6);
+        m.set(Emotion::Trust, 0.8);
+        let expected = (0.6f32 * 0.6 + 0.8 * 0.8).sqrt();
+        assert!((m.intensity() - expected).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_emotional_state_default() {
+        let s = EmotionalState::default();
+        assert!(s.deviation().abs() < f32::EPSILON);
+        assert!((s.decay_half_life_secs - 300.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_emotional_state_with_baseline() {
+        let mut baseline = MoodVector::neutral();
+        baseline.set(Emotion::Joy, 0.5);
+        let s = EmotionalState::with_baseline(baseline);
+        assert!((s.mood.joy - 0.5).abs() < f32::EPSILON);
+        assert!((s.baseline.joy - 0.5).abs() < f32::EPSILON);
+        assert!(s.deviation().abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_set_decay_half_life_valid() {
+        let mut s = EmotionalState::new();
+        assert!(s.set_decay_half_life(60.0).is_ok());
+        assert!((s.decay_half_life_secs - 60.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_apply_decay_no_time() {
+        let mut s = EmotionalState::new();
+        s.stimulate(Emotion::Joy, 0.8);
+        let before = s.mood.joy;
+        s.apply_decay(s.last_updated); // zero elapsed
+        assert!((s.mood.joy - before).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_apply_decay_toward_baseline() {
+        let mut baseline = MoodVector::neutral();
+        baseline.set(Emotion::Joy, 0.3);
+        let mut s = EmotionalState::with_baseline(baseline);
+        s.stimulate(Emotion::Joy, 0.5); // mood.joy now ~0.8
+
+        let future = s.last_updated + chrono::Duration::hours(1);
+        s.apply_decay(future);
+        // After long decay, should approach baseline (0.3)
+        assert!((s.mood.joy - 0.3).abs() < 0.05);
+    }
+
+    #[test]
+    fn test_apply_decay_negative_elapsed() {
+        let mut s = EmotionalState::new();
+        s.stimulate(Emotion::Joy, 0.8);
+        let before = s.mood.joy;
+        let past = s.last_updated - chrono::Duration::minutes(5);
+        s.apply_decay(past); // negative elapsed, should be no-op
+        assert!((s.mood.joy - before).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_deviation_with_baseline() {
+        let mut baseline = MoodVector::neutral();
+        baseline.set(Emotion::Joy, 0.5);
+        let mut s = EmotionalState::with_baseline(baseline);
+        // mood starts at baseline, deviation is 0
+        assert!(s.deviation().abs() < f32::EPSILON);
+        s.stimulate(Emotion::Joy, 0.3);
+        assert!(s.deviation() > 0.0);
+    }
+
+    #[test]
+    fn test_emotional_state_serde() {
+        let mut s = EmotionalState::new();
+        s.stimulate(Emotion::Joy, 0.5);
+        s.stimulate(Emotion::Frustration, -0.3);
+        let json = serde_json::to_string(&s).unwrap();
+        let s2: EmotionalState = serde_json::from_str(&json).unwrap();
+        assert!((s2.mood.joy - s.mood.joy).abs() < 0.01);
+        assert!((s2.mood.frustration - s.mood.frustration).abs() < 0.01);
+        assert!((s2.decay_half_life_secs - s.decay_half_life_secs).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_emotion_serde() {
+        for &e in Emotion::ALL {
+            let json = serde_json::to_string(&e).unwrap();
+            let e2: Emotion = serde_json::from_str(&json).unwrap();
+            assert_eq!(e2, e);
+        }
+    }
 }

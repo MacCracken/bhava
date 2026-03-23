@@ -83,4 +83,46 @@ mod tests {
         let ok: Result<i32> = Ok(42);
         assert!(ok.is_ok());
     }
+
+    #[test]
+    fn test_unknown_layer() {
+        let e = BhavaError::UnknownLayer {
+            name: "aura".into(),
+        };
+        assert!(e.to_string().contains("aura"));
+    }
+
+    #[test]
+    fn test_unknown_preset() {
+        let e = BhavaError::UnknownPreset { id: "ghost".into() };
+        assert!(e.to_string().contains("ghost"));
+    }
+
+    #[test]
+    fn test_mood_out_of_range_format() {
+        let e = BhavaError::MoodOutOfRange {
+            dimension: "arousal".into(),
+            value: 2.5,
+        };
+        let msg = e.to_string();
+        assert!(msg.contains("arousal"));
+        assert!(msg.contains("2.5"));
+        assert!(msg.contains("-1.0..=1.0"));
+    }
+
+    #[test]
+    fn test_result_alias_err() {
+        let err: Result<i32> = Err(BhavaError::InvalidConfig {
+            reason: "bad".into(),
+        });
+        assert!(err.is_err());
+    }
+
+    #[test]
+    fn test_error_is_send_sync() {
+        fn assert_send<T: Send>() {}
+        fn assert_sync<T: Sync>() {}
+        assert_send::<BhavaError>();
+        assert_sync::<BhavaError>();
+    }
 }

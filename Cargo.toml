@@ -42,11 +42,11 @@ criterion = { version = "0.5", features = ["html_reports"] }
 [[bench]]
 name = "benchmarks"
 harness = false
-required-features = ["traits", "mood", "archetype", "sentiment"]
+required-features = ["traits", "mood", "archetype", "sentiment", "presets"]
 
 [[test]]
 name = "integration"
-required-features = ["traits", "mood", "archetype", "sentiment"]
+required-features = ["traits", "mood", "archetype", "sentiment", "presets"]
 
 [[example]]
 name = "npc_personality"

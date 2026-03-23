@@ -1,121 +1,217 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: ./scripts/bench-history.sh [history.csv] [results.md]
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-HISTORY="${1:-$REPO_ROOT/bench-history.csv}"
-RESULTS="${2:-$REPO_ROOT/benchmarks.md}"
-BENCH_NAME="benchmarks"
+# Run criterion benchmarks, append results to a CSV history file,
+# and regenerate BENCHMARKS.md with the latest 3 runs for trend tracking.
+#
+# Usage:
+#   ./scripts/bench-history.sh              # defaults to bench-history.csv
+#   ./scripts/bench-history.sh results.csv  # custom output file
 
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+HISTORY_FILE="${1:-$REPO_ROOT/bench-history.csv}"
+BENCHMARKS_MD="$REPO_ROOT/BENCHMARKS.md"
+BENCH_NAME="benchmarks"
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 COMMIT=$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-BRANCH=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+BRANCH=$(git -C "$REPO_ROOT" branch --show-current 2>/dev/null || echo "unknown")
 
-# Ensure CSV header
-if [ ! -f "$HISTORY" ]; then
-    echo "timestamp,commit,branch,benchmark,estimate_ns" > "$HISTORY"
+# Create header if file doesn't exist
+if [ ! -f "$HISTORY_FILE" ]; then
+    echo "timestamp,commit,branch,benchmark,estimate_ns" > "$HISTORY_FILE"
 fi
 
-echo "Running benchmarks..."
-RAW=$(cargo bench --bench "$BENCH_NAME" 2>&1 | sed 's/\x1b\[[0-9;]*m//g')
+echo "┌─────────────────────────────────────────────┐"
+echo "│  bhava benchmark suite                      │"
+echo "├─────────────────────────────────────────────┤"
+echo "│  commit : $COMMIT                              │"
+echo "│  branch : $BRANCH                              │"
+echo "│  date   : $TIMESTAMP   │"
+echo "└─────────────────────────────────────────────┘"
+echo ""
 
-# Parse criterion output: "benchmark_name  time:   [low mid high]"
+# Run benchmarks and capture output, stripping ANSI escape codes
+BENCH_OUTPUT=$(cd "$REPO_ROOT" && cargo bench --bench "$BENCH_NAME" --all-features 2>&1 | sed 's/\x1b\[[0-9;]*m//g')
+
+# Parse criterion output into arrays
+declare -a BENCH_NAMES=()
+declare -a BENCH_NS=()
+declare -a BENCH_DISPLAY=()
+
+PREV_LINE=""
 while IFS= read -r line; do
-    # Match lines like: "trait_behavior_lookup  time:   [1.2345 ns 1.3000 ns 1.3700 ns]"
-    if [[ "$line" =~ ^([a-zA-Z0-9_/]+)[[:space:]]+time:[[:space:]]+\[.*[[:space:]]([0-9.]+)[[:space:]]+(ps|ns|µs|us|ms|s)[[:space:]] ]]; then
-        NAME="${BASH_REMATCH[1]}"
-        VALUE="${BASH_REMATCH[2]}"
-        UNIT="${BASH_REMATCH[3]}"
+    if [[ "$line" == *"time:"*"["* ]]; then
+        BENCH_NAME=$(echo "$line" | sed -E 's/[[:space:]]*time:.*//' | xargs)
+        if [ -z "$BENCH_NAME" ]; then
+            BENCH_NAME=$(echo "$PREV_LINE" | xargs)
+        fi
+
+        VALS=$(echo "$line" | sed -E 's/.*\[(.+)\]/\1/')
+        MEDIAN=$(echo "$VALS" | awk '{print $3}')
+        UNIT=$(echo "$VALS" | awk '{print $4}')
 
         # Normalize to nanoseconds
         case "$UNIT" in
-            ps) NS=$(echo "$VALUE / 1000" | bc -l) ;;
-            ns) NS="$VALUE" ;;
-            µs|us) NS=$(echo "$VALUE * 1000" | bc -l) ;;
-            ms) NS=$(echo "$VALUE * 1000000" | bc -l) ;;
-            s)  NS=$(echo "$VALUE * 1000000000" | bc -l) ;;
-            *)  NS="$VALUE" ;;
+            ps)  NS=$(echo "$MEDIAN" | awk '{printf "%.4f", $1 / 1000}') ;;
+            ns)  NS="$MEDIAN" ;;
+            µs|us)  NS=$(echo "$MEDIAN" | awk '{printf "%.4f", $1 * 1000}') ;;
+            ms)  NS=$(echo "$MEDIAN" | awk '{printf "%.4f", $1 * 1000000}') ;;
+            s)   NS=$(echo "$MEDIAN" | awk '{printf "%.4f", $1 * 1000000000}') ;;
+            *)   NS="$MEDIAN" ;;
         esac
 
-        echo "$TIMESTAMP,$COMMIT,$BRANCH,$NAME,$NS" >> "$HISTORY"
-        printf "  %-40s %s %s\n" "$NAME" "$VALUE" "$UNIT"
+        # Human-friendly display value
+        DISPLAY="${MEDIAN} ${UNIT}"
+
+        BENCH_NAMES+=("$BENCH_NAME")
+        BENCH_NS+=("$NS")
+        BENCH_DISPLAY+=("$DISPLAY")
+
+        echo "${TIMESTAMP},${COMMIT},${BRANCH},${BENCH_NAME},${NS}" >> "$HISTORY_FILE"
     fi
-done <<< "$RAW"
+    PREV_LINE="$line"
+done <<< "$BENCH_OUTPUT"
+
+TOTAL=${#BENCH_NAMES[@]}
+
+# ── Print summary table ──────────────────────────────────────────────────
 
 echo ""
-echo "Results appended to $HISTORY"
+echo "┌──────────────────────────────────────────────────────────────┐"
+echo "│  Results                                                     │"
+echo "├────────────────────────────────────────────┬─────────────────┤"
+printf "│ %-42s │ %15s │\n" "Benchmark" "Time"
+echo "├────────────────────────────────────────────┼─────────────────┤"
 
-# Generate markdown with last 3 runs
-python3 -c "
-import csv, sys
-from collections import defaultdict, OrderedDict
+CURRENT_GROUP=""
+for i in $(seq 0 $((TOTAL - 1))); do
+    NAME="${BENCH_NAMES[$i]}"
+    DISPLAY="${BENCH_DISPLAY[$i]}"
+    GROUP="${NAME%%/*}"
 
-rows = []
-with open('$HISTORY') as f:
-    reader = csv.DictReader(f)
-    for r in reader:
-        rows.append(r)
+    if [ "$GROUP" != "$CURRENT_GROUP" ]; then
+        if [ -n "$CURRENT_GROUP" ]; then
+            echo "├────────────────────────────────────────────┼─────────────────┤"
+        fi
+        CURRENT_GROUP="$GROUP"
+    fi
 
-if not rows:
-    sys.exit(0)
+    printf "│ %-42s │ %15s │\n" "$NAME" "$DISPLAY"
+done
 
-# Get last 3 unique (timestamp, commit) pairs
-seen = OrderedDict()
-for r in reversed(rows):
-    key = (r['timestamp'], r['commit'])
-    if key not in seen:
-        seen[key] = True
-    if len(seen) >= 3:
-        break
-runs = list(reversed(seen.keys()))
+echo "└────────────────────────────────────────────┴─────────────────┘"
+echo ""
+echo "Appended ${TOTAL} entries to ${HISTORY_FILE}"
 
-# Group by benchmark
-benchmarks = defaultdict(dict)
-for r in rows:
-    key = (r['timestamp'], r['commit'])
-    if key in seen:
-        benchmarks[r['benchmark']][key] = float(r['estimate_ns'])
+# ── Generate BENCHMARKS.md with 3-point tracking ────────────────────────
 
-def fmt_ns(ns):
-    if ns < 1:
-        return f'{ns*1000:.1f} ps'
-    elif ns < 1000:
-        return f'{ns:.1f} ns'
-    elif ns < 1_000_000:
-        return f'{ns/1000:.1f} us'
-    elif ns < 1_000_000_000:
-        return f'{ns/1_000_000:.1f} ms'
-    else:
-        return f'{ns/1_000_000_000:.2f} s'
+# Find the last 3 distinct (timestamp,commit) pairs from the CSV.
+mapfile -t RUNS < <(awk -F, 'NR>1 {print $1","$2}' "$HISTORY_FILE" | sort -u | tail -3)
+NUM_RUNS=${#RUNS[@]}
 
-with open('$RESULTS', 'w') as f:
-    f.write('# Benchmarks\n\n')
-    f.write('Last {} runs.\n\n'.format(len(runs)))
+# Extract timestamp and commit for each run
+declare -a RUN_TS=()
+declare -a RUN_COMMIT=()
+for run in "${RUNS[@]}"; do
+    RUN_TS+=("${run%%,*}")
+    RUN_COMMIT+=("${run#*,}")
+done
 
-    headers = ['Benchmark'] + [f'{c} ({t[:10]})' for t, c in runs] + ['Delta']
-    f.write('| ' + ' | '.join(headers) + ' |\n')
-    f.write('| ' + ' | '.join(['---'] * len(headers)) + ' |\n')
+# Helper: look up ns value for a given commit+benchmark from the CSV
+lookup_ns() {
+    local commit="$1" bench="$2"
+    awk -F, -v c="$commit" -v b="$bench" '$2 == c && $4 == b {print $5}' "$HISTORY_FILE" | tail -1
+}
 
-    for bench in sorted(benchmarks.keys()):
-        vals = benchmarks[bench]
-        cols = [bench]
-        first_val = None
-        last_val = None
-        for run in runs:
-            if run in vals:
-                v = vals[run]
-                cols.append(fmt_ns(v))
-                if first_val is None:
-                    first_val = v
-                last_val = v
-            else:
-                cols.append('-')
-        if first_val and last_val and first_val > 0:
-            delta = ((last_val - first_val) / first_val) * 100
-            cols.append(f'{delta:+.1f}%')
-        else:
-            cols.append('-')
-        f.write('| ' + ' | '.join(cols) + ' |\n')
+# Helper: format ns for display (pick best unit)
+format_ns() {
+    local ns="$1"
+    if [ -z "$ns" ]; then
+        echo "—"
+        return
+    fi
+    awk "BEGIN {
+        v = $ns
+        if (v < 1)        printf \"%.2f ps\", v * 1000
+        else if (v < 1000)     printf \"%.2f ns\", v
+        else if (v < 1000000)  printf \"%.2f µs\", v / 1000
+        else                    printf \"%.2f ms\", v / 1000000
+    }"
+}
 
-print(f'Markdown written to $RESULTS')
-" 2>/dev/null || echo "(python3 not available -- CSV updated, markdown skipped)"
+{
+    echo "# Benchmarks"
+    echo ""
+    echo "> Auto-generated by \`scripts/bench-history.sh\` — do not edit manually."
+    echo ""
+    echo "## Run History"
+    echo ""
+    echo "| | $(for i in $(seq 0 $((NUM_RUNS - 1))); do printf "Run %d | " "$((i + 1))"; done)"
+    echo "|---|$(for _ in $(seq 1 "$NUM_RUNS"); do printf -- "---|"; done)"
+    echo "| **Date** | $(for i in $(seq 0 $((NUM_RUNS - 1))); do printf "\`%s\` | " "${RUN_TS[$i]}"; done)"
+    echo "| **Commit** | $(for i in $(seq 0 $((NUM_RUNS - 1))); do printf "\`%s\` | " "${RUN_COMMIT[$i]}"; done)"
+    echo "| **Toolchain** | $(for _ in $(seq 1 "$NUM_RUNS"); do printf "\`%s\` | " "$(rustc --version 2>/dev/null || echo unknown)"; done)"
+    echo ""
+    echo "## Results"
+    echo ""
+
+    # Collect all unique benchmark names from the current run
+    CURRENT_GROUP=""
+    for i in $(seq 0 $((TOTAL - 1))); do
+        NAME="${BENCH_NAMES[$i]}"
+        GROUP="${NAME%%/*}"
+        BENCH="${NAME#*/}"
+
+        if [ "$GROUP" != "$CURRENT_GROUP" ]; then
+            if [ -n "$CURRENT_GROUP" ]; then
+                echo ""
+            fi
+            echo "### ${GROUP}"
+            echo ""
+            # Build header with run columns
+            printf "| Benchmark |"
+            for r in $(seq 0 $((NUM_RUNS - 1))); do
+                printf " \`%s\` |" "${RUN_COMMIT[$r]}"
+            done
+            echo " Δ first→last |"
+            printf "|-----------|"
+            for _ in $(seq 1 "$NUM_RUNS"); do printf -- "------|"; done
+            echo "------|"
+            CURRENT_GROUP="$GROUP"
+        fi
+
+        # Build row with value from each run
+        printf "| %s |" "$BENCH"
+        FIRST_NS=""
+        LAST_NS=""
+        for r in $(seq 0 $((NUM_RUNS - 1))); do
+            VAL=$(lookup_ns "${RUN_COMMIT[$r]}" "$NAME")
+            FORMATTED=$(format_ns "$VAL")
+            printf " %s |" "$FORMATTED"
+            if [ -n "$VAL" ]; then
+                if [ -z "$FIRST_NS" ]; then
+                    FIRST_NS="$VAL"
+                fi
+                LAST_NS="$VAL"
+            fi
+        done
+
+        # Compute delta from first to last available value
+        if [ -n "$FIRST_NS" ] && [ -n "$LAST_NS" ] && [ "$FIRST_NS" != "$LAST_NS" ]; then
+            DELTA=$(awk "BEGIN {d=($LAST_NS - $FIRST_NS) / $FIRST_NS * 100; printf \"%+.1f%%\", d}")
+        else
+            DELTA="—"
+        fi
+        printf " %s |" "$DELTA"
+        echo ""
+    done
+
+    echo ""
+    echo "---"
+    echo ""
+    echo "Run benchmarks: \`./scripts/bench-history.sh\`"
+    echo ""
+    echo "History: [\`bench-history.csv\`](bench-history.csv)"
+} > "$BENCHMARKS_MD"
+
+echo "Updated ${BENCHMARKS_MD}"

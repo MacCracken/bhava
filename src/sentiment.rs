@@ -307,4 +307,93 @@ mod tests {
         let r2: SentimentResult = serde_json::from_str(&json).unwrap();
         assert!((r2.valence - r.valence).abs() < 0.01);
     }
+
+    #[test]
+    fn test_confidence_positive() {
+        let r = analyze("This is great and wonderful and amazing!");
+        assert!(r.confidence > 0.0);
+        assert!(r.confidence <= 1.0);
+    }
+
+    #[test]
+    fn test_confidence_zero_for_neutral() {
+        let r = analyze("The meeting is scheduled for noon.");
+        assert!((r.confidence - 0.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_multiple_trust_keywords_accumulate() {
+        let r = analyze("I trust this safe, reliable, honest system.");
+        let trust = r.emotions.iter().find(|(e, _)| *e == Emotion::Trust);
+        assert!(trust.is_some());
+        assert!(trust.unwrap().1 > 0.3); // accumulated from multiple keywords
+    }
+
+    #[test]
+    fn test_punctuation_stripped() {
+        let r = analyze("great! wonderful!! amazing!!!");
+        assert!(r.is_positive());
+        assert!(r.matched_keywords.len() >= 3);
+    }
+
+    #[test]
+    fn test_single_word_positive() {
+        let r = analyze("excellent");
+        assert!(r.is_positive());
+    }
+
+    #[test]
+    fn test_single_word_negative() {
+        let r = analyze("terrible");
+        assert!(r.is_negative());
+    }
+
+    #[test]
+    fn test_mixed_emotions_detected() {
+        let r = analyze("I'm curious but frustrated with this broken thing.");
+        let has_interest = r.emotions.iter().any(|(e, _)| *e == Emotion::Interest);
+        let has_frustration = r.emotions.iter().any(|(e, _)| *e == Emotion::Frustration);
+        assert!(has_interest);
+        assert!(has_frustration);
+    }
+
+    #[test]
+    fn test_valence_clamped() {
+        // Even with many positive words, valence should not exceed 1.0
+        let r = analyze("good great excellent amazing wonderful fantastic love happy glad pleased");
+        assert!(r.valence <= 1.0);
+        assert!(r.valence >= -1.0);
+    }
+
+    #[test]
+    fn test_is_neutral_boundary() {
+        // valence of exactly 0.0 should be neutral
+        let r = analyze("The time is noon.");
+        assert!(r.is_neutral());
+        assert!(!r.is_positive());
+        assert!(!r.is_negative());
+    }
+
+    #[test]
+    fn test_dominant_emotion_frustration() {
+        let r = analyze("frustrated annoyed stuck broken confused irritated");
+        assert_eq!(r.dominant_emotion(), Some(Emotion::Frustration));
+    }
+
+    #[test]
+    fn test_serde_roundtrip_with_emotions() {
+        let r = analyze("I trust this curious interesting system, it's great!");
+        let json = serde_json::to_string(&r).unwrap();
+        let r2: SentimentResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(r2.emotions.len(), r.emotions.len());
+        assert_eq!(r2.matched_keywords, r.matched_keywords);
+        assert!((r2.confidence - r.confidence).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_whitespace_only() {
+        let r = analyze("   ");
+        assert!(r.is_neutral());
+        assert_eq!(r.confidence, 0.0);
+    }
 }

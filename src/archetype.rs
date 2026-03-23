@@ -246,4 +246,119 @@ mod tests {
         let c2: IdentityContent = serde_json::from_str(&json).unwrap();
         assert_eq!(c2.get(IdentityLayer::Soul), Some("test soul"));
     }
+
+    #[test]
+    fn test_cosmic_archetype_serde() {
+        for arch in [
+            CosmicArchetype::NoThingNess,
+            CosmicArchetype::TheOne,
+            CosmicArchetype::ThePlurality,
+        ] {
+            let json = serde_json::to_string(&arch).unwrap();
+            let restored: CosmicArchetype = serde_json::from_str(&json).unwrap();
+            assert_eq!(restored, arch);
+        }
+    }
+
+    #[test]
+    fn test_identity_layer_description_all() {
+        for &layer in IdentityLayer::ALL {
+            let desc = layer.description();
+            assert!(!desc.is_empty(), "{layer} has empty description");
+        }
+    }
+
+    #[test]
+    fn test_identity_layer_description_content() {
+        assert!(IdentityLayer::Spirit.description().contains("drive"));
+        assert!(IdentityLayer::Brain.description().contains("mind"));
+        assert!(IdentityLayer::Body.description().contains("form"));
+        assert!(IdentityLayer::Heart.description().contains("pulse"));
+    }
+
+    #[test]
+    fn test_identity_layer_display_all() {
+        assert_eq!(IdentityLayer::Spirit.to_string(), "Spirit");
+        assert_eq!(IdentityLayer::Brain.to_string(), "Brain");
+        assert_eq!(IdentityLayer::Body.to_string(), "Body");
+    }
+
+    #[test]
+    fn test_identity_content_all_layers() {
+        let mut c = IdentityContent::default();
+        c.set(IdentityLayer::Soul, "soul content");
+        c.set(IdentityLayer::Spirit, "spirit content");
+        c.set(IdentityLayer::Brain, "brain content");
+        c.set(IdentityLayer::Body, "body content");
+        c.set(IdentityLayer::Heart, "heart content");
+        assert_eq!(c.populated_count(), 5);
+        assert_eq!(c.get(IdentityLayer::Brain), Some("brain content"));
+        assert_eq!(c.get(IdentityLayer::Body), Some("body content"));
+        assert_eq!(c.get(IdentityLayer::Heart), Some("heart content"));
+    }
+
+    #[test]
+    fn test_identity_content_overwrite() {
+        let mut c = IdentityContent::default();
+        c.set(IdentityLayer::Soul, "first");
+        c.set(IdentityLayer::Soul, "second");
+        assert_eq!(c.get(IdentityLayer::Soul), Some("second"));
+        assert_eq!(c.populated_count(), 1);
+    }
+
+    #[test]
+    fn test_compose_identity_prompt_empty_content() {
+        let c = IdentityContent::default();
+        let prompt = compose_identity_prompt(&c);
+        // Should still have the preamble
+        assert!(prompt.contains("In Our Image"));
+        // But no layer sections
+        assert!(!prompt.contains("### Soul"));
+    }
+
+    #[test]
+    fn test_compose_identity_prompt_all_layers() {
+        let mut c = IdentityContent::default();
+        for &layer in IdentityLayer::ALL {
+            c.set(layer, format!("{layer} content here"));
+        }
+        let prompt = compose_identity_prompt(&c);
+        assert!(prompt.contains("### Soul"));
+        assert!(prompt.contains("### Spirit"));
+        assert!(prompt.contains("### Brain"));
+        assert!(prompt.contains("### Body"));
+        assert!(prompt.contains("### Heart"));
+    }
+
+    #[test]
+    fn test_compose_preamble_contains_all_layers() {
+        let p = compose_preamble();
+        for &layer in IdentityLayer::ALL {
+            assert!(p.contains(&layer.to_string()), "preamble missing {layer}");
+        }
+    }
+
+    #[test]
+    fn test_identity_layer_serde() {
+        for &layer in IdentityLayer::ALL {
+            let json = serde_json::to_string(&layer).unwrap();
+            let restored: IdentityLayer = serde_json::from_str(&json).unwrap();
+            assert_eq!(restored, layer);
+        }
+    }
+
+    #[test]
+    fn test_identity_content_serde_all_layers() {
+        let mut c = IdentityContent::default();
+        c.set(IdentityLayer::Soul, "s");
+        c.set(IdentityLayer::Spirit, "sp");
+        c.set(IdentityLayer::Brain, "b");
+        c.set(IdentityLayer::Body, "bo");
+        c.set(IdentityLayer::Heart, "h");
+        let json = serde_json::to_string(&c).unwrap();
+        let c2: IdentityContent = serde_json::from_str(&json).unwrap();
+        for &layer in IdentityLayer::ALL {
+            assert_eq!(c2.get(layer), c.get(layer));
+        }
+    }
 }
