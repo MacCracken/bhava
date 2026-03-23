@@ -40,17 +40,20 @@
 ## Code Style
 
 - `cargo fmt` is mandatory
-- `cargo clippy -- -D warnings` must pass with zero warnings
-- Doc comments on all public items
+- `cargo clippy --all-features --all-targets -- -D warnings` must pass with zero warnings
+- `///` doc comments on all public items
 - `#[non_exhaustive]` on public enums
+- `#[must_use]` on pure functions that return computed values
 - No `unsafe` code
-- No `println!` -- use `tracing` for instrumentation
+- No `println!` in library code
 
 ## Testing
 
 - Unit tests colocated in modules via `#[cfg(test)]`
-- Integration tests in `tests/`
+- Integration tests in `tests/integration.rs`
 - Feature-gated tests with `#[cfg(feature = "...")]`
+- Criterion benchmarks in `benches/benchmarks.rs`
+- Run `./scripts/bench-history.sh` to record benchmark history
 - Target: 90%+ line coverage
 
 ## License

@@ -75,8 +75,13 @@ make bench    # or ./scripts/bench-history.sh
 
 ## Testing Patterns
 
-1. **Exhaustive enum coverage**: tests iterate `TraitKind::ALL`, `Emotion::ALL`, `IdentityLayer::ALL` to verify every variant
-2. **Boundary values**: decay factors 0.0/1.0/5.0 (clamped), mood values beyond [-1.0, 1.0] (clamped), negative elapsed time (no-op)
+1. **Exhaustive enum coverage**: tests iterate `TraitKind::ALL`, `Emotion::ALL`, `IdentityLayer::ALL`, `TraitGroup::ALL` to verify every variant
+2. **Boundary values**: decay factors 0.0/1.0/5.0 (clamped), mood values beyond [-1.0, 1.0] (clamped), negative elapsed time (no-op), zero-rate mutation (no-op)
 3. **Serde roundtrip**: every serializable type has a serialize→deserialize test
-4. **Determinism**: `behavioral_instructions()` and `compose_prompt()` produce identical output across runs (fixed iteration order)
-5. **Cross-module integration**: sentiment results feed mood stimulation, presets generate valid prompts, distance metrics are symmetric
+4. **Determinism**: `behavioral_instructions()` and `compose_prompt()` produce identical output across runs (fixed `[TraitLevel; 15]` array, not HashMap)
+5. **Cross-module integration**: sentiment→mood feedback, triggers→classify→history pipeline, presets→prompt generation, templates→validation, crew composition from presets, mood baseline from profiles
+6. **Markdown roundtrip**: all 15 traits × 5 levels survive `to_markdown()` → `from_markdown()`, tested per-preset
+7. **Sorted invariants**: `test_lexicons_sorted` verifies all sentiment lexicons remain alphabetically sorted
+8. **Cosine similarity properties**: identical profiles → 1.0, opposite → 0.0, same-direction-different-magnitude → >0.9, orthogonal → ~0.5
+9. **Compound effects**: warm+funny → playful boost verified against baseline-only derivation
+10. **Feedback scaling**: sentiment feedback at scale 0.0 is a no-op, scale 1.0 > scale 0.5 in effect

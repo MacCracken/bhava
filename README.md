@@ -48,31 +48,46 @@ let full_prompt = compose_identity_prompt(&identity);
 
 ### traits
 
-11 personality dimensions with 5 graduated levels each (Lowest → Low → Balanced → High → Highest). Each trait/level combination maps to a behavioral instruction for LLM system prompts. Profiles support distance metrics and deterministic prompt composition.
+15 personality dimensions across 4 groups (Social, Cognitive, Behavioral, Professional) with 5 graduated levels each (Lowest → Low → Balanced → High → Highest). Each trait/level maps to behavioral instructions for LLM system prompts. Supports cosine similarity compatibility scoring, profile blending, gradual mutation, and portable markdown serialization.
 
 ### mood
 
-6-dimensional emotional state vectors based on the PAD model (Pleasure-Arousal-Dominance) extended with Trust, Interest, and Frustration. Supports time-based exponential decay toward a configurable baseline, stimulus application, and vector blending.
+6-dimensional emotional state vectors based on the PAD model (Pleasure-Arousal-Dominance) extended with Trust, Interest, and Frustration. Supports time-based exponential decay toward a configurable baseline, mood triggers, history ring buffer with trend analysis, 12 named mood states, trait-to-mood baseline derivation with compound effects, and mood tone guides for prompt injection.
 
 ### archetype
 
-The "In Our Image" identity hierarchy: Soul → Spirit → Brain → Body → Heart. Each layer flows from the one above. Composes cosmological preamble and layer-specific content into system prompts.
+The "In Our Image" identity hierarchy: Soul → Spirit → Brain → Body → Heart. Each layer flows from the one above. Includes layer validation, 4 archetype templates (assistant, expert, creative, guardian), multi-agent crew composition, and identity merging.
 
 ### sentiment
 
-Fast, local keyword-based sentiment analysis. Classifies text into positive/negative/neutral with valence scoring, confidence estimation, and emotion detection (trust, curiosity, frustration). Zero network I/O.
+Keyword-based sentiment analysis with negation handling ("not good" → negative), intensity modifiers ("very good" → stronger), configurable lexicons, and sentence-level analysis. Classifies text with valence scoring, confidence estimation, and emotion detection.
+
+### spirit
+
+The animating force within an agent — passions (what drives you), inspirations (what illuminates your path), and pains (what grounds your empathy). Composes into prompt-injectable markdown for the Spirit identity layer.
+
+### relationship
+
+Inter-entity relationship tracking with affinity (-1.0 to 1.0), trust (0.0 to 1.0), interaction counting, and time-based decay toward neutral. Supports allies/rivals queries and aggregate metrics.
 
 ### presets
 
-5 built-in personality templates ready for immediate use:
+5 built-in personality templates matching SecureYeoman configurations:
 
 | Preset | Style |
 |--------|-------|
-| `blue-shirt-guy` | Eternally optimistic, warm, creative |
-| `t-ron` | Security watchdog, blunt, risk-averse |
-| `friday` | Professional assistant, formal, concise |
-| `oracle` | Wise advisor, patient, curious |
-| `scout` | Energetic explorer, bold, creative |
+| `blue-shirt-guy` | Eternally optimistic, warm, creative, curious |
+| `t-ron` | Security watchdog, blunt, risk-averse, skeptical, meticulous |
+| `friday` | Professional assistant, formal, concise, autonomous, precise |
+| `oracle` | Wise advisor, patient, curious, socratic, skeptical |
+| `scout` | Energetic explorer, bold, creative, autonomous |
+
+### ai
+
+Integration with agnosai and hoosh for personality-aware AI:
+- `compose_system_prompt()` — build full system prompts from personality + identity + mood + spirit
+- `apply_sentiment_feedback()` — analyze AI responses and feed back into emotional state
+- `build_personality_metadata()` — export structured metadata for agent registration
 
 ## Consumers
 

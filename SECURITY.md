@@ -2,7 +2,7 @@
 
 ## Scope
 
-Bhava is a personality and emotional state library for AI agents and game NPCs. The core library performs no network I/O and no file I/O. The optional `ai` feature adds HTTP client dependencies for daimon/hoosh integration.
+Bhava is a personality and emotional state library for AI agents and game NPCs. The core library (traits, mood, archetype, sentiment, spirit, relationship) performs no network I/O and no file I/O. The optional `ai` feature adds HTTP client dependencies for agnosai/hoosh integration.
 
 ## Attack Surface
 

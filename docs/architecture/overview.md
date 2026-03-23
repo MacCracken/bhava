@@ -66,11 +66,37 @@ compose_identity_prompt(IdentityContent) → preamble + populated layer sections
 ### Sentiment Analysis
 
 ```
-text → lowercase → split whitespace → trim punctuation
+text → lowercase → single-pass whitespace iteration
+  → check negation (not, never, hardly...) → flip next word
+  → check intensity modifier (very, extremely, slightly...) → scale next word
   → match against 5 lexicons (positive, negative, trust, curiosity, frustration)
-  → compute valence (pos - neg) / word_count, clamped [-1.0, 1.0]
-  → compute confidence from keyword density
+  → compute valence (pos_score - neg_score) / word_count, clamped [-1.0, 1.0]
   → SentimentResult { valence, confidence, emotions, matched_keywords }
+```
+
+### Trait-to-Mood Baseline
+
+```
+PersonalityProfile (15 traits)
+  → per-trait valence/arousal modifiers (TRAIT_VALUE_MODIFIERS table)
+  → average across all traits
+  → apply compound effects (7 emergent combos: playful, nurturing, mentoring, ...)
+  → MoodVector { joy: valence, arousal: arousal }
+```
+
+### AI Integration (full pipeline)
+
+```
+compose_system_prompt(profile, identity, mood, spirit)
+  → compose_identity_prompt()     — archetype preamble + layer content
+  → profile.compose_prompt()      — trait behavioral instructions
+  → compose_mood_prompt()         — current mood state + tone guide
+  → spirit text                   — passions, inspirations, pains
+  → single String for InferenceRequest.system
+
+Response → apply_sentiment_feedback(text, state, scale)
+  → sentiment::analyze()          — valence + emotions
+  → stimulate emotional state     — scaled feedback into mood vector
 ```
 
 ## Dependencies

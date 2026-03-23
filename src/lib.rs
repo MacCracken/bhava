@@ -15,6 +15,7 @@
 //! - [`presets`] — Built-in personality templates (BlueShirtGuy, T.Ron, Friday, Oracle, Scout)
 //! - [`spirit`] — Passions, inspirations, and pains — the animating force
 //! - [`relationship`] — Inter-entity affinity, trust, and interaction tracking
+//! - [`ai`] — System prompt composition, sentiment feedback, and agent metadata
 //! - [`error`] — Error types
 
 pub mod error;

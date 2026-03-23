@@ -3,18 +3,23 @@
 ## Trust Boundaries
 
 - **Trusts**: calling application for authorization and input validation
-- **Does not trust**: deserialized JSON, user-supplied text for sentiment analysis
+- **Does not trust**: deserialized JSON, user-supplied text for sentiment analysis, markdown input for personality import
 
 ## Attack Surface
 
 | Area | Risk | Mitigation |
 |------|------|------------|
-| Prompt composition | Injection via trait/identity content | Consumer responsibility; bhava composes text, caller validates before sending to LLM |
+| Prompt composition | Injection via trait/identity/spirit content | Consumer responsibility; bhava composes text, caller validates before sending to LLM |
 | Mood vector values | Out-of-range f32 values | Clamped to [-1.0, 1.0] on every `set()` and `nudge()` |
 | Decay computation | Time-based overflow | Chrono duration with safe arithmetic; negative elapsed is no-op |
-| Sentiment analysis | Adversarial input | No-alloc keyword scan against bounded static lexicons; no regex, no recursion |
-| Serde deserialization | Crafted JSON | Enum validation via serde derive; invalid variants rejected |
-| AI client (opt-in) | Network I/O, endpoint injection | Feature-gated; not compiled by default; endpoint is caller-configured |
+| Sentiment analysis | Adversarial input | Single-pass keyword scan against bounded static lexicons; no regex, no recursion |
+| Sentiment feedback | Mood manipulation via crafted AI responses | `scale` parameter (0.0–1.0) limits feedback strength; caller controls |
+| Serde deserialization | Crafted JSON | Enum validation via serde derive; invalid variants rejected; missing traits default to Balanced |
+| Markdown import | Malformed personality files | Unknown traits/levels silently default to Balanced; missing name returns `None` |
+| AI prompt composition | System prompt injection via identity layers | Feature-gated; caller controls all content passed to `compose_system_prompt()` |
+| Relationship graph | Unbounded growth | In-memory `Vec`-backed; consumer responsible for lifecycle management |
+| Spirit content | Arbitrary text in passions/inspirations/pains | Consumer responsibility; bhava composes into markdown, caller validates |
+| Cosine similarity | Division by zero on zero vectors | Returns 1.0 by convention (two zero vectors are identical) |
 | Personality distance | NaN from degenerate inputs | All trait levels map to finite f32 values; sqrt of sum of squares is always finite |
 
 ## Unsafe Code
@@ -23,7 +28,7 @@ None. Zero `unsafe` blocks in the crate.
 
 ## Privilege Model
 
-Bhava requires no elevated privileges. It performs no I/O in core modules. The `ai` feature adds outbound HTTP only.
+Bhava requires no elevated privileges. It performs no I/O in core modules. The `ai` feature adds outbound HTTP only (via reqwest).
 
 ## Design Principles
 
@@ -33,3 +38,5 @@ Bhava requires no elevated privileges. It performs no I/O in core modules. The `
 - Minimal dependency surface (3 core deps: serde, thiserror, chrono)
 - No secrets in logs or error messages
 - `#[non_exhaustive]` on all public enums for forward compatibility
+- `#[must_use]` on 37 pure functions to prevent accidental value drops
+- All mood/affinity/trust values clamped to safe ranges
