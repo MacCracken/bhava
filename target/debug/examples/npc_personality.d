@@ -1,0 +1,1 @@
+/home/macro/Repos/bhava/target/debug/examples/npc_personality: /home/macro/Repos/bhava/examples/npc_personality.rs /home/macro/Repos/bhava/src/archetype.rs /home/macro/Repos/bhava/src/error.rs /home/macro/Repos/bhava/src/lib.rs /home/macro/Repos/bhava/src/mood.rs /home/macro/Repos/bhava/src/presets.rs /home/macro/Repos/bhava/src/sentiment.rs /home/macro/Repos/bhava/src/traits.rs
