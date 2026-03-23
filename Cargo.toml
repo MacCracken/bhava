@@ -20,7 +20,7 @@ mood = []
 archetype = []
 sentiment = []
 presets = []
-ai = ["dep:reqwest", "dep:tokio", "dep:serde_json"]
+ai = ["traits", "mood", "archetype", "sentiment", "dep:reqwest", "dep:tokio", "dep:serde_json"]
 full = ["traits", "mood", "archetype", "sentiment", "presets", "ai"]
 
 [dependencies]
