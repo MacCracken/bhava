@@ -12,12 +12,15 @@ Initial release. Extracted from SecureYeoman's soul/brain architecture.
 - **spirit**: Passions, inspirations, and pains — the animating force within an agent. Prompt-injectable markdown composition for the Spirit identity layer.
 - **relationship**: Inter-entity relationship graph with affinity (-1.0 to 1.0), trust (0.0 to 1.0), interaction tracking, time-based decay toward neutral, allies/rivals queries.
 - **presets**: 5 built-in personality templates matching SecureYeoman configurations (BlueShirtGuy, T.Ron, Friday, Oracle, Scout).
+- **monitor**: Live sentiment monitoring for streaming text. Buffers chunks, analyzes at sentence boundaries, feeds back into emotional state. Running summaries with positive/negative/neutral counts.
 - **ai**: System prompt composition from personality + identity + mood + spirit. Sentiment feedback loop with configurable scale. Personality metadata export for agent registration. Interaction outcome mapping to mood triggers.
-- **error**: `BhavaError` with 8 `#[non_exhaustive]` variants including feature-gated `Network`.
+- **store**: `BhavaStore` trait — abstract persistence interface for pluggable backends (SQLite, Postgres, Redis, etc.).
+- **storage**: `SqliteStore` — SQLite implementation of `BhavaStore` with tables for profiles, emotional states, mood history, snapshots, relationships, and spirit data.
+- **error**: `BhavaError` with 9 `#[non_exhaustive]` variants including feature-gated `Network` and `Storage`.
 
 ### Quality
-- 386 tests (353 unit + 33 integration)
-- 63 criterion benchmarks across 12 groups with CSV history tracking
+- 417 tests (381 unit + 35 integration + 1 doc)
+- 66 criterion benchmarks across 13 groups with CSV history tracking
 - `#[must_use]` on 37 pure functions
 - `# Errors` doc sections on Result-returning functions
 - Zero `unsafe` code

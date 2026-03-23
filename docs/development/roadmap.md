@@ -6,12 +6,10 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 **Bhava does NOT own:** natural language processing (hoosh), agent orchestration (daimon), game logic (joshua), desktop integration (aethersafha).
 
-## Completed (0.22.3)
+## Current Status
 
-All planned features implemented and integrated:
+All planned 0.22.3 features are implemented. See [CHANGELOG.md](../../CHANGELOG.md) for details.
 
-- Core engine: 15 traits, mood vectors, archetypes, sentiment, spirit, relationships
-- Persistence: BhavaStore trait + SQLite adapter
-- Live monitoring: SentimentMonitor for streaming text
-- AI integration: system prompt composition, sentiment feedback, agent metadata
-- Ecosystem: agnosai personality scoring + mood-driven temperature; hoosh sentiment analysis
+## Future
+
+No outstanding items. Feature requests and enhancements will be tracked via GitHub issues.

@@ -19,6 +19,9 @@
 | AI prompt composition | System prompt injection via identity layers | Feature-gated; caller controls all content passed to `compose_system_prompt()` |
 | Relationship graph | Unbounded growth | In-memory `Vec`-backed; consumer responsible for lifecycle management |
 | Spirit content | Arbitrary text in passions/inspirations/pains | Consumer responsibility; bhava composes into markdown, caller validates |
+| SQLite storage | SQL injection via IDs | Parameterized queries (`?1`) throughout; no string interpolation in SQL |
+| SQLite storage | Data corruption | JSON serialization via serde; schema migrations via `CREATE TABLE IF NOT EXISTS` |
+| Sentiment monitor | Unbounded buffer growth | Consumer calls `flush()` at stream end; `reset()` available for cleanup |
 | Cosine similarity | Division by zero on zero vectors | Returns 1.0 by convention (two zero vectors are identical) |
 | Personality distance | NaN from degenerate inputs | All trait levels map to finite f32 values; sqrt of sum of squares is always finite |
 

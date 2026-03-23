@@ -11,8 +11,11 @@ bhava
 ├── presets      — 5 built-in personalities (BlueShirtGuy, T.Ron, Friday, Oracle, Scout)            [feature: presets]
 ├── spirit       — Spirit (passions, inspirations, pains) with prompt composition                    [feature: archetype]
 ├── relationship — RelationshipGraph, affinity, trust, interaction tracking, decay                   [feature: mood]
+├── monitor      — SentimentMonitor for streaming text with mood feedback                           [feature: sentiment]
 ├── ai           — System prompt composition, sentiment feedback, agent metadata                     [feature: ai]
-└── error        — BhavaError (8 variants, #[non_exhaustive])                                      [always]
+├── store        — BhavaStore trait for pluggable persistence backends                              [all core features]
+├── storage      — SqliteStore implementation of BhavaStore                                         [feature: sqlite]
+└── error        — BhavaError (9 variants, #[non_exhaustive])                                      [always]
 ```
 
 ## Feature Flags
@@ -22,9 +25,10 @@ bhava
 | `traits` | yes | — | 15-dimension personality spectrums with behavioral instructions |
 | `mood` | yes | — | Emotional state vectors with decay, triggers, history, baselines |
 | `archetype` | yes | — | Identity hierarchy, templates, validation, spirit, crew composition |
-| `sentiment` | yes | — | Sentiment analysis with negation, intensity, configurable lexicons |
+| `sentiment` | yes | mood | Sentiment analysis with negation, intensity, configurable lexicons |
 | `presets` | no | traits, archetype | Built-in personality templates |
 | `ai` | no | traits, mood, archetype, sentiment, reqwest, tokio, serde_json | Prompt composition, sentiment feedback, metadata |
+| `sqlite` | no | traits, mood, archetype, sentiment, rusqlite, serde_json | SQLite persistence |
 | `full` | — | all of the above | Enable everything |
 
 ## Design Principles
@@ -99,6 +103,31 @@ Response → apply_sentiment_feedback(text, state, scale)
   → stimulate emotional state     — scaled feedback into mood vector
 ```
 
+### Live Sentiment Monitoring
+
+```
+SentimentMonitor::new(scale)
+  → feed(chunk)                     — buffer text, analyze at sentence boundaries
+  → feed_and_apply(chunk, state)    — feed + apply results to EmotionalState
+  → flush()                         — analyze remaining buffered text
+  → summary()                       — positive/negative/neutral counts + average valence
+```
+
+### Persistence
+
+```
+BhavaStore (trait)
+  ├── save_profile / load_profile / delete_profile / list_profile_ids
+  ├── save_emotional_state / load_emotional_state
+  ├── save_mood_history / load_mood_history
+  ├── append_snapshot / load_snapshots
+  ├── save_relationships / load_relationships
+  └── save_spirit / load_spirit
+
+SqliteStore implements BhavaStore (feature: sqlite)
+Custom backends: implement BhavaStore for Postgres, Redis, etc.
+```
+
 ## Dependencies
 
 | Crate | Purpose |
@@ -108,7 +137,8 @@ Response → apply_sentiment_feedback(text, state, scale)
 | `chrono` | Timestamp tracking for mood decay |
 | `reqwest` | HTTP client (ai feature only) |
 | `tokio` | Async runtime (ai feature only) |
-| `serde_json` | JSON handling (ai feature only) |
+| `serde_json` | JSON handling (ai + sqlite features) |
+| `rusqlite` | SQLite database (sqlite feature only) |
 
 ## Consumers
 

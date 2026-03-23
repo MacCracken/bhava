@@ -10,7 +10,7 @@
 
 | Module | Tests | Notes |
 |--------|-------|-------|
-| error | 11 | All error variants, Result alias, Send+Sync |
+| error | 12 | All 9 error variants, Result alias, Send+Sync |
 | traits | 53 | 15 trait kinds/levels, 4 groups, behaviors, profile ops, cosine similarity, markdown, mutation, blend |
 | mood | 47 | Emotions, decay/blend, triggers, history, classify, baseline derivation, compound effects, tone guides |
 | archetype | 33 | Layers, archetypes, validation, templates, crew composition, merge |
@@ -18,9 +18,11 @@
 | presets | 16 | All 5 presets validated with 15 traits, identity content |
 | spirit | 13 | Passions, inspirations, pains, active count, prompt composition, serde |
 | relationship | 22 | Graph CRUD, interactions, decay, allies/rivals, averages, serde |
+| monitor | 15 | Feed, flush, streaming simulation, apply, summary, reset, custom config |
 | ai | 17 | System prompt composition, sentiment feedback, metadata, outcomes |
-| integration | 33 | Cross-module: preset→prompt, sentiment→mood, triggers→history, templates→validation, crew, relationships |
-| **Total** | **386** | |
+| storage | 14 | SQLite CRUD for all types, snapshots, full-agent persistence |
+| integration | 35 | Cross-module: preset→prompt, sentiment→mood, triggers→history, templates→validation, crew, relationships, monitor, store |
+| **Total** | **417** | |
 
 ## Running Tests
 
@@ -48,7 +50,7 @@ make coverage    # generates HTML report in coverage/
 
 ## Benchmarks
 
-63 criterion benchmarks across 12 groups:
+66 criterion benchmarks across 13 groups:
 
 | Group | Count | What it measures |
 |-------|-------|------------------|
@@ -62,6 +64,7 @@ make coverage    # generates HTML report in coverage/
 | relationship | 2 | record_interaction, decay_10 |
 | markdown | 2 | to_markdown, from_markdown |
 | ai | 5 | compose_system_prompt, minimal, sentiment_feedback, metadata, outcome |
+| monitor | 3 | feed_sentence, feed_and_apply, streaming_10_tokens |
 | serde | 6 | personality/mood/emotional_state serialize + deserialize |
 
 ```bash
