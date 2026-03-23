@@ -45,6 +45,7 @@ impl Default for AiConfig {
 /// 2. Personality disposition (trait behavioral instructions)
 /// 3. Current mood state + tone guide (if `inject_mood` is true)
 /// 4. Spirit content (if provided)
+#[must_use]
 pub fn compose_system_prompt(
     profile: &PersonalityProfile,
     identity: &IdentityContent,
@@ -116,6 +117,7 @@ pub struct PersonalityMetadata {
 }
 
 /// Build personality metadata for agent registration.
+#[must_use]
 pub fn build_personality_metadata(
     profile: &PersonalityProfile,
     mood: Option<&EmotionalState>,

@@ -55,6 +55,7 @@ pub struct Relationship {
 
 impl Relationship {
     /// Create a new neutral relationship.
+    #[must_use]
     pub fn new(source: impl Into<String>, target: impl Into<String>) -> Self {
         Self {
             source: source.into(),
@@ -103,6 +104,7 @@ pub struct RelationshipGraph {
 
 impl RelationshipGraph {
     /// Create an empty graph.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }

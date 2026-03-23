@@ -10,16 +10,20 @@ Bhava is a personality and emotional state library for AI agents and game NPCs. 
 |------|------|------------|
 | Personality prompt composition | Prompt injection via trait/identity content | Consumer responsibility; bhava composes, caller validates |
 | Mood vector values | Out-of-range f32 values | Clamped to [-1.0, 1.0] on set |
-| Sentiment keyword matching | Adversarial input | No-alloc keyword scan; bounded lexicons |
+| Sentiment keyword matching | Adversarial input | No-alloc keyword scan; bounded static lexicons |
 | Serde deserialization | Crafted JSON | Enum validation via serde derive |
-| AI client (opt-in) | Network I/O | Feature-gated; not compiled by default |
+| AI prompt composition (opt-in) | System prompt injection | Feature-gated; caller controls identity/spirit content |
+| Sentiment feedback loop (opt-in) | Mood manipulation via crafted responses | Scale parameter (0.0-1.0) limits feedback strength |
+| Relationship graph | Unbounded growth | Consumer responsibility; bhava provides in-memory graph |
+| Markdown deserialization | Malformed input | Unknown traits/levels default to Balanced; missing name returns None |
 | Decay computation | Time-based overflow | Chrono duration with safe arithmetic |
 
 ## Supported Versions
 
 | Version | Supported |
 |---------|-----------|
-| 0.1.x | Yes |
+| 0.22.x | Yes |
+| < 0.22 | No |
 | < 0.1 | No |
 
 ## Reporting

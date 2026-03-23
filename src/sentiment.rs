@@ -282,11 +282,13 @@ impl SentimentLexicon {
 ///
 /// This is a fast, local, zero-network analysis with negation handling and
 /// intensity modifiers. For deeper analysis, use the `ai` feature.
+#[must_use]
 pub fn analyze(text: &str) -> SentimentResult {
     analyze_with_config(text, &SentimentConfig::default())
 }
 
 /// Analyze sentiment with a custom configuration.
+#[must_use]
 pub fn analyze_with_config(text: &str, config: &SentimentConfig) -> SentimentResult {
     let lower = text.to_lowercase();
     analyze_fragment(&lower, config)
@@ -391,11 +393,13 @@ fn analyze_fragment(lower: &str, config: &SentimentConfig) -> SentimentResult {
 ///
 /// Splits on sentence-ending punctuation (`.`, `!`, `?`) and analyzes each
 /// sentence independently. Returns per-sentence results plus an aggregate.
+#[must_use]
 pub fn analyze_sentences(text: &str) -> DocumentResult {
     analyze_sentences_with_config(text, &SentimentConfig::default())
 }
 
 /// Analyze text at the sentence level with a custom configuration.
+#[must_use]
 pub fn analyze_sentences_with_config(text: &str, config: &SentimentConfig) -> DocumentResult {
     let lower = text.to_lowercase();
 

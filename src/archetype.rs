@@ -210,6 +210,7 @@ impl IdentityContent {
 ///
 /// This is the "In Our Image" opening that establishes the agent's
 /// place in the archetype hierarchy.
+#[must_use]
 pub fn compose_preamble() -> String {
     use std::fmt::Write;
     let mut s = String::with_capacity(512);
@@ -226,6 +227,7 @@ pub fn compose_preamble() -> String {
 }
 
 /// Compose a full identity prompt from archetype preamble + layer content.
+#[must_use]
 pub fn compose_identity_prompt(content: &IdentityContent) -> String {
     use std::fmt::Write;
     let mut prompt = compose_preamble();
@@ -426,11 +428,13 @@ pub fn template_guardian() -> ArchetypeTemplate {
 }
 
 /// List all available template names.
+#[must_use]
 pub fn list_templates() -> &'static [&'static str] {
     &["assistant", "expert", "creative", "guardian"]
 }
 
 /// Get a template by name.
+#[must_use]
 pub fn get_template(name: &str) -> Option<ArchetypeTemplate> {
     match name {
         "assistant" => Some(template_assistant()),
@@ -455,6 +459,7 @@ pub struct CrewMember {
 /// Compose a crew prompt that introduces multiple agents and their roles.
 ///
 /// Generates a preamble followed by each agent's identity layers.
+#[must_use]
 pub fn compose_crew_prompt(members: &[CrewMember]) -> String {
     use std::fmt::Write;
     let mut prompt = compose_preamble();

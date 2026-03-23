@@ -4,30 +4,34 @@
 
 ```
 bhava
-├── traits       — PersonalityProfile, TraitKind (11), TraitLevel (5), behavioral instructions   [feature: traits]
-├── mood         — MoodVector (6D), EmotionalState, time-based exponential decay                  [feature: mood]
-├── archetype    — CosmicArchetype, IdentityLayer (5), IdentityContent, prompt composition        [feature: archetype]
-├── sentiment    — SentimentResult, keyword-based valence/emotion detection                       [feature: sentiment]
-├── presets      — 5 built-in personalities (BlueShirtGuy, T.Ron, Friday, Oracle, Scout)          [feature: presets]
-├── ai           — DaimonClient, HooshConfig (daimon/hoosh integration)                           [feature: ai]
-└── error        — BhavaError (7 variants, #[non_exhaustive])                                    [always]
+├── traits       — PersonalityProfile, TraitKind (15), TraitLevel (5), 4 groups, cosine similarity  [feature: traits]
+├── mood         — MoodVector (6D), EmotionalState, decay, triggers, history, baseline derivation   [feature: mood]
+├── archetype    — IdentityLayer (5), IdentityContent, templates, validation, crew composition      [feature: archetype]
+├── sentiment    — SentimentResult, negation, intensity modifiers, sentence-level analysis           [feature: sentiment]
+├── presets      — 5 built-in personalities (BlueShirtGuy, T.Ron, Friday, Oracle, Scout)            [feature: presets]
+├── spirit       — Spirit (passions, inspirations, pains) with prompt composition                    [feature: archetype]
+├── relationship — RelationshipGraph, affinity, trust, interaction tracking, decay                   [feature: mood]
+├── ai           — System prompt composition, sentiment feedback, agent metadata                     [feature: ai]
+└── error        — BhavaError (8 variants, #[non_exhaustive])                                      [always]
 ```
 
 ## Feature Flags
 
 | Feature | Default | Dependencies | Description |
 |---------|---------|--------------|-------------|
-| `traits` | yes | — | Personality trait spectrums and behavioral instruction mapping |
-| `mood` | yes | — | Emotional state vectors with time-based decay |
-| `archetype` | yes | — | Identity hierarchy and prompt composition |
-| `sentiment` | yes | — | Keyword-based sentiment analysis |
+| `traits` | yes | — | 15-dimension personality spectrums with behavioral instructions |
+| `mood` | yes | — | Emotional state vectors with decay, triggers, history, baselines |
+| `archetype` | yes | — | Identity hierarchy, templates, validation, spirit, crew composition |
+| `sentiment` | yes | — | Sentiment analysis with negation, intensity, configurable lexicons |
 | `presets` | no | traits, archetype | Built-in personality templates |
-| `ai` | no | reqwest, tokio, serde_json | Daimon/hoosh network integration |
+| `ai` | no | traits, mood, archetype, sentiment, reqwest, tokio, serde_json | Prompt composition, sentiment feedback, metadata |
 | `full` | — | all of the above | Enable everything |
 
 ## Design Principles
 
-- **Deterministic output**: Prompt composition iterates traits in fixed `TraitKind::ALL` order, not HashMap iteration order
+- **Deterministic output**: Prompt composition iterates traits in fixed `TraitKind::ALL` order via `[TraitLevel; 15]` array
+- **Cosine similarity**: Compatibility scoring measures behavioral pattern direction, not magnitude
+- **`#[must_use]`**: 37 pure functions annotated to prevent accidental value drops
 - **Zero network I/O in core**: All core modules are pure computation; network deps are behind the `ai` feature flag
 - **Clamped values**: Mood dimensions are always clamped to [-1.0, 1.0]; decay factors to [0.0, 1.0]
 - **Minimal allocations**: Prompt builders use `write!`/`writeln!` directly into Strings; static slices where possible

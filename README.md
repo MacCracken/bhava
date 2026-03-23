@@ -8,12 +8,12 @@ Shared personality and emotional state system for AI agents, game NPCs, and any 
 
 | Feature | Default | Description |
 |---------|---------|-------------|
-| `traits` | yes | Personality trait spectrums (11 dimensions, 5 levels each) |
-| `mood` | yes | Emotional state vectors (PAD model + extensions) with time-based decay |
-| `archetype` | yes | Identity hierarchy (Soul/Spirit/Brain/Body/Heart) |
-| `sentiment` | yes | Basic keyword-based sentiment analysis |
-| `presets` | no | Built-in personality templates (BlueShirtGuy, T.Ron, Friday, etc.) |
-| `ai` | no | Daimon/hoosh integration (network deps) |
+| `traits` | yes | 15-dimension personality spectrums with behavioral instructions |
+| `mood` | yes | PAD emotional state vectors with decay, triggers, history, baselines |
+| `archetype` | yes | Identity hierarchy (Soul/Spirit/Brain/Body/Heart) with templates and validation |
+| `sentiment` | yes | Keyword-based analysis with negation, intensity modifiers, sentence-level |
+| `presets` | no | Built-in personalities (BlueShirtGuy, T.Ron, Friday, Oracle, Scout) |
+| `ai` | no | Prompt composition, sentiment feedback, agent metadata (activates all core features) |
 
 ## Quick Start
 

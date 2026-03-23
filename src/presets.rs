@@ -14,6 +14,7 @@ pub struct PersonalityPreset {
 }
 
 /// Get a preset by ID.
+#[must_use]
 pub fn get_preset(id: &str) -> Option<PersonalityPreset> {
     match id {
         "blue-shirt-guy" => Some(blue_shirt_guy()),
@@ -26,6 +27,7 @@ pub fn get_preset(id: &str) -> Option<PersonalityPreset> {
 }
 
 /// List all available preset IDs.
+#[must_use]
 pub fn list_presets() -> &'static [&'static str] {
     &["blue-shirt-guy", "t-ron", "friday", "oracle", "scout"]
 }

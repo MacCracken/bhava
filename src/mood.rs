@@ -68,6 +68,7 @@ pub struct MoodVector {
 
 impl MoodVector {
     /// Neutral mood — all dimensions at 0.
+    #[must_use]
     pub fn neutral() -> Self {
         Self {
             joy: 0.0,
@@ -113,6 +114,7 @@ impl MoodVector {
     }
 
     /// Magnitude of the mood vector (distance from neutral).
+    #[must_use]
     pub fn intensity(&self) -> f32 {
         let sum = self.joy * self.joy
             + self.arousal * self.arousal
@@ -124,6 +126,7 @@ impl MoodVector {
     }
 
     /// Dominant emotion (highest absolute value).
+    #[must_use]
     pub fn dominant_emotion(&self) -> Emotion {
         let mut best = Emotion::Joy;
         let mut best_val = 0.0f32;
@@ -149,6 +152,7 @@ impl MoodVector {
     }
 
     /// Blend with another mood vector (linear interpolation).
+    #[must_use]
     pub fn blend(&self, other: &MoodVector, t: f32) -> MoodVector {
         let t = t.clamp(0.0, 1.0);
         MoodVector {
@@ -177,6 +181,7 @@ pub struct EmotionalState {
 
 impl EmotionalState {
     /// Create with neutral baseline and default decay (5 minutes).
+    #[must_use]
     pub fn new() -> Self {
         Self {
             mood: MoodVector::neutral(),
@@ -187,6 +192,7 @@ impl EmotionalState {
     }
 
     /// Create with a custom baseline.
+    #[must_use]
     pub fn with_baseline(baseline: MoodVector) -> Self {
         Self {
             mood: baseline.clone(),
@@ -197,6 +203,9 @@ impl EmotionalState {
     }
 
     /// Set decay half-life.
+    ///
+    /// # Errors
+    /// Returns `BhavaError::InvalidDecayRate` if `secs` is zero or negative.
     pub fn set_decay_half_life(&mut self, secs: f64) -> Result<()> {
         if secs <= 0.0 {
             return Err(BhavaError::InvalidDecayRate { rate: secs as f32 });
@@ -226,6 +235,7 @@ impl EmotionalState {
     }
 
     /// Current mood intensity (distance from baseline).
+    #[must_use]
     pub fn deviation(&self) -> f32 {
         let dj = self.mood.joy - self.baseline.joy;
         let da = self.mood.arousal - self.baseline.arousal;
@@ -237,6 +247,7 @@ impl EmotionalState {
     }
 
     /// Classify the current mood into a named emotional state.
+    #[must_use]
     pub fn classify(&self) -> MoodState {
         let intensity = self.mood.intensity();
         let dominant = self.mood.dominant_emotion();
@@ -278,6 +289,7 @@ impl EmotionalState {
     // --- Mood History (v0.3) ---
 
     /// Take a snapshot of the current mood with a timestamp.
+    #[must_use]
     pub fn snapshot(&self) -> MoodSnapshot {
         MoodSnapshot {
             mood: self.mood.clone(),
@@ -647,6 +659,7 @@ fn trait_mood_modifier(
 /// Returns a `MoodVector` with `joy` set to the derived valence and `arousal`
 /// set to the derived arousal. Other dimensions are zero.
 #[cfg(feature = "traits")]
+#[must_use]
 pub fn derive_mood_baseline(profile: &crate::traits::PersonalityProfile) -> MoodVector {
     use crate::traits::TraitKind;
 
@@ -738,6 +751,7 @@ fn compute_compound_effects(profile: &crate::traits::PersonalityProfile) -> (f32
 ///
 /// These are short behavioral instructions that can be injected into LLM
 /// system prompts to color the agent's communication style based on current mood.
+#[must_use]
 pub fn mood_tone_guide(state: MoodState) -> &'static str {
     match state {
         MoodState::Euphoric => {
@@ -766,6 +780,7 @@ pub fn mood_tone_guide(state: MoodState) -> &'static str {
 /// Compose a mood prompt fragment for injection into a system prompt.
 ///
 /// Combines the current mood label with its tone guide.
+#[must_use]
 pub fn compose_mood_prompt(state: &EmotionalState) -> String {
     let mood_state = state.classify();
     let guide = mood_tone_guide(mood_state);

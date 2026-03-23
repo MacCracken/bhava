@@ -1,17 +1,34 @@
 # Changelog
 
-## [0.5.0] - 2026-03-22
+## [0.22.3] - 2026-03-23
 
 ### Added
-- archetype: `ValidationRules` with `required_layers`, `max_layer_length`, `min_layer_length`; `ValidationRules::strict()` preset (Soul+Spirit, 10-2000 chars)
-- archetype: `IdentityContent::validate()` and `is_valid()` — returns typed `ValidationError` variants (MissingRequired, TooLong, TooShort)
-- archetype: `IdentityContent::clear()` — remove content for a layer
-- archetype: `IdentityContent::merge()` — combine two identities with separator for overlapping layers
-- archetype: 4 archetype templates: `template_assistant()` (2 layers), `template_expert()` (3), `template_creative()` (4), `template_guardian()` (5)
-- archetype: `ArchetypeTemplate` with `apply()` to produce `IdentityContent`; `list_templates()`, `get_template()`
+- archetype: `ValidationRules` with `required_layers`, `max_layer_length`, `min_layer_length`; `ValidationRules::strict()` preset
+- archetype: `IdentityContent::validate()`, `is_valid()`, `clear()`, `merge()`
+- archetype: 4 templates (assistant, expert, creative, guardian); `ArchetypeTemplate`, `list_templates()`, `get_template()`
 - archetype: `CrewMember` struct and `compose_crew_prompt()` for multi-agent identity composition
-- 22 new tests for v0.5 features (298 total)
-- 3 new benchmarks: validate, template_apply, crew_prompt_3 (48 total)
+- ai: Complete rewrite — `compose_system_prompt()` builds full prompts from personality + identity + mood + spirit
+- ai: `apply_sentiment_feedback()` — sentiment feedback loop with configurable scale
+- ai: `build_personality_metadata()` — structured metadata for agent registration
+- ai: `feedback_from_outcome()` with `InteractionOutcome` enum; `AiConfig`, `PersonalityMetadata` types
+- traits: 4 new traits from SecureYeoman — Skepticism, Autonomy, Pedagogy, Precision (15 total)
+- traits: `TraitGroup::Professional` (autonomy, pedagogy, precision)
+- traits: `PersonalityProfile::to_markdown()` / `from_markdown()` — portable markdown serialization
+- traits: Cosine similarity for `compatibility()` and `group_compatibility()`
+- mood: `derive_mood_baseline()` — derive emotional baseline from 15-trait profile
+- mood: 7 compound trait effects (playful, nurturing, mentoring, driven, guarded, anxious, investigative)
+- mood: `mood_tone_guide()` — 12 mood states → prompt injection text; `compose_mood_prompt()`
+- spirit: New module — `Spirit` with passions, inspirations, pains, and prompt composition
+- relationship: New module — `RelationshipGraph` with affinity, trust, interaction tracking, decay
+- `#[must_use]` on 37 pure functions across all modules
+- `# Errors` doc sections on Result-returning functions
+- 386 tests (353 unit + 33 integration), 63 benchmarks across 12 groups
+
+### Changed
+- ai: Replaced stub daimon client with real personality-aware prompt building and sentiment feedback
+- ai feature now activates traits, mood, archetype, sentiment features automatically
+- traits: `compatibility()` uses cosine similarity (pattern direction, not magnitude distance)
+- Presets updated with new traits matching SY configurations
 
 ## [0.4.0] - 2026-03-22
 

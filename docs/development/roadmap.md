@@ -37,11 +37,23 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 - Stable public API for PersonalityProfile, EmotionalState, SentimentResult, IdentityContent
 - Comprehensive documentation on docs.rs
+- `#[must_use]` on pure functions
+- `# Errors` sections on Result-returning functions
 - No breaking changes within 1.x
-- Published to crates.io
 
-## AI Integration (ai feature)
+## AI Integration (ai feature) (done)
 
 - Agent registration with personality metadata
 - Mood-aware prompt injection (dynamic system prompt sections based on current state)
 - Sentiment feedback loop (analyze agent output → adjust mood)
+
+## SY Parity (done)
+
+- 15-trait personality system (4 new: skepticism, autonomy, pedagogy, precision)
+- Professional trait group
+- Trait-to-mood baseline derivation with compound effects
+- Mood tone guides for prompt injection
+- Spirit module (passions, inspirations, pains)
+- Relationship graph (affinity, trust, interaction tracking, decay)
+- Personality markdown serialization (portable export/import)
+- Cosine similarity for compatibility scoring

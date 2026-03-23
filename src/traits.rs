@@ -269,6 +269,7 @@ impl TraitLevel {
     }
 
     /// Snap a normalized float (-1.0..=1.0) to the nearest trait level.
+    #[must_use]
     pub fn from_normalized(v: f32) -> Self {
         let n = (v * 2.0).round() as i8;
         match n.clamp(-2, 2) {
@@ -281,6 +282,9 @@ impl TraitLevel {
     }
 
     /// Parse from numeric value.
+    ///
+    /// # Errors
+    /// Returns `BhavaError::InvalidConfig` if `n` is outside -2..=2.
     pub fn from_numeric(n: i8) -> Result<Self> {
         match n {
             -2 => Ok(Self::Lowest),
@@ -671,6 +675,7 @@ impl PersonalityProfile {
     }
 
     /// Get all non-balanced traits, in deterministic trait-kind order.
+    #[must_use]
     pub fn active_traits(&self) -> Vec<TraitValue> {
         TraitKind::ALL
             .iter()
@@ -685,6 +690,7 @@ impl PersonalityProfile {
     /// Generate behavioral instructions for this personality.
     ///
     /// Returns instructions in deterministic trait-kind order.
+    #[must_use]
     pub fn behavioral_instructions(&self) -> Vec<&'static str> {
         TraitKind::ALL
             .iter()
@@ -693,6 +699,7 @@ impl PersonalityProfile {
     }
 
     /// Compose a system prompt preamble from this personality's traits.
+    #[must_use]
     pub fn compose_prompt(&self) -> String {
         let instructions = self.behavioral_instructions();
         if instructions.is_empty() {
@@ -714,6 +721,7 @@ impl PersonalityProfile {
     }
 
     /// Distance between two profiles (Euclidean in trait space).
+    #[must_use]
     pub fn distance(&self, other: &PersonalityProfile) -> f32 {
         let sum_sq: f32 = TraitKind::ALL
             .iter()
@@ -738,6 +746,7 @@ impl PersonalityProfile {
     /// Get the average normalized value for a trait group.
     ///
     /// Returns a value from -1.0 (all Lowest) to 1.0 (all Highest).
+    #[must_use]
     pub fn group_average(&self, group: TraitGroup) -> f32 {
         let traits = group.traits();
         let sum: f32 = traits.iter().map(|&k| self.get_trait(k).normalized()).sum();
@@ -753,6 +762,7 @@ impl PersonalityProfile {
     /// capturing behavioral pattern similarity regardless of intensity differences.
     ///
     /// For two all-Balanced profiles (zero vectors), returns 1.0 by convention.
+    #[must_use]
     pub fn compatibility(&self, other: &PersonalityProfile) -> f32 {
         cosine_similarity(
             TraitKind::ALL
@@ -765,6 +775,7 @@ impl PersonalityProfile {
     }
 
     /// Compatibility score restricted to a specific trait group.
+    #[must_use]
     pub fn group_compatibility(&self, other: &PersonalityProfile, group: TraitGroup) -> f32 {
         let traits = group.traits();
         cosine_similarity(
@@ -779,6 +790,7 @@ impl PersonalityProfile {
     ///
     /// `t` controls the mix: 0.0 = fully `self`, 1.0 = fully `other`.
     /// Trait levels are interpolated in normalized space and snapped to the nearest level.
+    #[must_use]
     pub fn blend(&self, other: &PersonalityProfile, t: f32) -> PersonalityProfile {
         let t = t.clamp(0.0, 1.0);
         let mut result = PersonalityProfile::new(format!("{}+{}", self.name, other.name));
@@ -835,6 +847,7 @@ impl PersonalityProfile {
     // --- Serialization (SY parity) ---
 
     /// Export personality to a portable markdown format.
+    #[must_use]
     pub fn to_markdown(&self) -> String {
         use std::fmt::Write;
         let mut md = String::with_capacity(512);
@@ -857,6 +870,7 @@ impl PersonalityProfile {
     ///
     /// Expects the format produced by `to_markdown()`. Unrecognized traits
     /// default to Balanced. Returns None if the name line is missing.
+    #[must_use]
     pub fn from_markdown(md: &str) -> Option<Self> {
         let mut lines = md.lines();
 
