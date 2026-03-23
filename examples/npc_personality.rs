@@ -22,5 +22,9 @@ fn main() {
 
     // Analyze some text
     let result = bhava::sentiment::analyze("This is wonderful! I love helping people!");
-    println!("\nSentiment: valence={:.2}, positive={}", result.valence, result.is_positive());
+    println!(
+        "\nSentiment: valence={:.2}, positive={}",
+        result.valence,
+        result.is_positive()
+    );
 }

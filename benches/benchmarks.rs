@@ -1,7 +1,7 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
 fn bench_trait_behavior(c: &mut Criterion) {
-    use bhava::traits::{trait_behavior, TraitKind, TraitLevel};
+    use bhava::traits::{TraitKind, TraitLevel, trait_behavior};
     c.bench_function("trait_behavior_lookup", |b| {
         b.iter(|| trait_behavior(black_box(TraitKind::Humor), black_box(TraitLevel::Highest)))
     });
@@ -19,7 +19,7 @@ fn bench_personality_prompt(c: &mut Criterion) {
 }
 
 fn bench_mood_operations(c: &mut Criterion) {
-    use bhava::mood::{EmotionalState, Emotion, MoodVector};
+    use bhava::mood::{Emotion, EmotionalState, MoodVector};
     let mut group = c.benchmark_group("mood");
     group.bench_function("stimulate", |b| {
         let mut s = EmotionalState::new();
@@ -47,7 +47,11 @@ fn bench_sentiment(c: &mut Criterion) {
         b.iter(|| sentiment::analyze(black_box("This is great!")))
     });
     group.bench_function("negative_medium", |b| {
-        b.iter(|| sentiment::analyze(black_box("This is terrible and broken, I hate it and it's useless.")))
+        b.iter(|| {
+            sentiment::analyze(black_box(
+                "This is terrible and broken, I hate it and it's useless.",
+            ))
+        })
     });
     group.bench_function("neutral_long", |b| {
         b.iter(|| sentiment::analyze(black_box(
@@ -59,7 +63,7 @@ fn bench_sentiment(c: &mut Criterion) {
 
 fn bench_archetype(c: &mut Criterion) {
     c.bench_function("compose_preamble", |b| {
-        b.iter(|| bhava::archetype::compose_preamble())
+        b.iter(bhava::archetype::compose_preamble)
     });
 }
 

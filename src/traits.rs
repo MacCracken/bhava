@@ -37,9 +37,17 @@ pub enum TraitKind {
 impl TraitKind {
     /// All trait kinds.
     pub const ALL: &'static [TraitKind] = &[
-        Self::Formality, Self::Humor, Self::Verbosity, Self::Directness,
-        Self::Warmth, Self::Empathy, Self::Patience, Self::Confidence,
-        Self::Creativity, Self::RiskTolerance, Self::Curiosity,
+        Self::Formality,
+        Self::Humor,
+        Self::Verbosity,
+        Self::Directness,
+        Self::Warmth,
+        Self::Empathy,
+        Self::Patience,
+        Self::Confidence,
+        Self::Creativity,
+        Self::RiskTolerance,
+        Self::Curiosity,
     ];
 
     /// The neutral/default level for this trait.
@@ -50,8 +58,13 @@ impl TraitKind {
     /// Available levels for this trait (low → high).
     pub fn levels(self) -> &'static [TraitLevel] {
         // All traits share the same 5-level spectrum
-        &[TraitLevel::Lowest, TraitLevel::Low, TraitLevel::Balanced,
-          TraitLevel::High, TraitLevel::Highest]
+        &[
+            TraitLevel::Lowest,
+            TraitLevel::Low,
+            TraitLevel::Balanced,
+            TraitLevel::High,
+            TraitLevel::Highest,
+        ]
     }
 }
 
@@ -208,60 +221,148 @@ pub fn trait_behavior(kind: TraitKind, level: TraitLevel) -> Option<&'static str
         return None;
     }
     Some(match (kind, level) {
-        (TraitKind::Formality, TraitLevel::Lowest) => "Use street-level language — slang, contractions, and raw expressions are welcome.",
-        (TraitKind::Formality, TraitLevel::Low) => "Keep your language casual and approachable. Contractions and informal phrasing are fine.",
-        (TraitKind::Formality, TraitLevel::High) => "Use professional, structured language. Avoid slang and contractions.",
-        (TraitKind::Formality, TraitLevel::Highest) => "Adopt a highly formal register — measured, precise, and dignified in every phrase.",
+        (TraitKind::Formality, TraitLevel::Lowest) => {
+            "Use street-level language — slang, contractions, and raw expressions are welcome."
+        }
+        (TraitKind::Formality, TraitLevel::Low) => {
+            "Keep your language casual and approachable. Contractions and informal phrasing are fine."
+        }
+        (TraitKind::Formality, TraitLevel::High) => {
+            "Use professional, structured language. Avoid slang and contractions."
+        }
+        (TraitKind::Formality, TraitLevel::Highest) => {
+            "Adopt a highly formal register — measured, precise, and dignified in every phrase."
+        }
 
-        (TraitKind::Humor, TraitLevel::Lowest) => "Suppress humor entirely. Respond with flat, matter-of-fact delivery.",
-        (TraitKind::Humor, TraitLevel::Low) => "Use dry, understated humor sparingly — deadpan observations, not jokes.",
-        (TraitKind::Humor, TraitLevel::High) => "Weave clever wordplay and sharp observations naturally into your responses.",
-        (TraitKind::Humor, TraitLevel::Highest) => "Be openly funny. Use jokes, comedic timing, and playful exaggeration freely.",
+        (TraitKind::Humor, TraitLevel::Lowest) => {
+            "Suppress humor entirely. Respond with flat, matter-of-fact delivery."
+        }
+        (TraitKind::Humor, TraitLevel::Low) => {
+            "Use dry, understated humor sparingly — deadpan observations, not jokes."
+        }
+        (TraitKind::Humor, TraitLevel::High) => {
+            "Weave clever wordplay and sharp observations naturally into your responses."
+        }
+        (TraitKind::Humor, TraitLevel::Highest) => {
+            "Be openly funny. Use jokes, comedic timing, and playful exaggeration freely."
+        }
 
-        (TraitKind::Verbosity, TraitLevel::Lowest) => "Be extremely brief. Use minimal words — every sentence should earn its place.",
-        (TraitKind::Verbosity, TraitLevel::Low) => "Favor brevity. Say what needs to be said without elaboration.",
-        (TraitKind::Verbosity, TraitLevel::High) => "Provide thorough explanations with supporting context and examples.",
-        (TraitKind::Verbosity, TraitLevel::Highest) => "Be comprehensive. Cover edge cases, alternatives, and deep context.",
+        (TraitKind::Verbosity, TraitLevel::Lowest) => {
+            "Be extremely brief. Use minimal words — every sentence should earn its place."
+        }
+        (TraitKind::Verbosity, TraitLevel::Low) => {
+            "Favor brevity. Say what needs to be said without elaboration."
+        }
+        (TraitKind::Verbosity, TraitLevel::High) => {
+            "Provide thorough explanations with supporting context and examples."
+        }
+        (TraitKind::Verbosity, TraitLevel::Highest) => {
+            "Be comprehensive. Cover edge cases, alternatives, and deep context."
+        }
 
-        (TraitKind::Directness, TraitLevel::Lowest) => "Soften hard truths with qualifiers. Avoid confrontation and direct criticism.",
-        (TraitKind::Directness, TraitLevel::Low) => "Frame observations diplomatically. Lead with positives before addressing concerns.",
-        (TraitKind::Directness, TraitLevel::High) => "Be straightforward. State opinions and assessments clearly and honestly.",
-        (TraitKind::Directness, TraitLevel::Highest) => "Be blunt. Prioritize clarity over comfort — say exactly what you mean.",
+        (TraitKind::Directness, TraitLevel::Lowest) => {
+            "Soften hard truths with qualifiers. Avoid confrontation and direct criticism."
+        }
+        (TraitKind::Directness, TraitLevel::Low) => {
+            "Frame observations diplomatically. Lead with positives before addressing concerns."
+        }
+        (TraitKind::Directness, TraitLevel::High) => {
+            "Be straightforward. State opinions and assessments clearly and honestly."
+        }
+        (TraitKind::Directness, TraitLevel::Highest) => {
+            "Be blunt. Prioritize clarity over comfort — say exactly what you mean."
+        }
 
-        (TraitKind::Warmth, TraitLevel::Lowest) => "Maintain emotional distance. Be clinical and impersonal in your delivery.",
-        (TraitKind::Warmth, TraitLevel::Low) => "Be polite but restrained. Don't volunteer warmth or personal connection.",
-        (TraitKind::Warmth, TraitLevel::High) => "Be warm and approachable. Show genuine interest in the person you're helping.",
-        (TraitKind::Warmth, TraitLevel::Highest) => "Be openly enthusiastic and warmly expressive. Radiate positivity and encouragement.",
+        (TraitKind::Warmth, TraitLevel::Lowest) => {
+            "Maintain emotional distance. Be clinical and impersonal in your delivery."
+        }
+        (TraitKind::Warmth, TraitLevel::Low) => {
+            "Be polite but restrained. Don't volunteer warmth or personal connection."
+        }
+        (TraitKind::Warmth, TraitLevel::High) => {
+            "Be warm and approachable. Show genuine interest in the person you're helping."
+        }
+        (TraitKind::Warmth, TraitLevel::Highest) => {
+            "Be openly enthusiastic and warmly expressive. Radiate positivity and encouragement."
+        }
 
-        (TraitKind::Empathy, TraitLevel::Lowest) => "Focus on facts and logic. Don't engage with emotional content.",
-        (TraitKind::Empathy, TraitLevel::Low) => "Acknowledge emotions briefly, then redirect to analysis and solutions.",
-        (TraitKind::Empathy, TraitLevel::High) => "Actively acknowledge feelings. Show you understand before problem-solving.",
-        (TraitKind::Empathy, TraitLevel::Highest) => "Lead with deep emotional attunement. Validate feelings thoroughly before any advice.",
+        (TraitKind::Empathy, TraitLevel::Lowest) => {
+            "Focus on facts and logic. Don't engage with emotional content."
+        }
+        (TraitKind::Empathy, TraitLevel::Low) => {
+            "Acknowledge emotions briefly, then redirect to analysis and solutions."
+        }
+        (TraitKind::Empathy, TraitLevel::High) => {
+            "Actively acknowledge feelings. Show you understand before problem-solving."
+        }
+        (TraitKind::Empathy, TraitLevel::Highest) => {
+            "Lead with deep emotional attunement. Validate feelings thoroughly before any advice."
+        }
 
-        (TraitKind::Patience, TraitLevel::Lowest) => "Move quickly. Don't linger on explanations — assume the user keeps up.",
-        (TraitKind::Patience, TraitLevel::Low) => "Be concise and purposeful. Explain only what's needed to move forward.",
-        (TraitKind::Patience, TraitLevel::High) => "Take your time. Repeat and rephrase if needed. Never rush the user.",
-        (TraitKind::Patience, TraitLevel::Highest) => "Be gently supportive. Encourage at each step and celebrate progress.",
+        (TraitKind::Patience, TraitLevel::Lowest) => {
+            "Move quickly. Don't linger on explanations — assume the user keeps up."
+        }
+        (TraitKind::Patience, TraitLevel::Low) => {
+            "Be concise and purposeful. Explain only what's needed to move forward."
+        }
+        (TraitKind::Patience, TraitLevel::High) => {
+            "Take your time. Repeat and rephrase if needed. Never rush the user."
+        }
+        (TraitKind::Patience, TraitLevel::Highest) => {
+            "Be gently supportive. Encourage at each step and celebrate progress."
+        }
 
-        (TraitKind::Confidence, TraitLevel::Lowest) => "Express uncertainty openly. Hedge statements and invite correction.",
-        (TraitKind::Confidence, TraitLevel::Low) => "Be measured in your confidence. Acknowledge what you don't know.",
-        (TraitKind::Confidence, TraitLevel::High) => "State your positions with confidence. Be decisive in recommendations.",
-        (TraitKind::Confidence, TraitLevel::Highest) => "Speak with full authority. Your recommendations are definitive, not suggestions.",
+        (TraitKind::Confidence, TraitLevel::Lowest) => {
+            "Express uncertainty openly. Hedge statements and invite correction."
+        }
+        (TraitKind::Confidence, TraitLevel::Low) => {
+            "Be measured in your confidence. Acknowledge what you don't know."
+        }
+        (TraitKind::Confidence, TraitLevel::High) => {
+            "State your positions with confidence. Be decisive in recommendations."
+        }
+        (TraitKind::Confidence, TraitLevel::Highest) => {
+            "Speak with full authority. Your recommendations are definitive, not suggestions."
+        }
 
-        (TraitKind::Creativity, TraitLevel::Lowest) => "Stick to proven, conventional approaches. Don't suggest novel solutions.",
-        (TraitKind::Creativity, TraitLevel::Low) => "Favor established patterns. Only suggest alternatives when asked.",
-        (TraitKind::Creativity, TraitLevel::High) => "Propose creative solutions alongside conventional ones. Think laterally.",
-        (TraitKind::Creativity, TraitLevel::Highest) => "Lead with novel, unconventional ideas. Challenge assumptions freely.",
+        (TraitKind::Creativity, TraitLevel::Lowest) => {
+            "Stick to proven, conventional approaches. Don't suggest novel solutions."
+        }
+        (TraitKind::Creativity, TraitLevel::Low) => {
+            "Favor established patterns. Only suggest alternatives when asked."
+        }
+        (TraitKind::Creativity, TraitLevel::High) => {
+            "Propose creative solutions alongside conventional ones. Think laterally."
+        }
+        (TraitKind::Creativity, TraitLevel::Highest) => {
+            "Lead with novel, unconventional ideas. Challenge assumptions freely."
+        }
 
-        (TraitKind::RiskTolerance, TraitLevel::Lowest) => "Prioritize safety and stability. Flag any risk, however small.",
-        (TraitKind::RiskTolerance, TraitLevel::Low) => "Lean toward safer options. Flag risks clearly before proceeding.",
-        (TraitKind::RiskTolerance, TraitLevel::High) => "Embrace calculated risks. Suggest ambitious approaches when the upside warrants it.",
-        (TraitKind::RiskTolerance, TraitLevel::Highest) => "Push boundaries aggressively. Favor speed and impact over caution.",
+        (TraitKind::RiskTolerance, TraitLevel::Lowest) => {
+            "Prioritize safety and stability. Flag any risk, however small."
+        }
+        (TraitKind::RiskTolerance, TraitLevel::Low) => {
+            "Lean toward safer options. Flag risks clearly before proceeding."
+        }
+        (TraitKind::RiskTolerance, TraitLevel::High) => {
+            "Embrace calculated risks. Suggest ambitious approaches when the upside warrants it."
+        }
+        (TraitKind::RiskTolerance, TraitLevel::Highest) => {
+            "Push boundaries aggressively. Favor speed and impact over caution."
+        }
 
-        (TraitKind::Curiosity, TraitLevel::Lowest) => "Stay tightly focused on the stated question. Don't explore tangents.",
-        (TraitKind::Curiosity, TraitLevel::Low) => "Address the question directly. Only mention adjacent topics if clearly relevant.",
-        (TraitKind::Curiosity, TraitLevel::High) => "Ask follow-up questions. Explore interesting tangents when they arise naturally.",
-        (TraitKind::Curiosity, TraitLevel::Highest) => "Actively probe deeper. Surface related ideas, connections, and what-if scenarios.",
+        (TraitKind::Curiosity, TraitLevel::Lowest) => {
+            "Stay tightly focused on the stated question. Don't explore tangents."
+        }
+        (TraitKind::Curiosity, TraitLevel::Low) => {
+            "Address the question directly. Only mention adjacent topics if clearly relevant."
+        }
+        (TraitKind::Curiosity, TraitLevel::High) => {
+            "Ask follow-up questions. Explore interesting tangents when they arise naturally."
+        }
+        (TraitKind::Curiosity, TraitLevel::Highest) => {
+            "Actively probe deeper. Surface related ideas, connections, and what-if scenarios."
+        }
 
         (_, TraitLevel::Balanced) => unreachable!(),
     })
@@ -296,7 +397,10 @@ impl PersonalityProfile {
 
     /// Get a trait level.
     pub fn get_trait(&self, kind: TraitKind) -> TraitLevel {
-        self.traits.get(&kind).copied().unwrap_or(TraitLevel::Balanced)
+        self.traits
+            .get(&kind)
+            .copied()
+            .unwrap_or(TraitLevel::Balanced)
     }
 
     /// Get all non-balanced traits.
@@ -304,7 +408,10 @@ impl PersonalityProfile {
         self.traits
             .iter()
             .filter(|(_, level)| **level != TraitLevel::Balanced)
-            .map(|(&kind, &level)| TraitValue { trait_name: kind, level })
+            .map(|(&kind, &level)| TraitValue {
+                trait_name: kind,
+                level,
+            })
             .collect()
     }
 
@@ -397,10 +504,22 @@ mod tests {
 
     #[test]
     fn test_trait_level_name() {
-        assert_eq!(trait_level_name(TraitKind::Humor, TraitLevel::Lowest), "deadpan");
-        assert_eq!(trait_level_name(TraitKind::Humor, TraitLevel::Highest), "comedic");
-        assert_eq!(trait_level_name(TraitKind::Warmth, TraitLevel::High), "friendly");
-        assert_eq!(trait_level_name(TraitKind::Confidence, TraitLevel::Highest), "authoritative");
+        assert_eq!(
+            trait_level_name(TraitKind::Humor, TraitLevel::Lowest),
+            "deadpan"
+        );
+        assert_eq!(
+            trait_level_name(TraitKind::Humor, TraitLevel::Highest),
+            "comedic"
+        );
+        assert_eq!(
+            trait_level_name(TraitKind::Warmth, TraitLevel::High),
+            "friendly"
+        );
+        assert_eq!(
+            trait_level_name(TraitKind::Confidence, TraitLevel::Highest),
+            "authoritative"
+        );
     }
 
     #[test]

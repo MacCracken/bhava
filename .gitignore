@@ -1,7 +1,7 @@
 # Build artifacts
 /target/
 
-# Editor/IDE
+# Editor / IDE
 *.swp
 *.swo
 *~
@@ -13,6 +13,19 @@
 .DS_Store
 Thumbs.db
 
-# Environment
+# Debugging
+*.pdb
+core
+core.*
+
+# Coverage
+lcov.info
+tarpaulin-report.html
+coverage/
+
+# Benchmark output
+criterion/
+
+# Secrets
 .env
 .env.*

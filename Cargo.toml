@@ -11,7 +11,7 @@ readme = "README.md"
 documentation = "https://docs.rs/bhava"
 keywords = ["emotion", "personality", "ai", "npc", "agent"]
 categories = ["game-engines", "simulation"]
-exclude = [".claude/", ".github/", "docs/", "scripts/"]
+exclude = [".claude/", ".github/", "bench-history.csv", "benchmarks.md", "docs/", "scripts/"]
 
 [features]
 default = ["traits", "mood", "archetype", "sentiment"]

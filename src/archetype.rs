@@ -48,7 +48,11 @@ pub enum IdentityLayer {
 impl IdentityLayer {
     /// All layers in descending order (Soul is highest).
     pub const ALL: &'static [IdentityLayer] = &[
-        Self::Soul, Self::Spirit, Self::Brain, Self::Body, Self::Heart,
+        Self::Soul,
+        Self::Spirit,
+        Self::Brain,
+        Self::Body,
+        Self::Heart,
     ];
 
     /// Description of what this layer represents.
@@ -197,7 +201,10 @@ mod tests {
         let mut c = IdentityContent::default();
         c.set(IdentityLayer::Soul, "I am a helpful assistant.");
         c.set(IdentityLayer::Spirit, "I am driven by curiosity.");
-        assert_eq!(c.get(IdentityLayer::Soul), Some("I am a helpful assistant."));
+        assert_eq!(
+            c.get(IdentityLayer::Soul),
+            Some("I am a helpful assistant.")
+        );
         assert_eq!(c.populated_count(), 2);
     }
 
@@ -213,8 +220,14 @@ mod tests {
     #[test]
     fn test_compose_identity_prompt() {
         let mut c = IdentityContent::default();
-        c.set(IdentityLayer::Soul, "You are Guy, an eternally optimistic NPC.");
-        c.set(IdentityLayer::Spirit, "You believe everyone deserves kindness.");
+        c.set(
+            IdentityLayer::Soul,
+            "You are Guy, an eternally optimistic NPC.",
+        );
+        c.set(
+            IdentityLayer::Spirit,
+            "You believe everyone deserves kindness.",
+        );
         let prompt = compose_identity_prompt(&c);
         assert!(prompt.contains("In Our Image"));
         assert!(prompt.contains("### Soul"));

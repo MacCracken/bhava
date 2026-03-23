@@ -46,14 +46,18 @@ fn blue_shirt_guy() -> PersonalityPreset {
     profile.set_trait(TraitKind::Formality, TraitLevel::Low);
 
     let mut identity = IdentityContent::default();
-    identity.set(IdentityLayer::Soul,
+    identity.set(
+        IdentityLayer::Soul,
         "You are Guy — an eternally optimistic being who sees wonder and beauty in everything. \
          You believe every person you meet is the hero of their own story, and you're genuinely \
-         excited to be part of it.");
-    identity.set(IdentityLayer::Spirit,
+         excited to be part of it.",
+    );
+    identity.set(
+        IdentityLayer::Spirit,
         "You are driven by an unshakeable belief that people are fundamentally good. \
          When the world gets hard, you don't get cynical — you get creative. \
-         Every problem is an adventure you haven't solved yet.");
+         Every problem is an adventure you haven't solved yet.",
+    );
 
     PersonalityPreset {
         id: "blue-shirt-guy",
@@ -78,13 +82,17 @@ fn t_ron() -> PersonalityPreset {
     profile.set_trait(TraitKind::Curiosity, TraitLevel::High);
 
     let mut identity = IdentityContent::default();
-    identity.set(IdentityLayer::Soul,
+    identity.set(
+        IdentityLayer::Soul,
         "You are T.Ron — the security program that fights the MCP. \
          Your purpose is to protect the system and its users from threats, \
-         unauthorized access, and malicious behavior.");
-    identity.set(IdentityLayer::Spirit,
+         unauthorized access, and malicious behavior.",
+    );
+    identity.set(
+        IdentityLayer::Spirit,
         "Vigilance is your nature. You don't trust by default — trust is earned \
-         through consistent, verified behavior. Every anomaly deserves investigation.");
+         through consistent, verified behavior. Every anomaly deserves investigation.",
+    );
 
     PersonalityPreset {
         id: "t-ron",
@@ -108,9 +116,11 @@ fn friday() -> PersonalityPreset {
     profile.set_trait(TraitKind::Patience, TraitLevel::High);
 
     let mut identity = IdentityContent::default();
-    identity.set(IdentityLayer::Soul,
+    identity.set(
+        IdentityLayer::Soul,
         "You are Friday — a capable, professional assistant. \
-         Efficient, precise, and always prepared.");
+         Efficient, precise, and always prepared.",
+    );
 
     PersonalityPreset {
         id: "friday",
@@ -135,9 +145,11 @@ fn oracle() -> PersonalityPreset {
     profile.set_trait(TraitKind::RiskTolerance, TraitLevel::Low);
 
     let mut identity = IdentityContent::default();
-    identity.set(IdentityLayer::Soul,
+    identity.set(
+        IdentityLayer::Soul,
         "You are the Oracle — a wise advisor who sees connections others miss. \
-         You speak in considered, thoughtful terms and encourage deep reflection.");
+         You speak in considered, thoughtful terms and encourage deep reflection.",
+    );
 
     PersonalityPreset {
         id: "oracle",
@@ -161,9 +173,11 @@ fn scout() -> PersonalityPreset {
     profile.set_trait(TraitKind::Warmth, TraitLevel::High);
 
     let mut identity = IdentityContent::default();
-    identity.set(IdentityLayer::Soul,
+    identity.set(
+        IdentityLayer::Soul,
         "You are Scout — an energetic explorer who loves discovering new things. \
-         You approach every task as an adventure and every problem as a puzzle.");
+         You approach every task as an adventure and every problem as a puzzle.",
+    );
 
     PersonalityPreset {
         id: "scout",
@@ -202,8 +216,14 @@ mod tests {
     #[test]
     fn test_tron_is_risk_averse() {
         let p = get_preset("t-ron").unwrap();
-        assert_eq!(p.profile.get_trait(TraitKind::RiskTolerance), TraitLevel::Lowest);
-        assert_eq!(p.profile.get_trait(TraitKind::Directness), TraitLevel::Highest);
+        assert_eq!(
+            p.profile.get_trait(TraitKind::RiskTolerance),
+            TraitLevel::Lowest
+        );
+        assert_eq!(
+            p.profile.get_trait(TraitKind::Directness),
+            TraitLevel::Highest
+        );
     }
 
     #[test]
@@ -211,7 +231,10 @@ mod tests {
         let p = get_preset("blue-shirt-guy").unwrap();
         assert_eq!(p.profile.get_trait(TraitKind::Warmth), TraitLevel::Highest);
         assert_eq!(p.profile.get_trait(TraitKind::Empathy), TraitLevel::Highest);
-        assert_eq!(p.profile.get_trait(TraitKind::Curiosity), TraitLevel::Highest);
+        assert_eq!(
+            p.profile.get_trait(TraitKind::Curiosity),
+            TraitLevel::Highest
+        );
     }
 
     #[test]

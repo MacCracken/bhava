@@ -46,12 +46,13 @@ impl DaimonClient {
         }
     }
 
-    pub async fn register_agent(&self) -> anyhow::Result<String> {
+    pub async fn register_agent(&self) -> crate::error::Result<String> {
         let body = serde_json::json!({
             "name": "bhava",
             "capabilities": ["personality", "emotion", "mood", "sentiment", "archetype"],
         });
-        let resp = self.client
+        let resp = self
+            .client
             .post(format!("{}/v1/agents/register", self.config.endpoint))
             .json(&body)
             .send()

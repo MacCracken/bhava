@@ -30,8 +30,12 @@ pub enum Emotion {
 
 impl Emotion {
     pub const ALL: &'static [Emotion] = &[
-        Self::Joy, Self::Arousal, Self::Dominance,
-        Self::Trust, Self::Interest, Self::Frustration,
+        Self::Joy,
+        Self::Arousal,
+        Self::Dominance,
+        Self::Trust,
+        Self::Interest,
+        Self::Frustration,
     ];
 }
 
@@ -65,8 +69,12 @@ impl MoodVector {
     /// Neutral mood — all dimensions at 0.
     pub fn neutral() -> Self {
         Self {
-            joy: 0.0, arousal: 0.0, dominance: 0.0,
-            trust: 0.0, interest: 0.0, frustration: 0.0,
+            joy: 0.0,
+            arousal: 0.0,
+            dominance: 0.0,
+            trust: 0.0,
+            interest: 0.0,
+            frustration: 0.0,
         }
     }
 

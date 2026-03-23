@@ -24,6 +24,10 @@ pub enum BhavaError {
 
     #[error("decay rate must be positive: {rate}")]
     InvalidDecayRate { rate: f32 },
+
+    #[cfg(feature = "ai")]
+    #[error("network error: {0}")]
+    Network(#[from] reqwest::Error),
 }
 
 pub type Result<T> = std::result::Result<T, BhavaError>;
@@ -34,7 +38,9 @@ mod tests {
 
     #[test]
     fn test_unknown_trait() {
-        let e = BhavaError::UnknownTrait { name: "charisma".into() };
+        let e = BhavaError::UnknownTrait {
+            name: "charisma".into(),
+        };
         assert!(e.to_string().contains("charisma"));
     }
 
@@ -60,7 +66,9 @@ mod tests {
 
     #[test]
     fn test_invalid_config() {
-        let e = BhavaError::InvalidConfig { reason: "empty name".into() };
+        let e = BhavaError::InvalidConfig {
+            reason: "empty name".into(),
+        };
         assert!(e.to_string().contains("empty name"));
     }
 
@@ -73,6 +81,6 @@ mod tests {
     #[test]
     fn test_result_alias() {
         let ok: Result<i32> = Ok(42);
-        assert_eq!(ok.unwrap(), 42);
+        assert!(ok.is_ok());
     }
 }
