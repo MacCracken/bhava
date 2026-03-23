@@ -448,6 +448,65 @@ fn bench_serde(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_ai(c: &mut Criterion) {
+    use bhava::ai::{
+        InteractionOutcome, apply_sentiment_feedback, build_personality_metadata,
+        compose_system_prompt, feedback_from_outcome,
+    };
+    use bhava::archetype::{IdentityContent, IdentityLayer};
+    use bhava::mood::{Emotion, EmotionalState};
+    use bhava::traits::{PersonalityProfile, TraitKind, TraitLevel};
+
+    let mut group = c.benchmark_group("ai");
+
+    let mut profile = PersonalityProfile::new("BenchBot");
+    profile.set_trait(TraitKind::Humor, TraitLevel::High);
+    profile.set_trait(TraitKind::Warmth, TraitLevel::Highest);
+    let mut identity = IdentityContent::default();
+    identity.set(IdentityLayer::Soul, "You are a helpful assistant.");
+    identity.set(IdentityLayer::Spirit, "Driven by curiosity.");
+    let mut mood = EmotionalState::new();
+    mood.stimulate(Emotion::Joy, 0.5);
+
+    group.bench_function("compose_system_prompt", |b| {
+        b.iter(|| {
+            compose_system_prompt(
+                black_box(&profile),
+                black_box(&identity),
+                Some(black_box(&mood)),
+                Some("Passionate about helping."),
+            )
+        })
+    });
+    group.bench_function("compose_system_prompt_minimal", |b| {
+        b.iter(|| compose_system_prompt(black_box(&profile), black_box(&identity), None, None))
+    });
+    group.bench_function("apply_sentiment_feedback", |b| {
+        b.iter_batched(
+            EmotionalState::new,
+            |mut state| {
+                apply_sentiment_feedback(
+                    black_box("This is wonderful and amazing work!"),
+                    &mut state,
+                    1.0,
+                )
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("build_personality_metadata", |b| {
+        b.iter(|| build_personality_metadata(black_box(&profile), Some(black_box(&mood))))
+    });
+    group.bench_function("feedback_from_outcome", |b| {
+        b.iter_batched(
+            EmotionalState::new,
+            |mut state| feedback_from_outcome(&mut state, black_box(InteractionOutcome::Praised)),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_trait_behavior,
@@ -459,6 +518,7 @@ criterion_group!(
     bench_spirit,
     bench_relationship,
     bench_markdown,
+    bench_ai,
     bench_serde,
 );
 criterion_main!(benches);

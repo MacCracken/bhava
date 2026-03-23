@@ -381,6 +381,7 @@ pub fn trigger_praised() -> MoodTrigger {
         .respond(Emotion::Trust, 0.1)
 }
 
+/// Built-in trigger: criticized (joy-, dominance-, frustration+).
 pub fn trigger_criticized() -> MoodTrigger {
     MoodTrigger::new("criticized")
         .respond(Emotion::Joy, -0.3)
@@ -388,12 +389,14 @@ pub fn trigger_criticized() -> MoodTrigger {
         .respond(Emotion::Frustration, 0.3)
 }
 
+/// Built-in trigger: surprised (arousal+, interest+).
 pub fn trigger_surprised() -> MoodTrigger {
     MoodTrigger::new("surprised")
         .respond(Emotion::Arousal, 0.5)
         .respond(Emotion::Interest, 0.3)
 }
 
+/// Built-in trigger: threatened (arousal+, trust-, dominance-, frustration+).
 pub fn trigger_threatened() -> MoodTrigger {
     MoodTrigger::new("threatened")
         .respond(Emotion::Arousal, 0.4)
