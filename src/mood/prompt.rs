@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::core::{EmotionalState, MoodState, MoodVector};
+use super::types::{EmotionalState, MoodState, MoodVector};
 
 // --- Mood Tone Guides (SY parity) ---
 

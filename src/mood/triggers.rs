@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::core::Emotion;
+use super::types::Emotion;
 
 // --- Mood Triggers (v0.3) ---
 

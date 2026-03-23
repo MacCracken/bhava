@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::core::{Emotion, MoodVector};
+use super::types::{Emotion, MoodVector};
 
 // --- Emotional Contagion ---
 
@@ -68,7 +68,7 @@ pub fn group_mood(members: &[&MoodVector]) -> MoodVector {
         return MoodVector::neutral();
     }
     let mut sum = MoodVector::neutral();
-    for m in members {
+    for &m in members {
         for &e in Emotion::ALL {
             sum.set(e, sum.get(e) + m.get(e));
         }

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::core::{Emotion, MoodVector};
+use super::types::{Emotion, MoodVector};
 
 // --- Emotion Amplifier ---
 

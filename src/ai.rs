@@ -135,7 +135,7 @@ pub fn build_personality_metadata(
         .map(|&g| (g.to_string(), profile.group_average(g)))
         .collect();
 
-    let mood_state = mood.map(|s| s.classify().to_string());
+    let mood_state = mood.map(|s: &EmotionalState| s.classify().to_string());
 
     PersonalityMetadata {
         name: profile.name.clone(),

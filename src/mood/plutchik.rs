@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::core::MoodVector;
+use super::types::MoodVector;
 
 // --- Plutchik Compound Emotions ---
 

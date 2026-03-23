@@ -5,13 +5,13 @@
 
 mod baseline;
 mod contagion;
-mod core;
 mod damping;
 mod history;
 mod memory;
 mod plutchik;
 mod prompt;
 mod triggers;
+mod types;
 
 // Re-export all public types and functions
 pub use self::baseline::AdaptiveBaseline;
@@ -20,7 +20,6 @@ pub use self::baseline::{derive_mood_baseline, emotion_amplifier, mood_trait_inf
 #[cfg(feature = "traits")]
 pub use self::contagion::contagion_from_personality;
 pub use self::contagion::{ContagionParams, compute_contagion, group_mood};
-pub use self::core::{ActiveCause, Emotion, EmotionalState, MoodState, MoodVector};
 pub use self::damping::DampedResponse;
 pub use self::history::{MoodHistory, MoodSnapshot};
 pub use self::memory::{EmotionalMemory, EmotionalMemoryBank};
@@ -29,6 +28,7 @@ pub use self::prompt::{ActionTendency, action_tendency, compose_mood_prompt, moo
 pub use self::triggers::{
     MoodTrigger, trigger_criticized, trigger_praised, trigger_surprised, trigger_threatened,
 };
+pub use self::types::{ActiveCause, Emotion, EmotionalState, MoodState, MoodVector};
 
 #[cfg(test)]
 mod tests {
