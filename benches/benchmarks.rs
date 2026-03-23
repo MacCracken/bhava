@@ -507,6 +507,51 @@ fn bench_ai(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_monitor(c: &mut Criterion) {
+    use bhava::monitor::SentimentMonitor;
+    use bhava::mood::EmotionalState;
+    let mut group = c.benchmark_group("monitor");
+
+    group.bench_function("feed_sentence", |b| {
+        b.iter_batched(
+            || SentimentMonitor::new(1.0),
+            |mut m| m.feed(black_box("This is wonderful work!")),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("feed_and_apply", |b| {
+        b.iter_batched(
+            || (SentimentMonitor::new(0.5), EmotionalState::new()),
+            |(mut m, mut s)| m.feed_and_apply(black_box("Great job!"), &mut s),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("streaming_10_tokens", |b| {
+        let tokens = [
+            "I ",
+            "really ",
+            "love ",
+            "this ",
+            "project! ",
+            "But ",
+            "the ",
+            "bugs ",
+            "are ",
+            "terrible.",
+        ];
+        b.iter_batched(
+            || (SentimentMonitor::new(0.5), EmotionalState::new()),
+            |(mut m, mut s)| {
+                for t in &tokens {
+                    m.feed_and_apply(black_box(t), &mut s);
+                }
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_trait_behavior,
@@ -519,6 +564,7 @@ criterion_group!(
     bench_relationship,
     bench_markdown,
     bench_ai,
+    bench_monitor,
     bench_serde,
 );
 criterion_main!(benches);

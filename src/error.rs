@@ -28,6 +28,9 @@ pub enum BhavaError {
     #[cfg(feature = "ai")]
     #[error("network error: {0}")]
     Network(#[from] reqwest::Error),
+
+    #[error("storage error: {0}")]
+    Storage(String),
 }
 
 pub type Result<T> = std::result::Result<T, BhavaError>;

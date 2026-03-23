@@ -15,7 +15,10 @@
 //! - [`presets`] — Built-in personality templates (BlueShirtGuy, T.Ron, Friday, Oracle, Scout)
 //! - [`spirit`] — Passions, inspirations, and pains — the animating force
 //! - [`relationship`] — Inter-entity affinity, trust, and interaction tracking
+//! - [`monitor`] — Live sentiment monitoring for streaming text
 //! - [`ai`] — System prompt composition, sentiment feedback, and agent metadata
+//! - [`store`] — Storage trait for pluggable persistence backends
+//! - [`storage`] — SQLite persistence implementation (feature: `sqlite`)
 //! - [`error`] — Error types
 
 pub mod error;
@@ -41,7 +44,22 @@ pub mod spirit;
 #[cfg(feature = "mood")]
 pub mod relationship;
 
+#[cfg(feature = "sentiment")]
+pub mod monitor;
+
 #[cfg(feature = "ai")]
 pub mod ai;
+
+// Storage trait (available when core features are on)
+#[cfg(all(
+    feature = "traits",
+    feature = "mood",
+    feature = "archetype",
+    feature = "sentiment"
+))]
+pub mod store;
+
+#[cfg(feature = "sqlite")]
+pub mod storage;
 
 pub use error::BhavaError;
