@@ -8,20 +8,8 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 ## Current Status
 
-All planned 0.22.3 features are implemented. See [CHANGELOG.md](../../CHANGELOG.md) for details.
+All planned features implemented. See [CHANGELOG.md](../../CHANGELOG.md) for details.
 
-## Next Phase
+## Future
 
-### Medium Priority
-
-- Plutchik compound emotions — 8 primary emotions + combination table (Joy+Trust=Love, Fear+Surprise=Awe, etc.)
-- Second-order damping — oscillatory emotional response for neurotic agents (underdamped/overdamped decay)
-- Emotional memory bank — somatic markers: agents remember how entities/events made them feel
-- Emotion amplifier — personality modulates incoming emotion stimulus intensity (ALMA layer interaction)
-
-### Low Priority
-
-- Emotional volatility — variance of deviation over mood history
-- Sentiment momentum — linear regression slope over recent valence
-- Relationship reciprocity — symmetry metrics for A→B vs B→A
-- Cause-tagged decay — active causes suppress decay; resolution accelerates it (FAtiMA-style)
+No outstanding items. Feature requests and enhancements tracked via GitHub issues.

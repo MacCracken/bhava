@@ -166,6 +166,15 @@ impl MoodVector {
     }
 }
 
+/// An active emotional cause that suppresses decay for specific emotions.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ActiveCause {
+    /// Identifier for this cause (e.g., "threat_active", "deadline_pressure").
+    pub id: String,
+    /// Which emotions this cause sustains.
+    pub emotions: Vec<Emotion>,
+}
+
 /// Emotional state with timestamp tracking and automatic decay.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmotionalState {
@@ -177,6 +186,9 @@ pub struct EmotionalState {
     pub decay_half_life_secs: f64,
     /// When the mood was last updated.
     pub last_updated: DateTime<Utc>,
+    /// Active causes that suppress decay for specific emotions.
+    #[serde(default)]
+    pub active_causes: Vec<ActiveCause>,
 }
 
 impl EmotionalState {
@@ -188,6 +200,7 @@ impl EmotionalState {
             baseline: MoodVector::neutral(),
             decay_half_life_secs: 300.0,
             last_updated: Utc::now(),
+            active_causes: Vec::new(),
         }
     }
 
@@ -199,6 +212,7 @@ impl EmotionalState {
             baseline,
             decay_half_life_secs: 300.0,
             last_updated: Utc::now(),
+            active_causes: Vec::new(),
         }
     }
 
@@ -223,8 +237,13 @@ impl EmotionalState {
         }
         // Exponential decay: factor = 1 - 2^(-elapsed / half_life)
         let factor = 1.0 - (2.0f64.powf(-elapsed / self.decay_half_life_secs)) as f32;
-        // Decay toward baseline, not toward zero
-        self.mood = self.mood.blend(&self.baseline, factor);
+        // Decay toward baseline, but skip emotions with active causes
+        let blended = self.mood.blend(&self.baseline, factor);
+        for &e in Emotion::ALL {
+            if !self.is_cause_active(e) {
+                self.mood.set(e, blended.get(e));
+            }
+        }
         self.last_updated = now;
     }
 
@@ -297,6 +316,36 @@ impl EmotionalState {
             deviation: self.deviation(),
             timestamp: self.last_updated,
         }
+    }
+
+    // --- Cause-Tagged Decay ---
+
+    /// Register an active cause that suppresses decay for specific emotions.
+    ///
+    /// While a cause is active, the specified emotions resist natural decay.
+    /// Call `resolve_cause()` when the situation is resolved to allow normal decay.
+    pub fn add_active_cause(&mut self, cause_id: impl Into<String>, emotions: Vec<Emotion>) {
+        self.active_causes.push(ActiveCause {
+            id: cause_id.into(),
+            emotions,
+        });
+    }
+
+    /// Resolve a cause, allowing suppressed emotions to decay normally.
+    ///
+    /// Returns true if the cause was found and removed.
+    pub fn resolve_cause(&mut self, cause_id: &str) -> bool {
+        let before = self.active_causes.len();
+        self.active_causes.retain(|c| c.id != cause_id);
+        self.active_causes.len() < before
+    }
+
+    /// Check if a specific emotion has an active cause suppressing its decay.
+    #[must_use]
+    pub fn is_cause_active(&self, emotion: Emotion) -> bool {
+        self.active_causes
+            .iter()
+            .any(|c| c.emotions.contains(&emotion))
     }
 }
 
@@ -515,6 +564,321 @@ impl MoodHistory {
         let second_avg = second_half / (self.snapshots.len() - half) as f32;
         second_avg - first_avg
     }
+
+    /// Emotional volatility — standard deviation of deviation across history.
+    ///
+    /// High volatility means the agent's emotional state swings wildly.
+    /// Low volatility means stable, predictable emotional behavior.
+    #[must_use]
+    pub fn volatility(&self) -> f32 {
+        if self.snapshots.len() < 2 {
+            return 0.0;
+        }
+        let mean = self.average_deviation();
+        let variance: f32 = self
+            .snapshots
+            .iter()
+            .map(|s| (s.deviation - mean).powi(2))
+            .sum::<f32>()
+            / (self.snapshots.len() - 1) as f32;
+        variance.sqrt()
+    }
+
+    /// Sentiment momentum — linear regression slope of deviation over time.
+    ///
+    /// Positive = escalating emotional intensity. Negative = calming down.
+    /// More precise than `deviation_trend()` which only compares halves.
+    #[must_use]
+    pub fn momentum(&self) -> f32 {
+        let n = self.snapshots.len();
+        if n < 2 {
+            return 0.0;
+        }
+        let nf = n as f32;
+        let mut sum_x = 0.0f32;
+        let mut sum_y = 0.0f32;
+        let mut sum_xy = 0.0f32;
+        let mut sum_xx = 0.0f32;
+        for (i, s) in self.snapshots.iter().enumerate() {
+            let x = i as f32;
+            let y = s.deviation;
+            sum_x += x;
+            sum_y += y;
+            sum_xy += x * y;
+            sum_xx += x * x;
+        }
+        let denom = nf * sum_xx - sum_x * sum_x;
+        if denom.abs() < f32::EPSILON {
+            return 0.0;
+        }
+        (nf * sum_xy - sum_x * sum_y) / denom
+    }
+}
+
+// --- Plutchik Compound Emotions ---
+
+/// Named compound emotion from Plutchik's wheel.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[non_exhaustive]
+pub enum CompoundEmotion {
+    Love,           // Joy + Trust
+    Optimism,       // Joy + Anticipation (mapped via Interest)
+    Submission,     // Trust + Fear (mapped via low Dominance)
+    Awe,            // Fear + Surprise (mapped via Arousal)
+    Remorse,        // Sadness + Disgust (mapped via negative Joy + Frustration)
+    Contempt,       // Anger + Disgust (mapped via Frustration)
+    Aggressiveness, // Anger + Anticipation (mapped via Frustration + Interest)
+}
+
+impl std::fmt::Display for CompoundEmotion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::Love => "love",
+            Self::Optimism => "optimism",
+            Self::Submission => "submission",
+            Self::Awe => "awe",
+            Self::Remorse => "remorse",
+            Self::Contempt => "contempt",
+            Self::Aggressiveness => "aggressiveness",
+        };
+        f.write_str(s)
+    }
+}
+
+/// Detect compound emotions present in a mood vector.
+///
+/// Returns all compound emotions whose constituent dimensions exceed the threshold.
+#[must_use]
+pub fn detect_compound_emotions(mood: &MoodVector, threshold: f32) -> Vec<(CompoundEmotion, f32)> {
+    let t = threshold;
+    let mut results = Vec::new();
+
+    // Love: Joy + Trust
+    if mood.joy > t && mood.trust > t {
+        results.push((CompoundEmotion::Love, (mood.joy + mood.trust) / 2.0));
+    }
+    // Optimism: Joy + Interest (anticipation proxy)
+    if mood.joy > t && mood.interest > t {
+        results.push((CompoundEmotion::Optimism, (mood.joy + mood.interest) / 2.0));
+    }
+    // Submission: Trust + low Dominance (fear proxy)
+    if mood.trust > t && mood.dominance < -t {
+        results.push((
+            CompoundEmotion::Submission,
+            (mood.trust - mood.dominance) / 2.0,
+        ));
+    }
+    // Awe: low Dominance + high Arousal (fear + surprise)
+    if mood.dominance < -t && mood.arousal > t {
+        results.push((CompoundEmotion::Awe, (-mood.dominance + mood.arousal) / 2.0));
+    }
+    // Remorse: negative Joy + Frustration
+    if mood.joy < -t && mood.frustration > t {
+        results.push((
+            CompoundEmotion::Remorse,
+            (-mood.joy + mood.frustration) / 2.0,
+        ));
+    }
+    // Contempt: Frustration + negative Trust
+    if mood.frustration > t && mood.trust < -t {
+        results.push((
+            CompoundEmotion::Contempt,
+            (mood.frustration - mood.trust) / 2.0,
+        ));
+    }
+    // Aggressiveness: Frustration + Interest (anger + anticipation)
+    if mood.frustration > t && mood.interest > t {
+        results.push((
+            CompoundEmotion::Aggressiveness,
+            (mood.frustration + mood.interest) / 2.0,
+        ));
+    }
+
+    results
+}
+
+// --- Second-Order Damping ---
+
+/// Damped emotional response — models oscillatory or smooth return to baseline.
+///
+/// - `zeta < 1.0` → underdamped (oscillatory, neurotic agents)
+/// - `zeta = 1.0` → critically damped (fastest smooth return)
+/// - `zeta > 1.0` → overdamped (sluggish, stoic agents)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DampedResponse {
+    /// Current position (deviation from baseline).
+    pub position: f32,
+    /// Current velocity (rate of change).
+    pub velocity: f32,
+    /// Damping ratio (0.3 = oscillatory, 1.0 = smooth, 2.0 = sluggish).
+    pub zeta: f32,
+    /// Natural frequency (related to decay half-life).
+    pub omega: f32,
+}
+
+impl DampedResponse {
+    /// Create a new damped response.
+    #[must_use]
+    pub fn new(zeta: f32, omega: f32) -> Self {
+        Self {
+            position: 0.0,
+            velocity: 0.0,
+            zeta: zeta.max(0.01),
+            omega: omega.max(0.01),
+        }
+    }
+
+    /// Apply an impulse (e.g., emotional stimulus).
+    pub fn impulse(&mut self, force: f32) {
+        self.velocity += force;
+    }
+
+    /// Step the simulation forward by `dt` seconds.
+    pub fn step(&mut self, dt: f32) {
+        let accel =
+            -2.0 * self.zeta * self.omega * self.velocity - self.omega * self.omega * self.position;
+        self.velocity += accel * dt;
+        self.position += self.velocity * dt;
+    }
+
+    /// Whether the response has settled (position and velocity near zero).
+    #[must_use]
+    pub fn is_settled(&self, threshold: f32) -> bool {
+        self.position.abs() < threshold && self.velocity.abs() < threshold
+    }
+}
+
+// --- Emotional Memory ---
+
+/// A somatic marker — an emotional memory associated with a tag.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EmotionalMemory {
+    /// What this memory is associated with (entity_id, location, event_type).
+    pub tag: String,
+    /// The emotional state recorded.
+    pub mood: MoodVector,
+    /// Strength of the memory (decays over time, 0.0–1.0).
+    pub intensity: f32,
+}
+
+/// Bank of emotional memories — agents remember how things made them feel.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct EmotionalMemoryBank {
+    memories: Vec<EmotionalMemory>,
+    capacity: usize,
+}
+
+impl EmotionalMemoryBank {
+    /// Create a memory bank with the given capacity.
+    #[must_use]
+    pub fn new(capacity: usize) -> Self {
+        Self {
+            memories: Vec::new(),
+            capacity: capacity.max(1),
+        }
+    }
+
+    /// Record an emotional memory. Overwrites if tag already exists.
+    pub fn record(&mut self, tag: impl Into<String>, mood: &MoodVector, intensity: f32) {
+        let tag = tag.into();
+        if let Some(existing) = self.memories.iter_mut().find(|m| m.tag == tag) {
+            existing.mood = mood.clone();
+            existing.intensity = intensity.clamp(0.0, 1.0);
+        } else {
+            if self.memories.len() >= self.capacity {
+                // Evict weakest memory
+                if let Some(weakest) = self
+                    .memories
+                    .iter()
+                    .enumerate()
+                    .min_by(|a, b| a.1.intensity.partial_cmp(&b.1.intensity).unwrap())
+                    .map(|(i, _)| i)
+                {
+                    self.memories.swap_remove(weakest);
+                }
+            }
+            self.memories.push(EmotionalMemory {
+                tag,
+                mood: mood.clone(),
+                intensity: intensity.clamp(0.0, 1.0),
+            });
+        }
+    }
+
+    /// Recall the emotional memory for a tag, attenuated by intensity.
+    #[must_use]
+    pub fn recall(&self, tag: &str) -> Option<MoodVector> {
+        self.memories.iter().find(|m| m.tag == tag).map(|m| {
+            let mut recalled = m.mood.clone();
+            for &e in Emotion::ALL {
+                recalled.set(e, recalled.get(e) * m.intensity);
+            }
+            recalled
+        })
+    }
+
+    /// Decay all memory intensities.
+    pub fn decay(&mut self, rate: f32) {
+        let r = rate.clamp(0.0, 1.0);
+        self.memories.retain_mut(|m| {
+            m.intensity *= 1.0 - r;
+            m.intensity > 0.01
+        });
+    }
+
+    /// Number of stored memories.
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.memories.len()
+    }
+
+    /// Whether the bank is empty.
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.memories.is_empty()
+    }
+}
+
+// --- Emotion Amplifier ---
+
+/// Compute a stimulus amplification factor from personality.
+///
+/// Returns a multiplier (0.5–2.0) that should be applied to incoming
+/// emotional stimuli before they affect the mood vector.
+/// High neuroticism amplifies negative stimuli; high agreeableness amplifies social stimuli.
+#[cfg(feature = "traits")]
+#[must_use]
+pub fn emotion_amplifier(
+    profile: &crate::traits::PersonalityProfile,
+    emotion: Emotion,
+    stimulus_valence: f32,
+) -> f32 {
+    use crate::traits::TraitKind;
+    let patience = profile.get_trait(TraitKind::Patience).normalized();
+    let confidence = profile.get_trait(TraitKind::Confidence).normalized();
+    let empathy = profile.get_trait(TraitKind::Empathy).normalized();
+    let skepticism = profile.get_trait(TraitKind::Skepticism).normalized();
+
+    let base = 1.0;
+    let modifier = match emotion {
+        // Negative stimuli amplified by low patience/confidence (neuroticism proxy)
+        Emotion::Frustration | Emotion::Arousal if stimulus_valence < 0.0 => {
+            -patience * 0.3 - confidence * 0.2 + skepticism * 0.1
+        }
+        // Trust stimuli amplified by empathy, dampened by skepticism
+        Emotion::Trust => empathy * 0.3 - skepticism * 0.2,
+        // Joy amplified by empathy for positive, patience for negative
+        Emotion::Joy if stimulus_valence > 0.0 => empathy * 0.2,
+        Emotion::Joy => -patience * 0.2 - confidence * 0.1,
+        // Interest amplified by curiosity
+        Emotion::Interest => {
+            let curiosity = profile.get_trait(TraitKind::Curiosity).normalized();
+            curiosity * 0.3
+        }
+        _ => 0.0,
+    };
+
+    (base + modifier).clamp(0.5, 2.0)
 }
 
 // --- Mood Influence on Traits (v0.3) ---
@@ -2080,5 +2444,251 @@ mod tests {
         let json = serde_json::to_string(&ab).unwrap();
         let ab2: AdaptiveBaseline = serde_json::from_str(&json).unwrap();
         assert!((ab2.adaptation_rate - ab.adaptation_rate).abs() < f32::EPSILON);
+    }
+
+    // --- Volatility + Momentum ---
+
+    #[test]
+    fn test_volatility_stable() {
+        let mut h = MoodHistory::new(10);
+        let s = EmotionalState::new();
+        for _ in 0..5 {
+            h.record(s.snapshot());
+        }
+        assert!(h.volatility() < 0.01);
+    }
+
+    #[test]
+    fn test_volatility_varying() {
+        let mut h = MoodHistory::new(10);
+        let mut s = EmotionalState::new();
+        h.record(s.snapshot()); // calm
+        s.stimulate(Emotion::Joy, 0.8);
+        h.record(s.snapshot()); // excited
+        let mut s2 = EmotionalState::new();
+        h.record(s2.snapshot()); // calm again
+        s2.stimulate(Emotion::Frustration, 0.9);
+        h.record(s2.snapshot()); // frustrated
+        assert!(h.volatility() > 0.1);
+    }
+
+    #[test]
+    fn test_momentum_escalating() {
+        let mut h = MoodHistory::new(10);
+        let mut s = EmotionalState::new();
+        for i in 0..5 {
+            s.stimulate(Emotion::Joy, 0.1 * (i as f32 + 1.0));
+            h.record(s.snapshot());
+        }
+        assert!(h.momentum() > 0.0);
+    }
+
+    #[test]
+    fn test_momentum_calming() {
+        let mut h = MoodHistory::new(10);
+        let mut s = EmotionalState::new();
+        s.stimulate(Emotion::Frustration, 0.9);
+        h.record(s.snapshot());
+        for _ in 0..4 {
+            s.mood.decay(0.3);
+            h.record(s.snapshot());
+        }
+        assert!(h.momentum() < 0.0);
+    }
+
+    // --- Cause-tagged decay ---
+
+    #[test]
+    fn test_active_cause() {
+        let mut s = EmotionalState::new();
+        s.add_active_cause("threat", vec![Emotion::Frustration, Emotion::Arousal]);
+        assert!(s.is_cause_active(Emotion::Frustration));
+        assert!(!s.is_cause_active(Emotion::Joy));
+    }
+
+    #[test]
+    fn test_resolve_cause() {
+        let mut s = EmotionalState::new();
+        s.add_active_cause("threat", vec![Emotion::Frustration]);
+        assert!(s.resolve_cause("threat"));
+        assert!(!s.is_cause_active(Emotion::Frustration));
+        assert!(!s.resolve_cause("threat"));
+    }
+
+    // --- Plutchik Compound Emotions ---
+
+    #[test]
+    fn test_compound_love() {
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, 0.7);
+        m.set(Emotion::Trust, 0.6);
+        let compounds = detect_compound_emotions(&m, 0.3);
+        assert!(compounds.iter().any(|(e, _)| *e == CompoundEmotion::Love));
+    }
+
+    #[test]
+    fn test_compound_contempt() {
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Frustration, 0.7);
+        m.set(Emotion::Trust, -0.6);
+        let compounds = detect_compound_emotions(&m, 0.3);
+        assert!(
+            compounds
+                .iter()
+                .any(|(e, _)| *e == CompoundEmotion::Contempt)
+        );
+    }
+
+    #[test]
+    fn test_compound_none_neutral() {
+        let m = MoodVector::neutral();
+        assert!(detect_compound_emotions(&m, 0.3).is_empty());
+    }
+
+    #[test]
+    fn test_compound_display() {
+        assert_eq!(CompoundEmotion::Love.to_string(), "love");
+        assert_eq!(
+            CompoundEmotion::Aggressiveness.to_string(),
+            "aggressiveness"
+        );
+    }
+
+    // --- Second-Order Damping ---
+
+    #[test]
+    fn test_damped_underdamped() {
+        let mut d = DampedResponse::new(0.3, 2.0);
+        d.impulse(1.0);
+        let mut crossed_zero = false;
+        for _ in 0..100 {
+            d.step(0.05);
+            if d.position < 0.0 {
+                crossed_zero = true;
+            }
+        }
+        assert!(crossed_zero, "underdamped should oscillate");
+    }
+
+    #[test]
+    fn test_damped_overdamped_settles() {
+        let mut d = DampedResponse::new(2.0, 1.0);
+        d.impulse(1.0);
+        for _ in 0..500 {
+            d.step(0.05);
+        }
+        assert!(d.is_settled(0.05));
+    }
+
+    #[test]
+    fn test_damped_serde() {
+        let d = DampedResponse::new(0.7, 1.5);
+        let json = serde_json::to_string(&d).unwrap();
+        let d2: DampedResponse = serde_json::from_str(&json).unwrap();
+        assert!((d2.zeta - 0.7).abs() < f32::EPSILON);
+    }
+
+    // --- Emotional Memory ---
+
+    #[test]
+    fn test_memory_record_recall() {
+        let mut bank = EmotionalMemoryBank::new(10);
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, 0.8);
+        bank.record("happy_place", &m, 0.9);
+        let recalled = bank.recall("happy_place").unwrap();
+        assert!(recalled.joy > 0.5);
+    }
+
+    #[test]
+    fn test_memory_recall_missing() {
+        let bank = EmotionalMemoryBank::new(10);
+        assert!(bank.recall("unknown").is_none());
+    }
+
+    #[test]
+    fn test_memory_overwrite() {
+        let mut bank = EmotionalMemoryBank::new(10);
+        let mut m1 = MoodVector::neutral();
+        m1.set(Emotion::Joy, 0.5);
+        bank.record("place", &m1, 0.8);
+        let mut m2 = MoodVector::neutral();
+        m2.set(Emotion::Frustration, 0.7);
+        bank.record("place", &m2, 0.9);
+        let recalled = bank.recall("place").unwrap();
+        assert!(recalled.frustration > 0.0);
+        assert_eq!(bank.len(), 1);
+    }
+
+    #[test]
+    fn test_memory_capacity_eviction() {
+        let mut bank = EmotionalMemoryBank::new(2);
+        let m = MoodVector::neutral();
+        bank.record("a", &m, 0.5);
+        bank.record("b", &m, 0.9);
+        bank.record("c", &m, 0.8); // should evict "a" (weakest)
+        assert_eq!(bank.len(), 2);
+        assert!(bank.recall("a").is_none());
+    }
+
+    #[test]
+    fn test_memory_decay() {
+        let mut bank = EmotionalMemoryBank::new(10);
+        let m = MoodVector::neutral();
+        bank.record("fading", &m, 0.1);
+        bank.decay(0.5); // 0.1 * 0.5 = 0.05
+        bank.decay(0.5); // 0.05 * 0.5 = 0.025
+        bank.decay(0.5); // 0.025 * 0.5 = 0.0125
+        bank.decay(0.5); // 0.00625 → below 0.01 threshold
+        assert!(bank.is_empty());
+    }
+
+    #[test]
+    fn test_memory_serde() {
+        let mut bank = EmotionalMemoryBank::new(10);
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, 0.5);
+        bank.record("test", &m, 0.8);
+        let json = serde_json::to_string(&bank).unwrap();
+        let bank2: EmotionalMemoryBank = serde_json::from_str(&json).unwrap();
+        assert_eq!(bank2.len(), 1);
+    }
+
+    // --- Emotion Amplifier ---
+
+    #[cfg(feature = "traits")]
+    #[test]
+    fn test_amplifier_neurotic_amplifies_negative() {
+        let mut p = crate::traits::PersonalityProfile::new("neurotic");
+        p.set_trait(
+            crate::traits::TraitKind::Patience,
+            crate::traits::TraitLevel::Lowest,
+        );
+        p.set_trait(
+            crate::traits::TraitKind::Confidence,
+            crate::traits::TraitLevel::Lowest,
+        );
+        let amp = emotion_amplifier(&p, Emotion::Frustration, -0.5);
+        assert!(amp > 1.0, "neurotic should amplify negative stimuli");
+    }
+
+    #[cfg(feature = "traits")]
+    #[test]
+    fn test_amplifier_empathetic_amplifies_trust() {
+        let mut p = crate::traits::PersonalityProfile::new("empath");
+        p.set_trait(
+            crate::traits::TraitKind::Empathy,
+            crate::traits::TraitLevel::Highest,
+        );
+        let amp = emotion_amplifier(&p, Emotion::Trust, 0.5);
+        assert!(amp > 1.0);
+    }
+
+    #[cfg(feature = "traits")]
+    #[test]
+    fn test_amplifier_clamped() {
+        let p = crate::traits::PersonalityProfile::new("neutral");
+        let amp = emotion_amplifier(&p, Emotion::Joy, 0.0);
+        assert!((0.5..=2.0).contains(&amp));
     }
 }

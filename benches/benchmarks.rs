@@ -225,6 +225,35 @@ fn bench_mood_operations(c: &mut Criterion) {
         };
         b.iter(|| compute_contagion(black_box(&sender), black_box(&sp), black_box(&rp), 0.5))
     });
+    group.bench_function("compound_emotions", |b| {
+        use bhava::mood::detect_compound_emotions;
+        let mut m = MoodVector::neutral();
+        m.set(Emotion::Joy, 0.7);
+        m.set(Emotion::Trust, 0.6);
+        m.set(Emotion::Frustration, 0.3);
+        b.iter(|| detect_compound_emotions(black_box(&m), 0.2))
+    });
+    group.bench_function("damped_step", |b| {
+        use bhava::mood::DampedResponse;
+        b.iter_batched(
+            || {
+                let mut d = DampedResponse::new(0.5, 2.0);
+                d.impulse(1.0);
+                d
+            },
+            |mut d| d.step(black_box(0.05)),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("memory_recall", |b| {
+        use bhava::mood::EmotionalMemoryBank;
+        let mut bank = EmotionalMemoryBank::new(100);
+        let m = MoodVector::neutral();
+        for i in 0..50 {
+            bank.record(format!("tag_{i}"), &m, 0.5 + (i as f32) * 0.01);
+        }
+        b.iter(|| bank.recall(black_box("tag_25")))
+    });
     group.bench_function("adaptive_baseline_adapt", |b| {
         use bhava::mood::AdaptiveBaseline;
         let mut positive = MoodVector::neutral();

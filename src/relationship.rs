@@ -235,6 +235,40 @@ impl RelationshipGraph {
             .filter(|r| r.source == source && r.is_negative())
             .collect()
     }
+
+    /// Reciprocity between two entities (0.0 = one-sided, 1.0 = perfectly mutual).
+    ///
+    /// Returns `None` if either direction is missing.
+    #[must_use]
+    pub fn reciprocity(&self, a: &str, b: &str) -> Option<f32> {
+        let ab = self.get(a, b)?;
+        let ba = self.get(b, a)?;
+        let affinity_diff = (ab.affinity - ba.affinity).abs();
+        let trust_diff = (ab.trust - ba.trust).abs();
+        Some(1.0 - (affinity_diff + trust_diff) / 4.0)
+    }
+
+    /// Fraction of an entity's relationships that are reciprocated.
+    #[must_use]
+    pub fn reciprocity_ratio(&self, source: &str) -> f32 {
+        let rels = self.relationships_for(source);
+        if rels.is_empty() {
+            return 0.0;
+        }
+        let reciprocated = rels
+            .iter()
+            .filter(|r| self.get(&r.target, source).is_some())
+            .count();
+        reciprocated as f32 / rels.len() as f32
+    }
+
+    /// Trust asymmetry for a pair — positive means A trusts B more than B trusts A.
+    #[must_use]
+    pub fn trust_asymmetry(&self, a: &str, b: &str) -> Option<f32> {
+        let ab = self.get(a, b)?;
+        let ba = self.get(b, a)?;
+        Some(ab.trust - ba.trust)
+    }
 }
 
 #[cfg(test)]
@@ -465,5 +499,50 @@ mod tests {
             let restored: RelationshipType = serde_json::from_str(&json).unwrap();
             assert_eq!(restored, t);
         }
+    }
+
+    #[test]
+    fn test_reciprocity_mutual() {
+        let mut g = RelationshipGraph::new();
+        g.record_interaction("a", "b", 0.5, 0.3);
+        g.record_interaction("b", "a", 0.5, 0.3);
+        let r = g.reciprocity("a", "b").unwrap();
+        assert!((r - 1.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_reciprocity_asymmetric() {
+        let mut g = RelationshipGraph::new();
+        g.record_interaction("a", "b", 0.8, 0.9);
+        g.record_interaction("b", "a", -0.5, 0.1);
+        let r = g.reciprocity("a", "b").unwrap();
+        assert!(r < 0.7);
+    }
+
+    #[test]
+    fn test_reciprocity_missing() {
+        let mut g = RelationshipGraph::new();
+        g.record_interaction("a", "b", 0.5, 0.3);
+        assert!(g.reciprocity("a", "b").is_none());
+    }
+
+    #[test]
+    fn test_reciprocity_ratio() {
+        let mut g = RelationshipGraph::new();
+        g.record_interaction("a", "b", 0.5, 0.3);
+        g.record_interaction("b", "a", 0.3, 0.1);
+        g.record_interaction("a", "c", 0.2, 0.1);
+        // a→b is reciprocated, a→c is not
+        let ratio = g.reciprocity_ratio("a");
+        assert!((ratio - 0.5).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_trust_asymmetry() {
+        let mut g = RelationshipGraph::new();
+        g.record_interaction("a", "b", 0.0, 0.3); // trust: 0.5+0.3 = 0.8
+        g.record_interaction("b", "a", 0.0, -0.2); // trust: 0.5-0.2 = 0.3
+        let asym = g.trust_asymmetry("a", "b").unwrap();
+        assert!(asym > 0.0, "a trusts b more");
     }
 }
