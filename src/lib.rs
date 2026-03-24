@@ -31,6 +31,9 @@
 //! - [`active_hours`] — Time-of-day personality activation scheduling
 //! - [`eq`] — Emotional intelligence (EQ) — Mayer-Salovey four-branch model
 //! - [`display_rules`] — Cultural display rules (Matsumoto framework)
+//! - [`energy`] — Depletable energy resource with Banister fitness-fatigue model
+//! - [`circadian`] — 24-hour alertness cycle with chronotype (Borbély two-process)
+//! - [`flow`] — Flow state detection with hysteresis (Csikszentmihalyi)
 //! - [`error`] — Error types
 
 pub mod error;
@@ -94,6 +97,15 @@ pub mod eq;
 
 #[cfg(feature = "mood")]
 pub mod display_rules;
+
+#[cfg(feature = "mood")]
+pub mod energy;
+
+#[cfg(feature = "mood")]
+pub mod circadian;
+
+#[cfg(feature = "mood")]
+pub mod flow;
 
 #[cfg(feature = "ai")]
 pub mod ai;
