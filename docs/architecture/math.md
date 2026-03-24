@@ -248,3 +248,138 @@ reciprocity = 1.0 - (|affinity_AB - affinity_BA| + |trust_AB - trust_BA|) / 4.0
 ```
 
 Range: 0.0 (completely asymmetric) to 1.0 (perfectly mutual).
+
+## Energy / Fatigue (Banister)
+
+### Impulse-Response Model
+
+```
+fitness(n+1) = fitness(n) × e^(-1/τ₁) + k₁ × exertion
+fatigue(n+1) = fatigue(n) × e^(-1/τ₂) + k₂ × exertion
+```
+
+Where τ₁ = 60 (slow fitness decay), τ₂ = 15 (fast fatigue decay), k₁ = 0.01, k₂ = 0.03.
+
+### Cognitive Performance (Sigmoid)
+
+```
+performance = 1 / (1 + e^(-4 × (fitness - fatigue)))
+```
+
+Range: 0.0–1.0. Above 0.5 = net-positive adaptation. Below 0.5 = overreached.
+
+### Exertion from Mood
+
+```
+exertion = mood.intensity() / sqrt(N)
+```
+
+Where N = number of emotion dimensions (6). Clamped to [0.0, 1.0].
+
+## Circadian Rhythm (Borbely)
+
+### Dual-Cosine Alertness
+
+```
+local_hour = (utc_hour + offset + chronotype_shift) mod 24
+primary = cos(2π(h - 10) / 24)         // peaks at hour 10
+secondary = -cos(2π(h - 14) / 12)      // dips at hour 14
+alertness = clamp(0.5 + A₁×primary + A₂×secondary, 0, 1)
+```
+
+A₁ = 0.3 (primary amplitude), A₂ = 0.1 (secondary amplitude).
+
+### Chronotype Phase Shifts
+
+```
+EarlyBird: -2h, MorningLeaning: -1h, Neutral: 0, EveningLeaning: +1h, NightOwl: +2h
+```
+
+## Flow State Detection
+
+### Condition Thresholds
+
+```
+interest >= 0.4
+frustration <= 0.3
+0.1 <= arousal <= 0.7
+dominance >= 0.1
+energy >= 0.3
+alertness >= 0.3
+```
+
+### State Machine
+
+```
+Inactive → Building (all conditions met, accumulator += build_rate)
+Building → Active (accumulator >= entry_threshold)
+Building → Inactive (any condition breaks, accumulator resets)
+Active → Disrupted (any condition breaks, instant)
+Disrupted → Inactive (one tick refractory)
+```
+
+### Performance Bonus
+
+```
+bonus = 1.1 + min(flow_duration / 60, 1.0) × 0.2
+```
+
+Range: 1.1 (entering flow) to 1.3 (deep flow after 60 ticks).
+
+## Emotional Intelligence (EQ)
+
+### Weighted Overall Score
+
+```
+overall = 0.15×perception + 0.20×facilitation + 0.30×understanding + 0.35×management
+```
+
+Hierarchical weights: higher branches weighted more (depend on lower ones).
+
+## ACT-R Activation
+
+### Base-Level Activation
+
+```
+B = ln(n) - d × ln(L)
+```
+
+n = rehearsal count, L = age since first presentation (min 1.0), d = 0.5 (decay).
+
+### Recency Bonus
+
+```
+bonus = e^(-λ × (now - last_seen))
+λ = ln(2) / half_life
+```
+
+### Hebbian Link Strengthening
+
+```
+s_new = s_old + δ × (1.0 - s_old)
+```
+
+Asymptotically approaches 1.0. Spreading activation dampened by 0.1 factor.
+
+## Salience Classification
+
+### Urgency × Importance
+
+```
+urgency = |desirability| × likelihood × (1 + mood_deviation)
+importance = max(|desirability|, |praiseworthiness|) × (1 + memory_intensity)
+magnitude = sqrt(urgency × importance)
+```
+
+Geometric mean ensures both dimensions must contribute. Levels: Background (<0.2), Notable (<0.45), Significant (<0.75), Critical.
+
+## Preference Learning
+
+### Exponential Moving Average
+
+```
+α = 1 / (1 + exposure_count)
+valence = valence × (1 - α) + biased_outcome × α
+```
+
+Learning rate decreases with exposure: first experience α=1.0, tenth α≈0.09.

@@ -18,11 +18,29 @@
 | presets | 16 | All 5 presets validated with 15 traits, identity content |
 | spirit | 13 | Passions, inspirations, pains, active count, prompt composition, serde |
 | relationship | 22 | Graph CRUD, interactions, decay, allies/rivals, averages, serde |
+| appraisal | 15 | OCC emotions, builder pattern, mood delta, attribution, affinity |
+| stress | 11 | Tick, recovery, burnout, regulation effectiveness, personality-derived |
+| regulation | 9 | Suppress/reappraise/distract, effectiveness, suppression gap, serde |
+| growth | 12 | Emotion→pressure, decay, threshold, trait shifting, limits |
 | monitor | 15 | Feed, flush, streaming simulation, apply, summary, reset, custom config |
+| rhythm | 22 | Ultradian/seasonal/biorhythm modulate, zero-period guards, phase offsets, apply_rhythms |
+| energy | 22 | Banister tick, fitness/fatigue decay, performance sigmoid, supercompensation, personality |
+| circadian | 19 | Alertness bounds, peak/trough, post-lunch dip, chronotype shifts, UTC offset, personality |
+| flow | 27 | State machine lifecycle, conditions, build/break/refractory/re-entry, modifiers, personality |
+| eq | 22 | 4-branch scores, overall weighted, bonuses, levels, personality-derived, prompt |
+| display_rules | 23 | All 5 rule types, felt unchanged, self-mask, negative factor, presets, distortion |
+| microexpr | 15 | Leak detection, stress modulation, personality susceptibility, leak vector |
+| affective | 14 | Complexity, granularity, inertia, variability, autocorrelation edge cases |
+| proximity | 22 | 3 falloff functions, negative distance/radius, system evaluate, serde |
+| reasoning | 11 | All 5 strategies, trait scoring, description, prompt composition |
+| salience | 17 | Urgency/importance scoring, levels, memory salience, filter, weighted recall |
+| actr | 18 | Base-level, recency, rehearse, Hebbian links, spread activation, capacity, orphan cleanup |
+| preference | 20 | EMA update, alpha decay, convergence, eviction, bias, personality |
+| active_hours | 16 | Window ranges, midnight wrap, timezone, schedules, zero-width |
 | ai | 17 | System prompt composition, sentiment feedback, metadata, outcomes |
 | storage | 14 | SQLite CRUD for all types, snapshots, full-agent persistence |
 | integration | 35 | Cross-module: preset→prompt, sentiment→mood, triggers→history, templates→validation, crew, relationships, monitor, store |
-| **Total** | **417** | |
+| **Total** | **787** | |
 
 ## Running Tests
 
@@ -50,7 +68,7 @@ make coverage    # generates HTML report in coverage/
 
 ## Benchmarks
 
-66 criterion benchmarks across 13 groups:
+Criterion benchmarks across 27 groups:
 
 | Group | Count | What it measures |
 |-------|-------|------------------|
@@ -66,6 +84,19 @@ make coverage    # generates HTML report in coverage/
 | ai | 5 | compose_system_prompt, minimal, sentiment_feedback, metadata, outcome |
 | monitor | 3 | feed_sentence, feed_and_apply, streaming_10_tokens |
 | serde | 6 | personality/mood/emotional_state serialize + deserialize |
+| rhythm | 4 | ultradian/seasonal/biorhythm modulate, apply_all |
+| energy | 3 | tick_exertion, performance sigmoid, exertion_from_mood |
+| circadian | 3 | alertness, mood_modulation, decay_rate_modifier |
+| flow | 2 | tick, check_conditions |
+| eq | 2 | overall, compose_prompt |
+| display_rules | 2 | apply_professional, apply_celebration |
+| microexpr | 1 | detect |
+| affective | 3 | snapshot_complexity, snapshot_granularity, compute_metrics_50 |
+| proximity | 1 | evaluate_20_rules |
+| reasoning | 2 | select_strategy, all_scores |
+| salience | 1 | classify |
+| actr | 2 | rehearse_100, retrieve_above |
+| preference | 2 | record_100, top_preferences |
 
 ```bash
 # Run benchmarks with history tracking

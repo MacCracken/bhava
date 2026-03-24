@@ -96,6 +96,7 @@ impl ActiveHoursSchedule {
     /// If multiple windows match, returns the highest activation.
     /// If no window matches, returns `default_activation`.
     #[must_use]
+    #[inline]
     pub fn activation_at(&self, now: DateTime<Utc>) -> f32 {
         let hour = self.local_hour(now);
         self.windows

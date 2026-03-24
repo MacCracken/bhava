@@ -235,7 +235,7 @@ impl FlowState {
 }
 
 /// Snapshot of flow conditions — which requirements are currently met.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct FlowConditions {
     /// Interest >= threshold.
     pub interest_met: bool,
@@ -448,6 +448,28 @@ mod tests {
         // One tick clears refractory
         f.tick(&mood, 0.5, 0.5);
         assert_eq!(f.phase, FlowPhase::Inactive);
+    }
+
+    #[test]
+    fn test_flow_reentry_after_disruption() {
+        let mut f = FlowState::new();
+        let mood = flow_mood();
+        // Enter flow
+        for _ in 0..25 {
+            f.tick(&mood, 0.5, 0.5);
+        }
+        assert!(f.is_in_flow());
+        // Break
+        f.tick(&breaking_mood(), 0.5, 0.5);
+        assert_eq!(f.phase, FlowPhase::Disrupted);
+        // Refractory clears
+        f.tick(&mood, 0.5, 0.5);
+        assert_eq!(f.phase, FlowPhase::Inactive);
+        // Re-enter flow
+        for _ in 0..25 {
+            f.tick(&mood, 0.5, 0.5);
+        }
+        assert!(f.is_in_flow(), "should re-enter flow after disruption");
     }
 
     #[test]

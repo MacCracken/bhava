@@ -4,18 +4,36 @@
 
 ```
 bhava
-├── traits       — PersonalityProfile, TraitKind (15), TraitLevel (5), 4 groups, cosine similarity  [feature: traits]
-├── mood         — MoodVector (6D), EmotionalState, decay, triggers, history, baseline derivation   [feature: mood]
-├── archetype    — IdentityLayer (5), IdentityContent, templates, validation, crew composition      [feature: archetype]
-├── sentiment    — SentimentResult, negation, intensity modifiers, sentence-level analysis           [feature: sentiment]
-├── presets      — 5 built-in personalities (BlueShirtGuy, T.Ron, Friday, Oracle, Scout)            [feature: presets]
-├── spirit       — Spirit (passions, inspirations, pains) with prompt composition                    [feature: archetype]
-├── relationship — RelationshipGraph, affinity, trust, interaction tracking, decay                   [feature: mood]
-├── monitor      — SentimentMonitor for streaming text with mood feedback                           [feature: sentiment]
-├── ai           — System prompt composition, sentiment feedback, agent metadata                     [feature: ai]
-├── store        — BhavaStore trait for pluggable persistence backends                              [all core features]
-├── storage      — SqliteStore implementation of BhavaStore                                         [feature: sqlite]
-└── error        — BhavaError (9 variants, #[non_exhaustive])                                      [always]
+├── traits        — PersonalityProfile, TraitKind (15), TraitLevel (5), 4 groups, cosine similarity  [feature: traits]
+├── mood          — MoodVector (6D), EmotionalState, decay, triggers, history, baseline derivation   [feature: mood]
+├── archetype     — IdentityLayer (5), IdentityContent, templates, validation, crew composition      [feature: archetype]
+├── sentiment     — SentimentResult, negation, intensity modifiers, sentence-level analysis           [feature: sentiment]
+├── presets       — 5 built-in personalities (BlueShirtGuy, T.Ron, Friday, Oracle, Scout)            [feature: presets]
+├── spirit        — Spirit (passions, inspirations, pains) with prompt composition                    [feature: archetype]
+├── relationship  — RelationshipGraph, affinity, trust, interaction tracking, decay                   [feature: mood]
+├── appraisal     — OCC appraisal model, 12 emotions, goal-aware generation                          [feature: mood]
+├── stress        — Allostatic load / burnout (McEwen), regulation effectiveness gating              [feature: mood]
+├── regulation    — Suppress/reappraise/distract, felt vs expressed mood split                       [feature: mood]
+├── growth        — Experience-driven personality evolution via trait pressure                        [feature: mood+traits]
+├── monitor       — SentimentMonitor for streaming text with mood feedback                           [feature: sentiment]
+├── rhythm        — Ultradian (BRAC), seasonal (SAD), biorhythm (NPC individuation)                  [feature: mood]
+├── energy        — Banister fitness-fatigue, depletable resource, performance sigmoid               [feature: mood]
+├── circadian     — Dual-cosine 24h alertness, chronotype, post-lunch dip                            [feature: mood]
+├── flow          — Csikszentmihalyi flow state machine with hysteresis                              [feature: mood]
+├── eq            — Mayer-Salovey EQ (perception, facilitation, understanding, management)           [feature: mood]
+├── display_rules — Matsumoto cultural display rules (amplify, mask, neutralize, qualify)             [feature: mood]
+├── microexpr     — Ekman micro-expression detection during suppression                              [feature: mood]
+├── affective     — Affective metrics: complexity, granularity, inertia, variability                 [feature: mood]
+├── salience      — Damasio somatic marker urgency/importance scoring                                [feature: mood]
+├── actr          — ACT-R activation math with Hebbian associative links                             [feature: mood]
+├── proximity     — Location-based mood triggers with falloff functions                              [feature: mood]
+├── reasoning     — Personality-driven reasoning strategy selection (5 strategies)                    [feature: mood+traits]
+├── preference    — Adaptive preference learning via EMA with personality bias                       [feature: mood]
+├── active_hours  — Time-of-day activation scheduling with timezone support                          [feature: mood]
+├── ai            — System prompt composition, sentiment feedback, agent metadata                     [feature: ai]
+├── store         — BhavaStore trait for pluggable persistence backends                              [all core features]
+├── storage       — SqliteStore implementation of BhavaStore                                         [feature: sqlite]
+└── error         — BhavaError (9 variants, #[non_exhaustive])                                      [always]
 ```
 
 ## Feature Flags
@@ -35,7 +53,7 @@ bhava
 
 - **Deterministic output**: Prompt composition iterates traits in fixed `TraitKind::ALL` order via `[TraitLevel; 15]` array
 - **Cosine similarity**: Compatibility scoring measures behavioral pattern direction, not magnitude
-- **`#[must_use]`**: 37 pure functions annotated to prevent accidental value drops
+- **`#[must_use]`**: Pure functions annotated to prevent accidental value drops
 - **Zero network I/O in core**: All core modules are pure computation; network deps are behind the `ai` feature flag
 - **Clamped values**: Mood dimensions are always clamped to [-1.0, 1.0]; decay factors to [0.0, 1.0]
 - **Minimal allocations**: Prompt builders use `write!`/`writeln!` directly into Strings; static slices where possible

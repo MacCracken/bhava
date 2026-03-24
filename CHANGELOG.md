@@ -1,5 +1,36 @@
 # Changelog
 
+## [Unreleased]
+
+### v1.0 Roadmap — Complete
+
+All 16 v1.0 roadmap items implemented across 14 new modules. 3 audit rounds.
+
+#### Rhythms & Cycles
+- **rhythm**: Ultradian (90-120 min BRAC), seasonal (SAD sensitivity), and biorhythm (incommensurate sine waves for NPC individuation) cycles. `apply_rhythms()` convenience composer. Division-by-zero guards on all periods.
+- **energy**: Depletable energy resource with Banister fitness-fatigue impulse-response model. Cognitive performance sigmoid. Gates flow state entry and regulation effectiveness. Personality-derived recovery/drain rates.
+- **circadian**: Dual-cosine 24-hour alertness cycle (Borbely two-process) with post-lunch dip. 5 chronotypes (EarlyBird to NightOwl). Modulates baseline mood, decay rate, and energy recovery. Personality-derived chronotype.
+- **flow**: Csikszentmihalyi flow state detector with 4-phase state machine (Inactive → Building → Active → Disrupted). 6 threshold conditions (interest, frustration, arousal band, dominance, energy, alertness). Builds slowly, breaks instantly. Performance bonus (1.1-1.3×), energy drain reduction (0.5×), stress shielding (0.3×).
+
+#### Behavioral Depth
+- **eq**: Mayer-Salovey four-branch emotional intelligence (Perception, Facilitation, Understanding, Management). Hierarchically weighted overall score. Bonus multipliers for micro-expression detection, regulation effectiveness, stress recovery, contagion resistance, appraisal accuracy. Personality-derived baseline.
+- **display_rules**: Matsumoto cultural display rules framework. 5 rule types (Amplify, DeAmplify, Mask, Neutralize, Qualify). Applies to regulation's felt/expressed split. `cultural_distortion()` metric. 5 preset contexts (professional, formal, celebration, mourning, adversarial).
+- **microexpr**: Ekman micro-expression detection during emotional suppression. Leak intensity scales with suppression gap × felt intensity. Stress-modulated and personality-modulated variants. Summary leak vector for NPC renderers.
+- **affective**: Affective computing metrics from mood history: emotional complexity (active emotion count), granularity (Shannon entropy), inertia (lag-1 autocorrelation), variability (mood-to-mood distance). Stack-allocated computation.
+
+#### SY Feature Parity
+- **salience**: Damasio somatic marker urgency/importance scoring. Geometric mean magnitude. 4-level classification (Background/Notable/Significant/Critical). Salience-weighted memory recall.
+- **actr**: ACT-R base-level activation (ln(n) - d×ln(L)), recency bonus, Hebbian associative links with asymptotic strengthening. Capacity-bounded store with lowest-activation eviction and orphan link cleanup.
+- **proximity**: Location-based mood triggers with 3 falloff functions (Step, Linear, Exponential). ProximitySystem evaluates rules against entity positions. Multi-location batch evaluation.
+- **reasoning**: Personality-driven reasoning strategy selection (Analytical, Intuitive, Empathetic, Systematic, Creative). Trait-scored with prompt injection.
+- **preference**: Adaptive preference learning via exponential moving average with decreasing learning rate. Personality-biased (Warmth → positive gain, Skepticism → negative gain). Capacity-bounded with weakest-valence eviction.
+- **active_hours**: Time-of-day activation scheduling with timezone offset. Midnight-wrapping windows. Factory presets (default 9-5, night owl, early bird, always-on).
+
+#### Quality
+- 787 tests (751 unit + 35 integration + 1 doc)
+- 27 benchmark groups covering all modules
+- 3 audit rounds: division-by-zero guards, unbounded growth fixes, orphan cleanup, hardcoded constant elimination, missing `#[inline]`/Serde/edge-case tests
+
 ## [0.23.3] - 2026-03-23
 
 Initial release. Extracted from SecureYeoman's soul/brain architecture.

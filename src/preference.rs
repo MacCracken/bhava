@@ -39,6 +39,7 @@ impl PreferenceEntry {
     }
 
     /// Update valence with a new outcome observation.
+    #[inline]
     fn update(&mut self, outcome: f32, bias: &PreferenceBias, now: DateTime<Utc>) {
         let alpha = self.alpha();
         let biased_outcome = if outcome >= 0.0 {

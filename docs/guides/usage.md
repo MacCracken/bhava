@@ -156,3 +156,69 @@ let profile = profile_from_ocean("Agent", &ocean);
 // To Big Five scores
 let scores = profile.to_ocean();
 ```
+
+### Energy / Circadian / Flow Loop
+
+```rust
+use bhava::energy::{EnergyState, exertion_from_mood};
+use bhava::circadian::{CircadianRhythm, Chronotype};
+use bhava::flow::FlowState;
+
+let mut energy = EnergyState::new();
+let circadian = CircadianRhythm::with_chronotype(Chronotype::NightOwl);
+let mut flow = FlowState::new();
+
+// Game loop tick
+let now = chrono::Utc::now();
+let alertness = circadian.alertness(now);
+let exertion = exertion_from_mood(&state.mood) * flow.energy_drain_modifier();
+energy.tick(exertion);
+energy.apply_recovery_modifier(circadian.energy_recovery_modifier(now));
+flow.tick(&state.mood, energy.energy, alertness);
+
+// Use flow bonus for performance
+let perf = energy.performance() * flow.performance_bonus();
+```
+
+### Emotional Intelligence
+
+```rust
+use bhava::eq::{eq_from_personality, compose_eq_prompt};
+
+let eq = eq_from_personality(&profile);
+let prompt_fragment = compose_eq_prompt(&eq);
+
+// Use EQ bonuses in other systems
+let regulation_eff = stress.regulation_effectiveness()
+    * energy.regulation_effectiveness()
+    * eq.management_bonus();
+```
+
+### Cultural Display Rules
+
+```rust
+use bhava::display_rules::{apply_display_rules, professional_context};
+use bhava::regulation::RegulatedMood;
+
+let mut regulated = RegulatedMood::from_state(&state);
+apply_display_rules(&mut regulated, &professional_context());
+// regulated.expressed is now culturally filtered
+// regulated.felt is unchanged
+```
+
+### Preference Learning
+
+```rust
+use bhava::preference::{PreferenceStore, bias_from_personality};
+
+let bias = bias_from_personality(&profile);
+let mut prefs = PreferenceStore::with_bias(100, bias);
+
+// Record interaction outcomes
+prefs.record_outcome("agent_alice", 0.8, chrono::Utc::now());
+prefs.record_outcome("agent_bob", -0.3, chrono::Utc::now());
+
+// Query preferences
+let top = prefs.top_preferences(5);
+let avoid = prefs.bottom_preferences(3);
+```

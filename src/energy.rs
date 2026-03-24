@@ -193,8 +193,9 @@ impl fmt::Display for EnergyLevel {
 #[must_use]
 #[inline]
 pub fn exertion_from_mood(mood: &MoodVector) -> f32 {
-    // Max intensity is sqrt(6) ≈ 2.449 (all dimensions at ±1.0)
-    (mood.intensity() / 2.449).clamp(0.0, 1.0)
+    // Max intensity = sqrt(N) where N = number of emotion dimensions
+    let max_intensity = (crate::mood::Emotion::ALL.len() as f32).sqrt();
+    (mood.intensity() / max_intensity).clamp(0.0, 1.0)
 }
 
 /// Derive energy parameters from personality.
@@ -429,6 +430,19 @@ mod tests {
         e.fitness_tau = 0.0;
         e.fatigue_tau = 0.0;
         e.tick(0.5); // should not panic or NaN
+        assert!(e.fitness.is_finite());
+        assert!(e.fatigue.is_finite());
+    }
+
+    #[test]
+    fn test_negative_tau_safe() {
+        let mut e = EnergyState::new();
+        e.fitness_tau = -10.0;
+        e.fatigue_tau = -5.0;
+        e.tick(0.8);
+        // Negative tau → exp(-1/negative) = exp(positive) → large value, clamped to 5.0
+        assert!(e.fitness <= 5.0, "fitness clamped: {}", e.fitness);
+        assert!(e.fatigue <= 5.0, "fatigue clamped: {}", e.fatigue);
         assert!(e.fitness.is_finite());
         assert!(e.fatigue.is_finite());
     }

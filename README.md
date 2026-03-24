@@ -9,7 +9,7 @@
 
 Shared personality and emotional state system for AI agents, game NPCs, and any entity that needs expressive behavior. Extracted from SecureYeoman's soul/brain architecture.
 
-**15-trait personalities, PAD mood vectors, cosine similarity, sentiment analysis, identity archetypes, relationship graphs** — zero `unsafe`, 3 core deps, 417 tests.
+**15-trait personalities, PAD mood vectors, cosine similarity, sentiment analysis, identity archetypes, relationship graphs, energy/circadian/flow systems, EQ, cultural display rules, ACT-R activation, preference learning** — zero `unsafe`, 3 core deps, 783 tests.
 
 ## Installation
 
@@ -80,6 +80,24 @@ let full_prompt = compose_identity_prompt(&identity);
 | `ai` | System prompt composition, sentiment feedback loop, agent metadata |
 | `store` | `BhavaStore` trait for pluggable persistence backends |
 | `storage` | `SqliteStore` implementation |
+| `appraisal` | OCC appraisal model — goal-aware emotion generation |
+| `stress` | Allostatic load / burnout modeling (McEwen) |
+| `regulation` | Emotion regulation: suppress, reappraise, distract (Gross) |
+| `growth` | Experience-driven personality evolution via trait pressure |
+| `rhythm` | Biological rhythms: ultradian, seasonal, biorhythm cycles |
+| `energy` | Depletable energy with Banister fitness-fatigue model |
+| `circadian` | 24-hour alertness cycle with chronotype (Borbely) |
+| `flow` | Flow state detection with hysteresis (Csikszentmihalyi) |
+| `eq` | Emotional intelligence — Mayer-Salovey four-branch model |
+| `display_rules` | Cultural display rules — Matsumoto framework |
+| `microexpr` | Micro-expression detection during suppression (Ekman) |
+| `affective` | Affective computing metrics: complexity, granularity, inertia |
+| `proximity` | Spatial proximity triggers for location-based mood effects |
+| `reasoning` | Personality-driven reasoning strategy selection |
+| `active_hours` | Time-of-day personality activation scheduling |
+| `salience` | Somatic marker urgency/importance scoring (Damasio) |
+| `actr` | ACT-R frequency x recency memory activation with Hebbian boost |
+| `preference` | Adaptive preference learning from interaction outcomes |
 
 ## Consumers
 
@@ -93,7 +111,7 @@ let full_prompt = compose_identity_prompt(&identity);
 - [Architecture Overview](docs/architecture/overview.md) — module map, data flows, design principles
 - [Mathematical Reference](docs/architecture/math.md) — all algorithms and formulas
 - [Usage Guide](docs/guides/usage.md) — patterns, philosophy, code examples
-- [Testing Guide](docs/guides/testing.md) — 484 tests, 77 benchmarks, testing patterns
+- [Testing Guide](docs/guides/testing.md) — 783 tests, testing patterns
 - [Threat Model](docs/development/threat-model.md) — attack surface, mitigations, privilege model
 - [Dependency Watch](docs/development/dependency-watch.md) — dependency tracking and upgrade notes
 - [ADRs](docs/adr/) — architectural decision records

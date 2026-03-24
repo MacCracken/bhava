@@ -656,6 +656,322 @@ fn bench_monitor(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_rhythm(c: &mut Criterion) {
+    use bhava::mood::MoodVector;
+    use bhava::rhythm::{SeasonalRhythm, UltradianRhythm, apply_rhythms, default_biorhythm};
+    let mut group = c.benchmark_group("rhythm");
+
+    let now = chrono::Utc::now();
+    let ultradian = UltradianRhythm::new();
+    let seasonal = SeasonalRhythm::new();
+    let biorhythm = default_biorhythm(now - chrono::Duration::hours(100));
+
+    group.bench_function("ultradian_modulate", |b| {
+        b.iter(|| ultradian.modulate(black_box(now)))
+    });
+    group.bench_function("seasonal_modulate", |b| {
+        b.iter(|| seasonal.modulate(black_box(now)))
+    });
+    group.bench_function("biorhythm_modulate", |b| {
+        b.iter(|| biorhythm.modulate(black_box(now)))
+    });
+    group.bench_function("apply_all_rhythms", |b| {
+        b.iter_batched(
+            MoodVector::neutral,
+            |mut mood| {
+                apply_rhythms(
+                    &mut mood,
+                    now,
+                    Some(&ultradian),
+                    Some(&seasonal),
+                    Some(&biorhythm),
+                )
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.finish();
+}
+
+fn bench_energy(c: &mut Criterion) {
+    use bhava::energy::{EnergyState, exertion_from_mood};
+    use bhava::mood::{Emotion, MoodVector};
+    let mut group = c.benchmark_group("energy");
+
+    group.bench_function("tick_exertion", |b| {
+        b.iter_batched(
+            EnergyState::new,
+            |mut e| e.tick(black_box(0.6)),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("performance", |b| {
+        let e = EnergyState::new();
+        b.iter(|| black_box(&e).performance())
+    });
+    group.bench_function("exertion_from_mood", |b| {
+        let mut mood = MoodVector::neutral();
+        mood.set(Emotion::Arousal, 0.7);
+        mood.set(Emotion::Joy, 0.5);
+        b.iter(|| exertion_from_mood(black_box(&mood)))
+    });
+    group.finish();
+}
+
+fn bench_circadian(c: &mut Criterion) {
+    use bhava::circadian::{Chronotype, CircadianRhythm};
+    let mut group = c.benchmark_group("circadian");
+
+    let now = chrono::Utc::now();
+    let c_rhythm = CircadianRhythm::with_chronotype(Chronotype::NightOwl);
+
+    group.bench_function("alertness", |b| {
+        b.iter(|| c_rhythm.alertness(black_box(now)))
+    });
+    group.bench_function("mood_modulation", |b| {
+        b.iter(|| c_rhythm.mood_modulation(black_box(now)))
+    });
+    group.bench_function("decay_rate_modifier", |b| {
+        b.iter(|| c_rhythm.decay_rate_modifier(black_box(now)))
+    });
+    group.finish();
+}
+
+fn bench_flow(c: &mut Criterion) {
+    use bhava::flow::FlowState;
+    use bhava::mood::{Emotion, MoodVector};
+    let mut group = c.benchmark_group("flow");
+
+    let mut flow_mood = MoodVector::neutral();
+    flow_mood.set(Emotion::Interest, 0.6);
+    flow_mood.set(Emotion::Arousal, 0.3);
+    flow_mood.set(Emotion::Dominance, 0.3);
+    flow_mood.set(Emotion::Frustration, 0.1);
+
+    group.bench_function("tick", |b| {
+        b.iter_batched(
+            FlowState::new,
+            |mut f| f.tick(black_box(&flow_mood), 0.5, 0.5),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("check_conditions", |b| {
+        let f = FlowState::new();
+        b.iter(|| f.check_conditions(black_box(&flow_mood), 0.5, 0.5))
+    });
+    group.finish();
+}
+
+fn bench_eq(c: &mut Criterion) {
+    use bhava::eq::{EqProfile, compose_eq_prompt};
+    let mut group = c.benchmark_group("eq");
+
+    let eq = EqProfile::with_scores(0.8, 0.6, 0.7, 0.9);
+    group.bench_function("overall", |b| b.iter(|| black_box(&eq).overall()));
+    group.bench_function("compose_prompt", |b| {
+        b.iter(|| compose_eq_prompt(black_box(&eq)))
+    });
+    group.finish();
+}
+
+fn bench_display_rules(c: &mut Criterion) {
+    use bhava::display_rules::{apply_display_rules, celebration_context, professional_context};
+    use bhava::mood::{Emotion, EmotionalState};
+    use bhava::regulation::RegulatedMood;
+    let mut group = c.benchmark_group("display_rules");
+
+    let prof = professional_context();
+    let celeb = celebration_context();
+
+    group.bench_function("apply_professional", |b| {
+        b.iter_batched(
+            || {
+                let mut s = EmotionalState::new();
+                s.stimulate(Emotion::Joy, 0.6);
+                s.stimulate(Emotion::Frustration, 0.5);
+                RegulatedMood::from_state(&s)
+            },
+            |mut r| apply_display_rules(&mut r, black_box(&prof)),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("apply_celebration", |b| {
+        b.iter_batched(
+            || {
+                let mut s = EmotionalState::new();
+                s.stimulate(Emotion::Joy, 0.6);
+                RegulatedMood::from_state(&s)
+            },
+            |mut r| apply_display_rules(&mut r, black_box(&celeb)),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.finish();
+}
+
+fn bench_microexpr(c: &mut Criterion) {
+    use bhava::microexpr::detect_micro_expressions;
+    use bhava::mood::{Emotion, EmotionalState};
+    use bhava::regulation::{RegulatedMood, RegulationStrategy};
+    let mut group = c.benchmark_group("microexpr");
+
+    group.bench_function("detect", |b| {
+        b.iter_batched(
+            || {
+                let mut s = EmotionalState::new();
+                s.stimulate(Emotion::Frustration, 0.8);
+                s.stimulate(Emotion::Arousal, 0.5);
+                let mut r = RegulatedMood::from_state(&s);
+                r.regulate(
+                    RegulationStrategy::Suppress {
+                        target: Emotion::Frustration,
+                        strength: 0.9,
+                    },
+                    1.0,
+                );
+                r
+            },
+            |r| detect_micro_expressions(black_box(&r)),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.finish();
+}
+
+fn bench_affective(c: &mut Criterion) {
+    use bhava::affective::{compute_affective_metrics, snapshot_complexity, snapshot_granularity};
+    use bhava::mood::{Emotion, MoodHistory, MoodSnapshot, MoodState, MoodVector};
+    let mut group = c.benchmark_group("affective");
+
+    let mut mood = MoodVector::neutral();
+    mood.set(Emotion::Joy, 0.5);
+    mood.set(Emotion::Arousal, 0.3);
+
+    group.bench_function("snapshot_complexity", |b| {
+        b.iter(|| snapshot_complexity(black_box(&mood)))
+    });
+    group.bench_function("snapshot_granularity", |b| {
+        b.iter(|| snapshot_granularity(black_box(&mood)))
+    });
+    group.bench_function("compute_metrics_50", |b| {
+        let mut h = MoodHistory::new(50);
+        for i in 0..50 {
+            let v = (i as f32 * 0.1).sin() * 0.5;
+            let mut m = MoodVector::neutral();
+            m.set(Emotion::Joy, v);
+            m.set(Emotion::Arousal, v * 0.5);
+            h.record(MoodSnapshot {
+                mood: m,
+                state: MoodState::Calm,
+                deviation: v.abs(),
+                timestamp: chrono::Utc::now(),
+            });
+        }
+        b.iter(|| compute_affective_metrics(black_box(&h)))
+    });
+    group.finish();
+}
+
+fn bench_proximity(c: &mut Criterion) {
+    use bhava::mood::{Emotion, MoodTrigger};
+    use bhava::proximity::{Falloff, ProximityRule, ProximitySystem};
+    let mut group = c.benchmark_group("proximity");
+
+    let mut sys = ProximitySystem::new();
+    for i in 0..20 {
+        sys.add_rule(ProximityRule {
+            location_tag: format!("loc_{}", i % 5),
+            radius: 20.0,
+            trigger: MoodTrigger::new("effect").respond(Emotion::Joy, 0.2),
+            falloff: Falloff::Linear,
+        });
+    }
+    group.bench_function("evaluate_20_rules", |b| {
+        b.iter(|| sys.evaluate(black_box("loc_2"), 10.0))
+    });
+    group.finish();
+}
+
+fn bench_reasoning(c: &mut Criterion) {
+    use bhava::reasoning::{reasoning_scores, select_reasoning_strategy};
+    use bhava::traits::{PersonalityProfile, TraitKind, TraitLevel};
+    let mut group = c.benchmark_group("reasoning");
+
+    let mut p = PersonalityProfile::new("test");
+    p.set_trait(TraitKind::Precision, TraitLevel::Highest);
+    p.set_trait(TraitKind::Skepticism, TraitLevel::High);
+
+    group.bench_function("select_strategy", |b| {
+        b.iter(|| select_reasoning_strategy(black_box(&p)))
+    });
+    group.bench_function("all_scores", |b| b.iter(|| reasoning_scores(black_box(&p))));
+    group.finish();
+}
+
+fn bench_salience(c: &mut Criterion) {
+    use bhava::appraisal::Appraisal;
+    use bhava::salience::classify_salience;
+    let mut group = c.benchmark_group("salience");
+
+    let a = Appraisal::event("test", 0.8).with_praise(0.6);
+    group.bench_function("classify", |b| {
+        b.iter(|| classify_salience(black_box(&a), 0.5, 0.3))
+    });
+    group.finish();
+}
+
+fn bench_actr(c: &mut Criterion) {
+    use bhava::actr::ActivationStore;
+    let mut group = c.benchmark_group("actr");
+
+    group.bench_function("rehearse_100", |b| {
+        b.iter_batched(
+            || ActivationStore::new(200),
+            |mut store| {
+                for i in 0..100 {
+                    store.rehearse(format!("item_{}", i % 50), i as f64);
+                }
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("retrieve_above", |b| {
+        let mut store = ActivationStore::new(100);
+        for i in 0..50 {
+            store.rehearse(format!("item_{i}"), i as f64);
+        }
+        b.iter(|| store.retrieve_above(black_box(0.0), 100.0))
+    });
+    group.finish();
+}
+
+fn bench_preference(c: &mut Criterion) {
+    use bhava::preference::PreferenceStore;
+    let mut group = c.benchmark_group("preference");
+
+    group.bench_function("record_100", |b| {
+        b.iter_batched(
+            || PreferenceStore::new(200),
+            |mut store| {
+                let now = chrono::Utc::now();
+                for i in 0..100 {
+                    store.record_outcome(format!("item_{}", i % 50), 0.5, now);
+                }
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    group.bench_function("top_preferences", |b| {
+        let mut store = PreferenceStore::new(100);
+        let now = chrono::Utc::now();
+        for i in 0..50 {
+            store.record_outcome(format!("item_{i}"), (i as f32 - 25.0) / 25.0, now);
+        }
+        b.iter(|| store.top_preferences(black_box(10)))
+    });
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_trait_behavior,
@@ -672,5 +988,18 @@ criterion_group!(
     bench_ai,
     bench_monitor,
     bench_serde,
+    bench_rhythm,
+    bench_energy,
+    bench_circadian,
+    bench_flow,
+    bench_eq,
+    bench_display_rules,
+    bench_microexpr,
+    bench_affective,
+    bench_proximity,
+    bench_reasoning,
+    bench_salience,
+    bench_actr,
+    bench_preference,
 );
 criterion_main!(benches);

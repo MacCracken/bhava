@@ -148,6 +148,23 @@ impl ActivationStore {
             return;
         }
 
+        // Bound link count: evict weakest link if at capacity * 4
+        let max_links = self.capacity * 4;
+        if self.links.len() >= max_links
+            && let Some(weakest) = self
+                .links
+                .iter()
+                .enumerate()
+                .min_by(|(_, a), (_, b)| {
+                    a.strength
+                        .partial_cmp(&b.strength)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                })
+                .map(|(i, _)| i)
+        {
+            self.links.swap_remove(weakest);
+        }
+
         self.links.push(HebbianLink {
             tag_a,
             tag_b,
@@ -232,7 +249,8 @@ impl ActivationStore {
         self.links.len()
     }
 
-    /// Evict the entry with the lowest activation.
+    /// Evict the entry with the lowest activation, cleaning up orphaned links.
+    #[inline]
     fn evict_lowest(&mut self, now: f64) {
         if self.entries.is_empty() {
             return;
@@ -246,7 +264,11 @@ impl ActivationStore {
                 min_idx = i;
             }
         }
+        let evicted_tag = self.entries[min_idx].tag.clone();
         self.entries.swap_remove(min_idx);
+        // Clean up orphaned links referencing the evicted entry
+        self.links
+            .retain(|l| l.tag_a != evicted_tag && l.tag_b != evicted_tag);
     }
 }
 
@@ -446,6 +468,36 @@ mod tests {
         };
         let b = e.base_level(10.0, 0.5);
         assert!(b.is_finite(), "base level at age 0 should be finite: {b}");
+    }
+
+    #[test]
+    fn test_eviction_cleans_orphaned_links() {
+        let mut store = ActivationStore::new(2);
+        store.rehearse("a", 1.0);
+        store.rehearse("b", 2.0);
+        store.strengthen_link("a", "b", 0.5);
+        assert_eq!(store.link_count(), 1);
+        // Rehearse b many times so a is weakest
+        for i in 0..10 {
+            store.rehearse("b", 3.0 + i as f64);
+        }
+        // Add c — evicts a, should also clean link(a,b)
+        store.rehearse("c", 15.0);
+        assert!(store.retrieve("a", 15.0).is_none());
+        assert_eq!(store.link_count(), 0, "orphaned link should be cleaned");
+    }
+
+    #[test]
+    fn test_link_capacity_bounded() {
+        let mut store = ActivationStore::new(3); // max_links = 3 * 4 = 12
+        for i in 0..20 {
+            store.strengthen_link(format!("a{i}"), format!("b{i}"), 0.1);
+        }
+        assert!(
+            store.link_count() <= 12,
+            "links should be bounded: {}",
+            store.link_count()
+        );
     }
 
     #[test]

@@ -64,17 +64,16 @@ fn emotional_complexity(mood: &MoodVector) -> f32 {
 #[must_use]
 #[inline]
 fn emotional_granularity(mood: &MoodVector) -> f32 {
-    let mut values = [0.0f32; 6];
-    for (i, &e) in Emotion::ALL.iter().enumerate() {
-        values[i] = mood.get(e).abs();
+    let mut total = 0.0f32;
+    for &e in Emotion::ALL {
+        total += mood.get(e).abs();
     }
-    let total: f32 = values.iter().sum();
     if total < f32::EPSILON {
         return 0.0;
     }
     let mut entropy = 0.0f32;
-    for &v in &values {
-        let p = v / total;
+    for &e in Emotion::ALL {
+        let p = mood.get(e).abs() / total;
         if p > f32::EPSILON {
             entropy -= p * p.ln();
         }
