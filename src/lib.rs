@@ -23,6 +23,12 @@
 //! - [`ai`] — System prompt composition, sentiment feedback, and agent metadata
 //! - [`store`] — Storage trait for pluggable persistence backends
 //! - [`storage`] — SQLite persistence implementation (feature: `sqlite`)
+//! - [`rhythm`] — Biological rhythms: ultradian, seasonal, and biorhythm cycles
+//! - [`microexpr`] — Micro-expression detection during emotional suppression
+//! - [`affective`] — Affective computing metrics (complexity, granularity, inertia, variability)
+//! - [`proximity`] — Spatial proximity triggers for location-based mood effects
+//! - [`reasoning`] — Personality-driven reasoning strategy selection
+//! - [`active_hours`] — Time-of-day personality activation scheduling
 //! - [`error`] — Error types
 
 pub mod error;
@@ -62,6 +68,24 @@ pub mod growth;
 
 #[cfg(feature = "sentiment")]
 pub mod monitor;
+
+#[cfg(feature = "mood")]
+pub mod rhythm;
+
+#[cfg(feature = "mood")]
+pub mod microexpr;
+
+#[cfg(feature = "mood")]
+pub mod affective;
+
+#[cfg(feature = "mood")]
+pub mod proximity;
+
+#[cfg(all(feature = "mood", feature = "traits"))]
+pub mod reasoning;
+
+#[cfg(feature = "mood")]
+pub mod active_hours;
 
 #[cfg(feature = "ai")]
 pub mod ai;
