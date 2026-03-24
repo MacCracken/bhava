@@ -76,6 +76,7 @@ impl EqProfile {
     /// (understanding, management) are weighted more heavily as they
     /// depend on the lower ones.
     #[must_use]
+    #[inline]
     pub fn overall(&self) -> f32 {
         // Weights: perception 0.15, facilitation 0.20, understanding 0.30, management 0.35
         self.perception * 0.15

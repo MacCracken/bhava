@@ -127,6 +127,27 @@ pub fn leak_vector(expressions: &[MicroExpression]) -> MoodVector {
     v
 }
 
+/// Detect micro-expressions with personality-modulated susceptibility.
+///
+/// Combines stress and personality factors: susceptible personalities leak
+/// more, controlled personalities leak less.
+#[cfg(feature = "traits")]
+#[must_use]
+pub fn detect_micro_expressions_personality(
+    regulated: &RegulatedMood,
+    stress_load: f32,
+    profile: &crate::traits::PersonalityProfile,
+) -> Vec<MicroExpression> {
+    let susceptibility = micro_expression_susceptibility(profile);
+    let stress_mult = stress_leak_multiplier(stress_load);
+    let combined = susceptibility * stress_mult;
+    let mut expressions = detect_micro_expressions(regulated);
+    for expr in &mut expressions {
+        expr.expressed_intensity = (expr.expressed_intensity * combined).clamp(0.0, 1.0);
+    }
+    expressions
+}
+
 /// Susceptibility to micro-expressions based on personality traits.
 ///
 /// High formality and confidence → better emotional control → less leaking.
@@ -291,6 +312,43 @@ mod tests {
         let expr2: MicroExpression = serde_json::from_str(&json).unwrap();
         assert_eq!(expr2.emotion, expr.emotion);
         assert!((expr2.true_intensity - expr.true_intensity).abs() < f32::EPSILON);
+    }
+
+    #[cfg(feature = "traits")]
+    #[test]
+    fn test_personality_detection_formal_leaks_less() {
+        let reg = suppressed_state();
+        let mut formal = crate::traits::PersonalityProfile::new("formal");
+        formal.set_trait(
+            crate::traits::TraitKind::Formality,
+            crate::traits::TraitLevel::Highest,
+        );
+        formal.set_trait(
+            crate::traits::TraitKind::Confidence,
+            crate::traits::TraitLevel::Highest,
+        );
+        let mut warm = crate::traits::PersonalityProfile::new("warm");
+        warm.set_trait(
+            crate::traits::TraitKind::Empathy,
+            crate::traits::TraitLevel::Highest,
+        );
+        warm.set_trait(
+            crate::traits::TraitKind::Warmth,
+            crate::traits::TraitLevel::Highest,
+        );
+        warm.set_trait(
+            crate::traits::TraitKind::Formality,
+            crate::traits::TraitLevel::Lowest,
+        );
+        let formal_exprs = detect_micro_expressions_personality(&reg, 0.0, &formal);
+        let warm_exprs = detect_micro_expressions_personality(&reg, 0.0, &warm);
+        // Formal agent should leak less than warm agent
+        let formal_total: f32 = formal_exprs.iter().map(|e| e.expressed_intensity).sum();
+        let warm_total: f32 = warm_exprs.iter().map(|e| e.expressed_intensity).sum();
+        assert!(
+            formal_total < warm_total,
+            "formal={formal_total} warm={warm_total}"
+        );
     }
 
     #[cfg(feature = "traits")]

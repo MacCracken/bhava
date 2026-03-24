@@ -52,6 +52,7 @@ const ACTIVE_THRESHOLD: f32 = 0.1;
 
 /// Count how many emotions exceed the activation threshold.
 #[must_use]
+#[inline]
 fn emotional_complexity(mood: &MoodVector) -> f32 {
     Emotion::ALL
         .iter()
@@ -61,8 +62,12 @@ fn emotional_complexity(mood: &MoodVector) -> f32 {
 
 /// Shannon entropy of emotion activations (normalized absolute values).
 #[must_use]
+#[inline]
 fn emotional_granularity(mood: &MoodVector) -> f32 {
-    let values: Vec<f32> = Emotion::ALL.iter().map(|&e| mood.get(e).abs()).collect();
+    let mut values = [0.0f32; 6];
+    for (i, &e) in Emotion::ALL.iter().enumerate() {
+        values[i] = mood.get(e).abs();
+    }
     let total: f32 = values.iter().sum();
     if total < f32::EPSILON {
         return 0.0;
@@ -147,6 +152,7 @@ pub fn compute_affective_metrics(history: &MoodHistory) -> AffectiveMetrics {
 ///
 /// Useful for real-time display without needing full history.
 #[must_use]
+#[inline]
 pub fn snapshot_complexity(mood: &MoodVector) -> f32 {
     emotional_complexity(mood)
 }
@@ -155,6 +161,7 @@ pub fn snapshot_complexity(mood: &MoodVector) -> f32 {
 ///
 /// Useful for real-time display without needing full history.
 #[must_use]
+#[inline]
 pub fn snapshot_granularity(mood: &MoodVector) -> f32 {
     emotional_granularity(mood)
 }

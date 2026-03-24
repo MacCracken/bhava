@@ -415,6 +415,44 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_mask_self_referential() {
+        // Mask source == replacement: zeros source, sets replacement to intensity
+        let mut reg = emotional_state();
+        apply_display_rules(
+            &mut reg,
+            &CulturalContext::new("test").with_rule(DisplayRule::Mask {
+                source: Emotion::Joy,
+                replacement: Emotion::Joy,
+                replacement_intensity: 0.2,
+            }),
+        );
+        // Net result: joy = 0.2 (set to 0, then set to 0.2)
+        assert!(
+            (reg.expressed.joy - 0.2).abs() < f32::EPSILON,
+            "self-mask should set to replacement_intensity: {}",
+            reg.expressed.joy
+        );
+    }
+
+    #[test]
+    fn test_amplify_negative_factor() {
+        // Negative factor clamped to 0.0 by .max(0.0)
+        let mut reg = emotional_state();
+        apply_display_rules(
+            &mut reg,
+            &CulturalContext::new("test").with_rule(DisplayRule::Amplify {
+                target: Emotion::Joy,
+                factor: -5.0,
+            }),
+        );
+        assert!(
+            reg.expressed.joy.abs() < f32::EPSILON,
+            "negative factor should zero the emotion: {}",
+            reg.expressed.joy
+        );
+    }
+
     // ── Cultural distortion ──
 
     #[test]

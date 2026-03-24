@@ -57,13 +57,8 @@ impl fmt::Display for ReasoningStrategy {
     }
 }
 
-/// Select the dominant reasoning strategy from a personality profile.
-///
-/// Computes a score for each strategy based on relevant trait combinations
-/// and returns the highest-scoring one. Ties are broken by strategy order
-/// (analytical > intuitive > empathetic > systematic > creative).
-#[must_use]
-pub fn select_reasoning_strategy(profile: &PersonalityProfile) -> ReasoningStrategy {
+/// Compute raw strategy scores from a personality profile.
+fn compute_scores(profile: &PersonalityProfile) -> [(ReasoningStrategy, f32); 5] {
     let precision = profile.get_trait(TraitKind::Precision).normalized();
     let skepticism = profile.get_trait(TraitKind::Skepticism).normalized();
     let creativity = profile.get_trait(TraitKind::Creativity).normalized();
@@ -73,14 +68,23 @@ pub fn select_reasoning_strategy(profile: &PersonalityProfile) -> ReasoningStrat
     let autonomy = profile.get_trait(TraitKind::Autonomy).normalized();
     let curiosity = profile.get_trait(TraitKind::Curiosity).normalized();
 
-    let scores = [
+    [
         (ReasoningStrategy::Analytical, precision + skepticism),
         (ReasoningStrategy::Intuitive, creativity + risk_tolerance),
         (ReasoningStrategy::Empathetic, empathy + warmth),
         (ReasoningStrategy::Systematic, precision + autonomy),
         (ReasoningStrategy::Creative, creativity + curiosity),
-    ];
+    ]
+}
 
+/// Select the dominant reasoning strategy from a personality profile.
+///
+/// Computes a score for each strategy based on relevant trait combinations
+/// and returns the highest-scoring one. Ties are broken by strategy order
+/// (analytical > intuitive > empathetic > systematic > creative).
+#[must_use]
+pub fn select_reasoning_strategy(profile: &PersonalityProfile) -> ReasoningStrategy {
+    let scores = compute_scores(profile);
     scores
         .iter()
         .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
@@ -94,23 +98,7 @@ pub fn select_reasoning_strategy(profile: &PersonalityProfile) -> ReasoningStrat
 /// strategy when the primary is inappropriate.
 #[must_use]
 pub fn reasoning_scores(profile: &PersonalityProfile) -> Vec<(ReasoningStrategy, f32)> {
-    let precision = profile.get_trait(TraitKind::Precision).normalized();
-    let skepticism = profile.get_trait(TraitKind::Skepticism).normalized();
-    let creativity = profile.get_trait(TraitKind::Creativity).normalized();
-    let risk_tolerance = profile.get_trait(TraitKind::RiskTolerance).normalized();
-    let empathy = profile.get_trait(TraitKind::Empathy).normalized();
-    let warmth = profile.get_trait(TraitKind::Warmth).normalized();
-    let autonomy = profile.get_trait(TraitKind::Autonomy).normalized();
-    let curiosity = profile.get_trait(TraitKind::Curiosity).normalized();
-
-    let mut scores = vec![
-        (ReasoningStrategy::Analytical, precision + skepticism),
-        (ReasoningStrategy::Intuitive, creativity + risk_tolerance),
-        (ReasoningStrategy::Empathetic, empathy + warmth),
-        (ReasoningStrategy::Systematic, precision + autonomy),
-        (ReasoningStrategy::Creative, creativity + curiosity),
-    ];
-
+    let mut scores = compute_scores(profile).to_vec();
     scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
     scores
 }

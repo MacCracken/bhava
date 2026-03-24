@@ -61,8 +61,13 @@ impl UltradianRhythm {
     ///
     /// Returns a `MoodVector` of additive deltas. Interest and arousal
     /// oscillate in phase (high focus = high interest + moderate arousal).
+    /// Returns neutral if `period_secs` is zero or negative.
     #[must_use]
+    #[inline]
     pub fn modulate(&self, now: DateTime<Utc>) -> MoodVector {
+        if self.period_secs <= 0.0 {
+            return MoodVector::neutral();
+        }
         let t = now.timestamp() as f64;
         let phase = std::f64::consts::TAU * t / self.period_secs + self.phase_offset;
         let wave = phase.sin() as f32;
@@ -122,8 +127,13 @@ impl SeasonalRhythm {
     /// Compute mood modulation at the given time.
     ///
     /// Returns additive deltas for joy and interest, peaking at `peak_day`.
+    /// Returns neutral if `year_length_days` is zero or negative.
     #[must_use]
+    #[inline]
     pub fn modulate(&self, now: DateTime<Utc>) -> MoodVector {
+        if self.year_length_days <= 0.0 {
+            return MoodVector::neutral();
+        }
         let day_of_year = now.ordinal0() as f64;
         let phase = std::f64::consts::TAU * (day_of_year - self.peak_day) / self.year_length_days;
         let wave = phase.cos() as f32; // cos so peak_day = maximum
@@ -182,12 +192,17 @@ impl BiorhythmSet {
     ///
     /// Each cycle contributes an additive delta to its target emotion.
     /// Multiple cycles targeting the same emotion sum together.
+    /// Cycles with zero or negative periods are skipped.
     #[must_use]
+    #[inline]
     pub fn modulate(&self, now: DateTime<Utc>) -> MoodVector {
         let elapsed = (now - self.epoch).num_milliseconds() as f64 / 1000.0;
         let mut delta = MoodVector::neutral();
 
         for cycle in &self.cycles {
+            if cycle.period_secs <= 0.0 {
+                continue;
+            }
             let phase = std::f64::consts::TAU * elapsed / cycle.period_secs;
             let wave = phase.sin() as f32;
             delta.nudge(cycle.target, wave * cycle.amplitude);
@@ -451,6 +466,53 @@ mod tests {
         assert_eq!(b.cycle_count(), 1);
         let delta = b.modulate(fixed_time() + chrono::Duration::minutes(15)); // quarter period
         assert!(delta.frustration.abs() > 0.1);
+    }
+
+    // ── Zero/negative period guards ──
+
+    #[test]
+    fn test_ultradian_zero_period_safe() {
+        let mut r = UltradianRhythm::new();
+        r.period_secs = 0.0;
+        let delta = r.modulate(fixed_time());
+        assert!(
+            delta.intensity() < f32::EPSILON,
+            "zero period should return neutral"
+        );
+    }
+
+    #[test]
+    fn test_seasonal_zero_year_safe() {
+        let mut r = SeasonalRhythm::new();
+        r.year_length_days = 0.0;
+        let delta = r.modulate(fixed_time());
+        assert!(
+            delta.intensity() < f32::EPSILON,
+            "zero year should return neutral"
+        );
+    }
+
+    #[test]
+    fn test_biorhythm_zero_period_skipped() {
+        let mut b = BiorhythmSet::new(fixed_time());
+        b.add_cycle(BiorhythmCycle {
+            period_secs: 0.0,
+            amplitude: 0.5,
+            target: Emotion::Joy,
+        });
+        let delta = b.modulate(fixed_time() + chrono::Duration::hours(1));
+        assert!(
+            delta.joy.abs() < f32::EPSILON,
+            "zero period cycle should be skipped"
+        );
+    }
+
+    #[test]
+    fn test_ultradian_negative_period_safe() {
+        let mut r = UltradianRhythm::new();
+        r.period_secs = -100.0;
+        let delta = r.modulate(fixed_time());
+        assert!(delta.intensity() < f32::EPSILON);
     }
 
     // ── apply_rhythms ──

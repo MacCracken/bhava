@@ -73,7 +73,7 @@ pub struct ProximityRule {
 }
 
 /// A trigger evaluation result — a trigger and its distance-scaled intensity.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProximityHit {
     /// The location tag that matched.
     pub location_tag: String,
@@ -223,6 +223,33 @@ mod tests {
     fn test_exponential_edge_near_zero() {
         let edge = Falloff::Exponential.intensity(10.0, 10.0);
         assert!(edge.abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_falloff_negative_distance() {
+        // Negative distance treated as "at center" → full intensity
+        assert!((Falloff::Linear.intensity(-5.0, 10.0) - 1.0).abs() < f32::EPSILON);
+        assert!((Falloff::Step.intensity(-1.0, 10.0) - 1.0).abs() < f32::EPSILON);
+        assert!((Falloff::Exponential.intensity(-1.0, 10.0) - 1.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_falloff_negative_radius() {
+        // Negative radius → 0.0 (invalid zone)
+        assert!(Falloff::Linear.intensity(0.0, -10.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_serde_proximity_hit() {
+        let hit = ProximityHit {
+            location_tag: "tavern".into(),
+            trigger: tavern_trigger(),
+            intensity: 0.75,
+        };
+        let json = serde_json::to_string(&hit).unwrap();
+        let hit2: ProximityHit = serde_json::from_str(&json).unwrap();
+        assert_eq!(hit2.location_tag, "tavern");
+        assert!((hit2.intensity - 0.75).abs() < f32::EPSILON);
     }
 
     #[test]

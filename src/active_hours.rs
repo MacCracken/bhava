@@ -228,6 +228,18 @@ mod tests {
         assert!((w.activation - 1.0).abs() < f32::EPSILON);
     }
 
+    #[test]
+    fn test_window_same_start_end() {
+        // Zero-width window: start == end → never active
+        let w = ActiveWindow::new(12, 12, 1.0);
+        for h in 0..24 {
+            assert!(
+                !w.contains_hour(h),
+                "hour {h} should not match zero-width window"
+            );
+        }
+    }
+
     // ── Schedule ──
 
     #[test]
