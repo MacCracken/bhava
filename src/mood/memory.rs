@@ -45,7 +45,11 @@ impl EmotionalMemoryBank {
                     .memories
                     .iter()
                     .enumerate()
-                    .min_by(|a, b| a.1.intensity.partial_cmp(&b.1.intensity).unwrap())
+                    .min_by(|a, b| {
+                        a.1.intensity
+                            .partial_cmp(&b.1.intensity)
+                            .unwrap_or(std::cmp::Ordering::Equal)
+                    })
                     .map(|(i, _)| i)
                 {
                     self.memories.swap_remove(weakest);

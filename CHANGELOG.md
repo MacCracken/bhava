@@ -1,10 +1,35 @@
 # Changelog
 
-## [Unreleased]
+## [1.0.0] - 2026-03-24
 
-### v1.0 Roadmap — Complete
+First stable release. API surface locked under semver. 30 modules, 785 tests, 105 benchmarks.
 
-All 16 v1.0 roadmap items implemented across 14 new modules. 3 audit rounds.
+### API Stability
+- All public types committed to semver compatibility
+- `#[non_exhaustive]` on all public enums for forward-compatible extension
+- `#[must_use]` on all pure functions
+
+### Fixed (from v1.0 audit)
+- Eliminated `unwrap()` in `EmotionalMemoryBank::record()` eviction — now handles NaN gracefully via `unwrap_or(Ordering::Equal)`
+- Eliminated `unwrap()` in `action_tendency()` — now returns `ActionTendency::Neutral` on empty candidates
+- Added `PartialEq` to `OceanScores` and `DisplayRule` for comparison support
+- Added `Serialize`/`Deserialize` to `SentimentMonitor` for streaming state persistence
+- Added `#[inline]` + `#[must_use]` to `TraitLevel::numeric()` and `TraitLevel::normalized()` (cascading 30-60% speedup on OCEAN/personality paths)
+- Added `#[must_use]` to `MoodHistory::state_distribution()`, `deviation_trend()`, `average_deviation()`, `len()`, `is_empty()`
+- Completed truncated test `test_amplifier_neurotic_amplifies_negative`
+
+### Quality
+- 785 tests (749 unit + 35 integration + 1 doc)
+- 105 criterion benchmarks across 27 groups
+- Zero `unwrap()`/`panic!()` in library code
+- Zero `unsafe` code
+- Full P(-1) scaffold hardening pass: fmt, clippy, audit, deny all clean
+
+## [0.24.3] - 2026-03-24
+
+14 new modules completing the v1.0 roadmap. Mood test suite extracted to dedicated file. P(-1) scaffold hardening pass.
+
+### New Modules
 
 #### Rhythms & Cycles
 - **rhythm**: Ultradian (90-120 min BRAC), seasonal (SAD sensitivity), and biorhythm (incommensurate sine waves for NPC individuation) cycles. `apply_rhythms()` convenience composer. Division-by-zero guards on all periods.
@@ -26,10 +51,17 @@ All 16 v1.0 roadmap items implemented across 14 new modules. 3 audit rounds.
 - **preference**: Adaptive preference learning via exponential moving average with decreasing learning rate. Personality-biased (Warmth → positive gain, Skepticism → negative gain). Capacity-bounded with weakest-valence eviction.
 - **active_hours**: Time-of-day activation scheduling with timezone offset. Midnight-wrapping windows. Factory presets (default 9-5, night owl, early bird, always-on).
 
-#### Quality
-- 787 tests (751 unit + 35 integration + 1 doc)
-- 27 benchmark groups covering all modules
+### Changed
+- Extracted mood test suite from `mood/mod.rs` into dedicated `mood/tests.rs` (1288 lines)
+
+### Fixed
+- Truncated test function `test_amplifier_neurotic_amplifies_negative` — completed with full neurotic vs calm profile assertions
+
+### Quality
+- 785 tests (749 unit + 35 integration + 1 doc)
+- 105 criterion benchmarks across 27 groups
 - 3 audit rounds: division-by-zero guards, unbounded growth fixes, orphan cleanup, hardcoded constant elimination, missing `#[inline]`/Serde/edge-case tests
+- P(-1) scaffold hardening: all cleanliness checks pass (fmt, clippy, audit, deny)
 
 ## [0.23.3] - 2026-03-23
 

@@ -13,7 +13,7 @@ use super::profile::PersonalityProfile;
 /// - **Extraversion**: sociability, assertiveness, warmth
 /// - **Agreeableness**: cooperation, trust, empathy
 /// - **Neuroticism**: emotional instability, anxiety, volatility
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct OceanScores {
     pub openness: f32,
     pub conscientiousness: f32,

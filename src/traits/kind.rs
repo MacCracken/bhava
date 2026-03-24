@@ -218,6 +218,8 @@ pub enum TraitLevel {
 
 impl TraitLevel {
     /// Numeric value: -2 (Lowest) to +2 (Highest).
+    #[inline]
+    #[must_use]
     pub fn numeric(self) -> i8 {
         match self {
             Self::Lowest => -2,
@@ -229,6 +231,8 @@ impl TraitLevel {
     }
 
     /// Normalized to -1.0..=1.0.
+    #[inline]
+    #[must_use]
     pub fn normalized(self) -> f32 {
         self.numeric() as f32 / 2.0
     }

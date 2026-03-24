@@ -1,9 +1,9 @@
 [package]
 name = "bhava"
-version = "0.23.3"
+version = "1.0.0"
 edition = "2024"
 rust-version = "1.89"
-license = "GPL-3.0"
+license = "GPL-3.0-only"
 description = "Emotion and personality engine — trait spectrums, mood vectors, archetypes, behavioral mapping"
 homepage = "https://github.com/MacCracken/bhava"
 repository = "https://github.com/MacCracken/bhava"

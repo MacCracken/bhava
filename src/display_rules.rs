@@ -21,7 +21,7 @@ use crate::mood::{Emotion, MoodVector};
 use crate::regulation::RegulatedMood;
 
 /// A display rule — how to transform expressed emotion in a given context.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum DisplayRule {
     /// Exaggerate expression of the target emotion.

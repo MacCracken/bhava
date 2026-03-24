@@ -1286,3 +1286,31 @@ fn test_memory_serde() {
 #[cfg(feature = "traits")]
 #[test]
 fn test_amplifier_neurotic_amplifies_negative() {
+    use crate::mood::baseline::emotion_amplifier;
+    use crate::traits::{PersonalityProfile, TraitKind, TraitLevel};
+
+    // Create a "neurotic" profile: low patience, low confidence, high skepticism
+    let mut profile = PersonalityProfile::new("neurotic");
+    profile.set_trait(TraitKind::Patience, TraitLevel::Lowest);
+    profile.set_trait(TraitKind::Confidence, TraitLevel::Lowest);
+    profile.set_trait(TraitKind::Skepticism, TraitLevel::Highest);
+
+    // Negative stimulus on frustration should be amplified above 1.0
+    let amp = emotion_amplifier(&profile, Emotion::Frustration, -0.5);
+    assert!(
+        amp > 1.0,
+        "neurotic profile should amplify negative frustration, got {amp}"
+    );
+
+    // Calm profile: high patience, high confidence
+    let mut calm = PersonalityProfile::new("calm");
+    calm.set_trait(TraitKind::Patience, TraitLevel::Highest);
+    calm.set_trait(TraitKind::Confidence, TraitLevel::Highest);
+    calm.set_trait(TraitKind::Skepticism, TraitLevel::Low);
+
+    let amp_calm = emotion_amplifier(&calm, Emotion::Frustration, -0.5);
+    assert!(
+        amp_calm < amp,
+        "calm profile should amplify less than neurotic: calm={amp_calm}, neurotic={amp}"
+    );
+}

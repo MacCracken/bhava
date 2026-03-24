@@ -95,10 +95,12 @@ pub fn action_tendency(mood: &MoodVector) -> ActionTendency {
         (protect, "protect"),
     ];
 
-    let (max_val, max_label) = candidates
+    let Some((max_val, max_label)) = candidates
         .iter()
         .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal))
-        .unwrap();
+    else {
+        return ActionTendency::Neutral;
+    };
 
     if *max_val < 0.1 {
         return ActionTendency::Neutral;

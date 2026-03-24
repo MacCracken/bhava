@@ -54,16 +54,21 @@ impl MoodHistory {
     }
 
     /// Number of recorded snapshots.
+    #[inline]
+    #[must_use]
     pub fn len(&self) -> usize {
         self.snapshots.len()
     }
 
     /// Whether the history is empty.
+    #[inline]
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.snapshots.is_empty()
     }
 
     /// Average deviation across all snapshots.
+    #[must_use]
     pub fn average_deviation(&self) -> f32 {
         if self.snapshots.is_empty() {
             return 0.0;
@@ -78,6 +83,7 @@ impl MoodHistory {
     }
 
     /// Count occurrences of each mood state in history.
+    #[must_use]
     pub fn state_distribution(&self) -> Vec<(MoodState, usize)> {
         use std::collections::HashMap;
         let mut counts: HashMap<MoodState, usize> = HashMap::new();
@@ -91,6 +97,7 @@ impl MoodHistory {
 
     /// Trend: is deviation increasing or decreasing?
     /// Returns positive for escalating, negative for calming, near-zero for stable.
+    #[must_use]
     pub fn deviation_trend(&self) -> f32 {
         if self.snapshots.len() < 2 {
             return 0.0;

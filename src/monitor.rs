@@ -36,7 +36,7 @@ use serde::{Deserialize, Serialize};
 /// }
 /// assert!(state.mood.joy != 0.0);
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SentimentMonitor {
     /// Accumulated text buffer.
     buffer: String,

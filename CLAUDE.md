@@ -5,9 +5,9 @@
 **Bhava** (Sanskrit: emotion/feeling/state of being) — Emotion and personality engine — traits, mood, archetypes, sentiment, relationships, appraisal
 
 - **Type**: Flat library crate
-- **License**: GPL-3.0
+- **License**: GPL-3.0-only
 - **MSRV**: 1.89
-- **Version**: SemVer 0.D.M pre-1.0
+- **Version**: SemVer 1.0.0
 
 ## Consumers
 
