@@ -39,6 +39,110 @@ Derive macro or `impl_display!` to eliminate 16+ manual `Display` match blocks. 
 ### State Machine Base Trait
 Generic `StateMachine { type State; type Input; fn tick(); fn state(); }` for `FlowState`, `CircadianRhythm`, and future phase-based systems. Build when: a 3rd state machine module is added.
 
+### Environmental Reactivity — v1.5 (Earth-Local Forces)
+
+Bhava entities exist in a physical world. Temperature, light, noise, air quality — these press on mood, energy, stress, and behavior. Bhava doesn't simulate the environment (that's kiran/joshua with ushma, pravash, bijli, prakash). Bhava *reacts* to it.
+
+#### Core: Environment Input Struct
+
+A single struct the game loop or simulation passes to bhava each tick:
+
+```rust
+pub struct Environment {
+    pub temperature_c: f32,      // Celsius — affects energy, stress, circadian
+    pub humidity_pct: f32,       // 0-100 — amplifies heat stress, saps motivation
+    pub pressure_hpa: f32,       // Barometric — low pressure → anxiety, headaches
+    pub light_lux: f32,          // Ambient light — drives circadian, SAD, alertness
+    pub noise_db: f32,           // Ambient noise — affects stress, flow disruption
+    pub wind_speed_ms: f32,      // Wind — energy cost modifier, exposure stress
+    pub air_quality_aqi: f32,    // 0-500 AQI — affects energy recovery, stress
+    pub altitude_m: f32,         // Elevation — affects energy, circadian sensitivity
+    pub weather: WeatherCondition, // Rain/Snow/Storm/Clear/Overcast/Fog
+}
+```
+
+#### Module Integration (all existing modules, no new systems)
+
+| Environmental Input | Bhava Module | Effect |
+|-------------------|-------------|--------|
+| **High temperature** (>35°C) | `energy` | Increased drain rate, reduced recovery. Heat exhaustion |
+| **Low temperature** (<0°C) | `energy` | Increased drain (shivering), `stress` allostatic load rises |
+| **Humidity + heat** | `stress` | Compound heat index → accelerated burnout accumulation |
+| **Low barometric pressure** | `mood` | Baseline anxiety nudge (arousal↑, trust↓). Storm sensitivity |
+| **Rapid pressure change** | `stress` | Acute stress spike. Migraine-prone entities (high neuroticism) amplified |
+| **Low light** (<100 lux) | `circadian` | Melatonin proxy → drowsiness. Extends existing SAD in `rhythm` |
+| **Bright light** (>10k lux) | `circadian` | Alertness boost, circadian entrainment. Resets sleep pressure |
+| **High noise** (>70 dB) | `stress` | Chronic noise stress. `flow` disruption threshold lowered |
+| **Sustained noise** | `flow` | Harder to enter/maintain flow. Disruption probability increases |
+| **Wind exposure** | `energy` | Movement energy cost multiplier. Wind chill compounds cold stress |
+| **Poor air quality** (AQI >150) | `energy` | Recovery rate reduced. `stress` baseline elevated |
+| **High altitude** (>2500m) | `energy` | Reduced peak performance (O₂). `circadian` sensitivity increased |
+| **Rain/Storm** | `mood` | Personality-dependent: high neuroticism → anxiety; high openness → calm/reflective |
+| **Fog** | `salience` | Reduced environmental salience. Proximity trigger ranges shortened |
+| **Clear sky** | `mood` | Baseline joy nudge. `circadian` light entrainment at full strength |
+
+#### Personality Modulation
+
+Not everyone reacts the same way to a hot day:
+
+- **High Patience** → heat tolerance. Stress accumulation slower
+- **Low Patience** → irritability amplified by heat/noise/crowds
+- **High Sensitivity (Neuroticism proxy)** → weather-reactive. Barometric headaches, storm anxiety, SAD
+- **High Resilience (Confidence)** → environmental stress dampened across the board
+- **High Curiosity** → rain/fog as *interesting* not *stressful*. Weather modifies salience differently
+
+#### Data Sources (game loop provides these)
+
+| Source | Crate | What It Provides |
+|--------|-------|-----------------|
+| **Temperature/humidity** | ushma (thermodynamics) | Heat transfer, ambient temperature, thermal comfort index |
+| **Wind/pressure** | pravash (fluid dynamics) | Atmospheric pressure, wind speed/direction, drag |
+| **Light levels** | prakash (optics) | Lux at entity position, color temperature, day/night cycle |
+| **Geomagnetic activity** | bijli (electromagnetism) | Solar storm Kp index, magnetosphere state |
+| **Weather state** | kiran/joshua (game/sim) | Weather system output, precipitation, cloud cover |
+| **Altitude/terrain** | impetus (physics) | Entity position, elevation, terrain type |
+
+Bhava takes the `Environment` struct — it doesn't care where the data comes from. In a game, kiran provides it from its weather system. In a simulation, joshua computes it from ushma/pravash. In a chat agent (SecureYeoman), the consumer can hardcode `Environment::comfortable_indoor()` or feed real weather API data.
+
+#### Factory Presets
+
+```rust
+impl Environment {
+    pub fn comfortable_indoor() -> Self { /* 22°C, 45% humidity, 500 lux, 30 dB */ }
+    pub fn hot_summer_day() -> Self { /* 38°C, 70% humidity, 80k lux, clear */ }
+    pub fn cold_winter_night() -> Self { /* -10°C, 30% humidity, 0.1 lux, clear */ }
+    pub fn storm() -> Self { /* 15°C, 90% humidity, 200 lux, 75 dB wind, low pressure */ }
+    pub fn office() -> Self { /* 21°C, fluorescent 400 lux, 45 dB HVAC hum */ }
+    pub fn forest() -> Self { /* 18°C, 60% humidity, dappled 2k lux, 25 dB ambient */ }
+}
+```
+
+#### API Surface
+
+```rust
+// Single function — takes environment + personality, returns modifiers for all affected modules
+pub fn environmental_modifiers(
+    env: &Environment,
+    profile: &PersonalityProfile,
+) -> EnvironmentalEffect {
+    // Returns multipliers/offsets for: energy drain, stress accumulation,
+    // circadian alertness, flow disruption, mood baseline nudges, salience scaling
+}
+
+// Apply to existing state
+pub fn apply_environment(
+    state: &mut EmotionalState,
+    energy: &mut EnergyState,
+    stress: &mut StressState,
+    env: &Environment,
+    profile: &PersonalityProfile,
+);
+```
+
+No new emotional systems. No new state machines. Just the physical world pressing on the 30 modules we already have.
+
+Build when: joshua NPC system needs weather-reactive NPCs, or kiran game entities need environmental mood. The integration points are all defined — implementation is mapping functions, not architecture.
+
 ### Zodiac Manifestation Engine
 
 Astrological archetype system that maps celestial placements to bhava's existing personality, emotion, and behavioral modules. Not fortune-telling — psychometric mapping backed by trait math.
@@ -454,16 +558,33 @@ All v1.0 entities implicitly live at `BreathPhase::LateExhale` — maximum manif
 | Version | Scope | Scale Layers | What It Adds |
 |---------|-------|-------------|-------------|
 | **v1.0** | Individual entity | Scale 0 | 30 modules — traits, mood, energy, growth, all behavioral systems. The complete individual |
+| **v1.5** | Earth-local environment | Scale 0 + physical world | Environmental reactivity — temperature, light, noise, weather, air quality as behavioral modifiers on existing modules. No new emotional systems |
 | **v2.0** | Solar system + stellar neighborhood | Scale 1-2 | Zodiac manifestation engine — planets → modules, aspects → cross-module dynamics, nakshatras, fixed stars, cultural systems |
 | **v3.0** | Full cosmological field | Scale 3-7 | Galactic personality fields, cluster dynamics, universal constants as substrate, the breath of consciousness. Entities as manifestations within a cosmic cycle |
 
 v1.0 answers: *who is this entity?*
+v1.5 answers: *how does the physical world press on them?*
 v2.0 answers: *what celestial forces shaped them?*
 v3.0 answers: *where in the cycle of existence do they stand?*
 
-### Science Crate Dependencies (v2.0/v3.0 Prerequisites)
+### Science Crate Dependencies (v1.5/v2.0/v3.0 Prerequisites)
 
-The zodiac and cosmological systems require computational astronomy backing. These are the science crates needed — either new AGNOS crates, extensions to existing ones (hisab, prakash), or vetted third-party dependencies.
+The environmental, zodiac, and cosmological systems build on existing AGNOS science crates. No new physics — bhava consumes simulation output from the ecosystem.
+
+#### v1.5 Requirements (Earth-Local Environmental)
+
+No new crates needed. Bhava consumes environment data from the existing game/sim stack:
+
+| Data Source | AGNOS Crate | Version | What Bhava Receives |
+|-------------|-------------|---------|-------------------|
+| Temperature, humidity, thermal comfort | **ushma** (thermodynamics) | 0.1.0 | Ambient temp (°C), humidity (%), heat index |
+| Wind, atmospheric pressure | **pravash** (fluid dynamics) | 0.24.3 | Pressure (hPa), wind speed (m/s), drag |
+| Light levels, color temperature | **prakash** (optics) | 0.24.3 | Lux at position, spectral color temp, day/night |
+| Geomagnetic activity | **bijli** (electromagnetism) | 0.1.0 | Kp index, magnetosphere state |
+| Altitude, terrain, position | **impetus** (physics) | 0.23.3 | Elevation, surface type, collision contacts |
+| Weather state, precipitation | **kiran** / **joshua** (engine/sim) | — | Weather enum, cloud cover, precipitation |
+
+The game loop (kiran/joshua) composes these into an `Environment` struct and passes it to bhava. Bhava never imports ushma/pravash/bijli directly — it receives plain f32 values. Zero coupling.
 
 #### v2.0 Requirements (Solar System + Stellar)
 
@@ -490,12 +611,16 @@ The zodiac and cosmological systems require computational astronomy backing. The
 | **Cosmological parameters** | Current best values: Hubble constant, cosmological constant, matter density, age of universe | Static constants from Planck 2018 + latest DESI results. Updated rarely (once per major survey) | Not started |
 | **Cosmic time / breath phase** | Map simulation time to position on the exhale-inhale cycle | Designer-defined — not empirical science. The breath duration and current phase are world-building parameters set by the game/simulation creator | Not started |
 
-#### Existing AGNOS Crates to Extend
+#### Existing AGNOS Crates
 
-| Crate | Current Scope | v2.0/v3.0 Extension |
-|-------|--------------|---------------------|
-| **hisab** (0.22.3) | Linear algebra, geometry, calculus, spatial structures (BVH, k-d tree, octree) | + Astronomical coordinate frames (equatorial, ecliptic, galactic, supergalactic). + Rotation matrices for frame conversion. + Spherical trigonometry for house systems |
-| **prakash** (0.22.3) | Ray optics, wave optics, spectral analysis, PBR | + Stellar magnitude/color → spectral type mapping (for fixed star characterization). + Light travel time computation (for v3.0 causality modeling) |
+| Crate | Version | Current Scope | Future Extension |
+|-------|---------|--------------|-----------------|
+| **hisab** | 0.24.3 | Linear algebra, geometry, calculus, spatial structures (BVH, k-d tree, octree) | v2.0: astronomical coordinate frames, spherical trig, frame rotation matrices |
+| **prakash** | 0.24.3 | Ray optics, wave optics, spectral analysis, PBR, atmospheric scattering | v1.5: lux computation at position. v2.0: stellar magnitude/spectral type. v3.0: light travel time |
+| **ushma** | 0.1.0 | Heat transfer, equations of state, entropy, thermal material properties | v1.5: ambient temperature, thermal comfort index, heat stress computation |
+| **pravash** | 0.24.3 | SPH fluids, Navier-Stokes grids, shallow water, buoyancy, vortex, coupling | v1.5: atmospheric pressure, wind speed, drag forces |
+| **bijli** | 0.1.0 | Electric/magnetic fields, Maxwell's equations, EM waves, Lorentz force | v1.5: geomagnetic field modeling, solar storm Kp index |
+| **impetus** | 0.23.3 | Rigid bodies, colliders, forces, joints, particles, spatial hashing | v1.5: entity position/altitude, terrain type, surface contacts |
 
 #### New Crate Candidates
 
@@ -509,6 +634,13 @@ Both crates would be pure computation — no I/O, no async, no network. Library 
 #### Build Order
 
 ```
+v1.5 prerequisite chain:
+  No new crates. Existing stack provides all data:
+  kiran/joshua game loop
+    → ushma (temperature) + pravash (pressure/wind) + prakash (light) + bijli (geomagnetic) + impetus (position)
+    → Environment struct (plain f32 values)
+    → bhava v1.5 (environmental_modifiers → existing modules)
+
 v2.0 prerequisite chain:
   hisab (extend: astro frames, spherical trig)
   → jyotish (ephemeris, houses, aspects, nakshatras)
@@ -521,4 +653,4 @@ v3.0 prerequisite chain:
   → bhava v3.0 (cosmological scales, breath phase)
 ```
 
-These dependencies are documented here so they are not lost. When demand triggers v2.0 work, the science crate requirements and build order are ready.
+These dependencies are documented here so they are not lost. When demand triggers work, the science crate requirements and build order are ready.
