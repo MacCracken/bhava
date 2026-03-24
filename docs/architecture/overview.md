@@ -44,7 +44,7 @@ bhava
 | `mood` | yes | — | Emotional state vectors with decay, triggers, history, baselines |
 | `archetype` | yes | — | Identity hierarchy, templates, validation, spirit, crew composition |
 | `sentiment` | yes | mood | Sentiment analysis with negation, intensity, configurable lexicons |
-| `presets` | no | traits, archetype | Built-in personality templates |
+| `presets` | no | traits, archetype | Built-in personality templates (BlueShirtGuy, T.Ron, Friday, Oracle, Scout) |
 | `ai` | no | traits, mood, archetype, sentiment, reqwest, tokio, serde_json | Prompt composition, sentiment feedback, metadata |
 | `sqlite` | no | traits, mood, archetype, sentiment, rusqlite, serde_json | SQLite persistence |
 | `full` | — | all of the above | Enable everything |
@@ -162,5 +162,5 @@ Custom backends: implement BhavaStore for Postgres, Redis, etc.
 
 - **SecureYeoman** — agent personalities (T.Ron, Friday, etc.)
 - **joshua** — NPC emotional states and personality-driven behavior
-- **agnosai** — crew member personality differentiation
-- **Any daimon agent** — consistent personality framework via presets
+- **agnosai** — crew member personality differentiation and mood-driven temperature
+- **hoosh** — response sentiment analysis

@@ -2,7 +2,7 @@
 
 ## [1.0.0] - 2026-03-24
 
-First stable release. API surface locked under semver. 30 modules, 785 tests, 105 benchmarks.
+First stable release. API surface locked under semver. 30 modules, 785 tests, 105 benchmarks across 27 groups.
 
 ### API Stability
 - All public types committed to semver compatibility

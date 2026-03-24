@@ -11,36 +11,37 @@
 | Module | Tests | Notes |
 |--------|-------|-------|
 | error | 12 | All 9 error variants, Result alias, Send+Sync |
-| traits | 53 | 15 trait kinds/levels, 4 groups, behaviors, profile ops, cosine similarity, markdown, mutation, blend |
-| mood | 47 | Emotions, decay/blend, triggers, history, classify, baseline derivation, compound effects, tone guides |
-| archetype | 33 | Layers, archetypes, validation, templates, crew composition, merge |
-| sentiment | 25 | Positive/negative/neutral/mixed, negation, intensity, configurable lexicons, sentence-level |
+| traits | 100 | 15 trait kinds/levels, 4 groups, behaviors, profile ops, cosine similarity, OCEAN, markdown, mutation, blend, entropy |
+| mood | 126 | Emotions, decay/blend, triggers, history, classify, baseline derivation, compound effects, tone guides, contagion, damping, memory, Plutchik |
+| archetype | 42 | Layers, archetypes, validation, templates, crew composition, merge |
+| sentiment | 52 | Positive/negative/neutral/mixed, negation, intensity, configurable lexicons, sentence-level |
 | presets | 16 | All 5 presets validated with 15 traits, identity content |
 | spirit | 13 | Passions, inspirations, pains, active count, prompt composition, serde |
-| relationship | 22 | Graph CRUD, interactions, decay, allies/rivals, averages, serde |
+| relationship | 27 | Graph CRUD, interactions, decay, allies/rivals, averages, serde |
 | appraisal | 15 | OCC emotions, builder pattern, mood delta, attribution, affinity |
 | stress | 11 | Tick, recovery, burnout, regulation effectiveness, personality-derived |
 | regulation | 9 | Suppress/reappraise/distract, effectiveness, suppression gap, serde |
-| growth | 12 | Emotion→pressure, decay, threshold, trait shifting, limits |
+| growth | 12 | Emotion-to-pressure, decay, threshold, trait shifting, limits |
 | monitor | 15 | Feed, flush, streaming simulation, apply, summary, reset, custom config |
-| rhythm | 22 | Ultradian/seasonal/biorhythm modulate, zero-period guards, phase offsets, apply_rhythms |
+| rhythm | 25 | Ultradian/seasonal/biorhythm modulate, zero-period guards, phase offsets, apply_rhythms |
 | energy | 22 | Banister tick, fitness/fatigue decay, performance sigmoid, supercompensation, personality |
 | circadian | 19 | Alertness bounds, peak/trough, post-lunch dip, chronotype shifts, UTC offset, personality |
-| flow | 27 | State machine lifecycle, conditions, build/break/refractory/re-entry, modifiers, personality |
-| eq | 22 | 4-branch scores, overall weighted, bonuses, levels, personality-derived, prompt |
-| display_rules | 23 | All 5 rule types, felt unchanged, self-mask, negative factor, presets, distortion |
-| microexpr | 15 | Leak detection, stress modulation, personality susceptibility, leak vector |
-| affective | 14 | Complexity, granularity, inertia, variability, autocorrelation edge cases |
+| flow | 28 | State machine lifecycle, conditions, build/break/refractory/re-entry, modifiers, personality |
+| eq | 23 | 4-branch scores, overall weighted, bonuses, levels, personality-derived, prompt |
+| display_rules | 22 | All 5 rule types, felt unchanged, self-mask, negative factor, presets, distortion |
+| microexpr | 14 | Leak detection, stress modulation, personality susceptibility, leak vector |
+| affective | 13 | Complexity, granularity, inertia, variability, autocorrelation edge cases |
 | proximity | 22 | 3 falloff functions, negative distance/radius, system evaluate, serde |
 | reasoning | 11 | All 5 strategies, trait scoring, description, prompt composition |
 | salience | 17 | Urgency/importance scoring, levels, memory salience, filter, weighted recall |
-| actr | 18 | Base-level, recency, rehearse, Hebbian links, spread activation, capacity, orphan cleanup |
+| actr | 19 | Base-level, recency, rehearse, Hebbian links, spread activation, capacity, orphan cleanup |
 | preference | 20 | EMA update, alpha decay, convergence, eviction, bias, personality |
 | active_hours | 16 | Window ranges, midnight wrap, timezone, schedules, zero-width |
-| ai | 17 | System prompt composition, sentiment feedback, metadata, outcomes |
-| storage | 14 | SQLite CRUD for all types, snapshots, full-agent persistence |
-| integration | 35 | Cross-module: preset→prompt, sentiment→mood, triggers→history, templates→validation, crew, relationships, monitor, store |
-| **Total** | **787** | |
+| ai | 16 | System prompt composition, sentiment feedback, metadata, outcomes |
+| storage | 12 | SQLite CRUD for all types, snapshots, full-agent persistence |
+| integration | 35 | Cross-module: preset-to-prompt, sentiment-to-mood, triggers-to-history, templates-to-validation, crew, relationships, monitor, store |
+| doc | 1 | SentimentMonitor doc test |
+| **Total** | **785** | 749 unit + 35 integration + 1 doc |
 
 ## Running Tests
 
@@ -73,8 +74,10 @@ Criterion benchmarks across 27 groups:
 | Group | Count | What it measures |
 |-------|-------|------------------|
 | traits | 3 | behavior_lookup, level_name, level_from_numeric |
-| personality | 10 | compose_prompt, instructions, active_traits, distance, compatibility, blend, group_average, mutate, group_compatibility |
-| mood | 17 | stimulate, intensity, blend, decay, dominant, nudge, deviation, apply_decay, classify, trigger, snapshot, influence, history, baseline, mood_prompt, tone_guide |
+| personality | 9 | compose_prompt, instructions, active_traits, distance, compatibility, blend, group_average, mutate_toward, group_compatibility |
+| mood | 23 | stimulate, intensity, blend, decay, dominant, nudge, deviation, apply_decay, classify, trigger, snapshot, influence, history, deviation_trend, baseline, mood_prompt, tone_guide, action_tendency, contagion, compound_emotions, damped_step, memory_recall, adaptive_baseline |
+| appraisal | 2 | positive_event, complex_appraisal |
+| ocean | 3 | to_ocean, from_ocean, entropy |
 | sentiment | 8 | positive, negative, neutral, mixed, keyword_dense, negation, intensifiers, sentences |
 | archetype | 7 | preamble, identity_2, identity_5, validate, template_apply, crew_3, merge |
 | presets | 3 | get_preset, list_presets, preset_full_prompt |

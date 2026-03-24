@@ -39,4 +39,4 @@ Bhava is a personality and emotional state library for AI agents and game NPCs. 
 - No network I/O in core (ai feature opt-in)
 - All public types `Send + Sync` compatible
 - Minimal dependency surface
-- Structured logging via `tracing` (no secrets in logs)
+- No logging in library code (consumers own their logging layer)

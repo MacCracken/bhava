@@ -11,7 +11,7 @@
 
 ## Consumers
 
-SecureYeoman (agent personalities), joshua (NPC emotions), agnosai (crew personality)
+SecureYeoman (agent personalities), joshua (NPC emotions), agnosai (crew personality), hoosh (response sentiment analysis)
 
 ## Development Process
 
