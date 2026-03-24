@@ -34,6 +34,9 @@
 //! - [`energy`] — Depletable energy resource with Banister fitness-fatigue model
 //! - [`circadian`] — 24-hour alertness cycle with chronotype (Borbély two-process)
 //! - [`flow`] — Flow state detection with hysteresis (Csikszentmihalyi)
+//! - [`salience`] — Somatic marker urgency/importance scoring (Damasio)
+//! - [`actr`] — ACT-R frequency × recency memory activation with Hebbian boost
+//! - [`preference`] — Adaptive preference learning from interaction outcomes
 //! - [`error`] — Error types
 
 pub mod error;
@@ -106,6 +109,15 @@ pub mod circadian;
 
 #[cfg(feature = "mood")]
 pub mod flow;
+
+#[cfg(feature = "mood")]
+pub mod salience;
+
+#[cfg(feature = "mood")]
+pub mod actr;
+
+#[cfg(feature = "mood")]
+pub mod preference;
 
 #[cfg(feature = "ai")]
 pub mod ai;
