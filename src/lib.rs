@@ -29,6 +29,8 @@
 //! - [`proximity`] — Spatial proximity triggers for location-based mood effects
 //! - [`reasoning`] — Personality-driven reasoning strategy selection
 //! - [`active_hours`] — Time-of-day personality activation scheduling
+//! - [`eq`] — Emotional intelligence (EQ) — Mayer-Salovey four-branch model
+//! - [`display_rules`] — Cultural display rules (Matsumoto framework)
 //! - [`error`] — Error types
 
 pub mod error;
@@ -86,6 +88,12 @@ pub mod reasoning;
 
 #[cfg(feature = "mood")]
 pub mod active_hours;
+
+#[cfg(feature = "mood")]
+pub mod eq;
+
+#[cfg(feature = "mood")]
+pub mod display_rules;
 
 #[cfg(feature = "ai")]
 pub mod ai;
