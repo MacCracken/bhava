@@ -1,5 +1,51 @@
 # Changelog
 
+## [1.1.0] - 2026-03-25
+
+Belief system, intuition engine, personal/social emotion classification, and shadow beliefs.
+
+### Added
+
+#### Belief Module (`belief`)
+- **belief** — Schema theory (Beck, Piaget) for belief formation from emotional patterns
+  - `BeliefKind` — four categories: SelfBelief ("I am..."), WorldBelief ("The world is..."), OtherBelief ("X is..."), UniversalBelief ("Everything is...")
+  - `Belief` — individual belief with conviction (asymptotic growth), evidence tracking, source memory provenance, suppression depth
+  - `BeliefSystem` — capacity-bounded belief store with reinforcement, challenge, decay, and coherence scoring
+  - `SelfModel` — emergent bottom-up self-concept derived from self-beliefs, mapped to trait dimensions
+  - `WorldModel` — emergent worldview tracking trust (safe vs hostile) and meaning (purposeful vs random) axes
+  - `InsightEvent` — detects moments when self-knowledge and world-knowledge resonate ("as above, so below")
+  - Understanding chain: `self_understanding()` -> `cosmic_understanding()` -> `check_insight()`
+  - Integration: `belief_trait_pressure()`, `appraisal_bias()`, `identity_alignment()`
+
+#### Personal vs Social Emotions & Shadow Beliefs (`belief`)
+- `EmotionCategory` — classifies OCC emotions as Personal (about events) or Social (about standards/relationships)
+- `classify_emotion()`, `emotion_to_belief_kind()`, `emotion_to_belief_tag()` — maps emotions to belief formation
+- `apply_emotion_to_beliefs()` — main integration: emotion + suppression -> belief with appropriate kind/tag/conviction
+- `Belief.suppression_depth` — tracks how deeply suppressed a belief is (0.0 conscious to 1.0 fully shadow)
+- `reinforce_or_create_with_suppression()` — creates beliefs with suppression tracking, blends on reinforcement
+- `shadow_beliefs()` — extracts shadow beliefs for intuition synthesis
+- Shadow beliefs decay at half rate — what you deny persists longer
+
+#### Intuition Module (`intuition`)
+- **intuition** — Subconscious pattern integration: gut feelings from converging subsystems
+  - `SignalSource` — which subsystem contributed (MemoryActivation, SomaticMarker, MicroExpressionLeak, EmotionalComplexity, PerceptualSensitivity)
+  - `KnowingLayer` — five layers of knowing: Instinct (scaffold), Conditioning, Belief, Intuition, Insight
+  - `LayerCharacteristics` — speed, accuracy, explainability per layer
+  - `IntuitiveSignal` — a gut feeling with tag, valence, strength, sources, and confidence gap
+  - `IntuitionProfile` — entity's intuitive capacity (sensitivity, integration_depth, trust_in_intuition), derivable from personality
+  - Composable input types: `ActivationSignals`, `SalienceSignals`, `MicroExpressionSignals`, `AffectiveSignals`, `PerceptionSignals`
+  - `synthesize_intuition()` — core algorithm: 1 source = noise, 2 = coincidence, 3+ = intuition (geometric mean convergence)
+  - `active_layer()` — determines which knowing layer is currently dominant
+  - `shadow_belief_signals()` — converts shadow beliefs into intuition inputs
+  - `should_override_reasoning()` — when gut feelings should override conscious analysis
+
+### Quality
+- 875 tests (839 unit + 35 integration + 1 doc) — up from 785
+- 119 criterion benchmarks across 30 groups — up from 105 across 27
+- Zero `unwrap()`/`panic!()` in library code
+- Zero `unsafe` code
+- Full cleanliness pass: fmt, clippy, audit, deny, doc all clean
+
 ## [1.0.0] - 2026-03-24
 
 First stable release. API surface locked under semver. 30 modules, 785 tests, 105 benchmarks across 27 groups.

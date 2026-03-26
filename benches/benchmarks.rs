@@ -972,6 +972,122 @@ fn bench_preference(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_belief(c: &mut Criterion) {
+    use bhava::belief::{BeliefKind, BeliefSystem, SelfModel, WorldModel};
+
+    let mut group = c.benchmark_group("belief");
+
+    group.bench_function("reinforce_100", |b| {
+        b.iter_batched(
+            || BeliefSystem::new(64),
+            |mut sys| {
+                let now = chrono::Utc::now();
+                for i in 0..100 {
+                    sys.reinforce_or_create(
+                        BeliefKind::SelfBelief,
+                        format!("self:tag_{}", i % 30),
+                        0.5,
+                        "evidence",
+                        now,
+                    );
+                }
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("coherence_64", |b| {
+        let mut sys = BeliefSystem::new(64);
+        let now = chrono::Utc::now();
+        for i in 0..64 {
+            let valence = if i % 3 == 0 { -0.5 } else { 0.5 };
+            sys.reinforce_or_create(
+                BeliefKind::SelfBelief,
+                format!("self:tag_{i}"),
+                valence,
+                "evidence",
+                now,
+            );
+        }
+        b.iter(|| sys.coherence())
+    });
+
+    group.bench_function("self_model_update", |b| {
+        let mut sys = BeliefSystem::new(64);
+        let now = chrono::Utc::now();
+        let tags = [
+            "self:warm",
+            "self:confident",
+            "self:creative",
+            "self:curious",
+            "self:brave",
+        ];
+        for tag in &tags {
+            for i in 0..10 {
+                sys.reinforce_or_create(BeliefKind::SelfBelief, *tag, 0.7, &format!("ev_{i}"), now);
+            }
+        }
+        b.iter_batched(
+            SelfModel::new,
+            |mut sm| sm.update_from_beliefs(black_box(&sys)),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("world_model_update", |b| {
+        let mut sys = BeliefSystem::new(64);
+        let now = chrono::Utc::now();
+        for tag in &["world:safe", "world:meaningful", "world:trustworthy"] {
+            for i in 0..10 {
+                sys.reinforce_or_create(
+                    BeliefKind::WorldBelief,
+                    *tag,
+                    0.6,
+                    &format!("ev_{i}"),
+                    now,
+                );
+            }
+        }
+        b.iter_batched(
+            WorldModel::new,
+            |mut wm| wm.update_from_beliefs(black_box(&sys)),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("cosmic_understanding", |b| {
+        let mut sys = BeliefSystem::new(64);
+        let now = chrono::Utc::now();
+        sys.reinforce_or_create(BeliefKind::WorldBelief, "world:meaningful", 0.9, "ev", now);
+        let mut wm = WorldModel::new();
+        wm.update_from_beliefs(&sys);
+        b.iter(|| bhava::belief::cosmic_understanding(black_box(0.8), black_box(&wm), 0.9))
+    });
+
+    group.bench_function("decay_64", |b| {
+        b.iter_batched(
+            || {
+                let mut sys = BeliefSystem::new(64);
+                let now = chrono::Utc::now();
+                for i in 0..64 {
+                    sys.reinforce_or_create(
+                        BeliefKind::SelfBelief,
+                        format!("tag_{i}"),
+                        0.5,
+                        "ev",
+                        now,
+                    );
+                }
+                sys
+            },
+            |mut sys| sys.decay(black_box(0.1)),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_trait_behavior,
@@ -1001,5 +1117,169 @@ criterion_group!(
     bench_salience,
     bench_actr,
     bench_preference,
+    bench_belief,
+    bench_belief_emotion,
+    bench_intuition,
 );
 criterion_main!(benches);
+
+fn bench_belief_emotion(c: &mut Criterion) {
+    use bhava::appraisal::AppraisedEmotion;
+    use bhava::belief::{
+        BeliefKind, BeliefSystem, apply_emotion_to_beliefs, classify_emotion, shadow_beliefs,
+    };
+
+    let mut group = c.benchmark_group("belief_emotion");
+
+    group.bench_function("classify_emotion", |b| {
+        b.iter(|| classify_emotion(black_box(AppraisedEmotion::Pride)))
+    });
+
+    group.bench_function("apply_emotion_100", |b| {
+        b.iter_batched(
+            || BeliefSystem::new(64),
+            |mut sys| {
+                let now = chrono::Utc::now();
+                let emotions = [
+                    AppraisedEmotion::Joy,
+                    AppraisedEmotion::Pride,
+                    AppraisedEmotion::Fear,
+                    AppraisedEmotion::Anger,
+                    AppraisedEmotion::Gratitude,
+                ];
+                for i in 0..100 {
+                    apply_emotion_to_beliefs(
+                        &mut sys,
+                        emotions[i % emotions.len()],
+                        0.7,
+                        i % 2 == 0,
+                        Some("npc"),
+                        (i % 3) as f32 * 0.3,
+                        now,
+                    );
+                }
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("shadow_beliefs_query", |b| {
+        let mut sys = BeliefSystem::new(64);
+        let now = chrono::Utc::now();
+        for i in 0..30 {
+            sys.reinforce_or_create_with_suppression(
+                BeliefKind::SelfBelief,
+                format!("tag_{i}"),
+                0.5,
+                "ev",
+                (i as f32 / 30.0).min(1.0),
+                now,
+            );
+        }
+        b.iter(|| shadow_beliefs(black_box(&sys), 0.3))
+    });
+
+    group.bench_function("decay_with_shadow", |b| {
+        b.iter_batched(
+            || {
+                let mut sys = BeliefSystem::new(64);
+                let now = chrono::Utc::now();
+                for i in 0..64 {
+                    sys.reinforce_or_create_with_suppression(
+                        BeliefKind::SelfBelief,
+                        format!("tag_{i}"),
+                        0.5,
+                        "ev",
+                        (i as f32 / 64.0).min(1.0),
+                        now,
+                    );
+                }
+                sys
+            },
+            |mut sys| sys.decay(black_box(0.1)),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.finish();
+}
+
+fn bench_intuition(c: &mut Criterion) {
+    use bhava::intuition::*;
+    use bhava::salience::SalienceScore;
+
+    let mut group = c.benchmark_group("intuition");
+
+    group.bench_function("synthesize_5_tags_3_sources", |b| {
+        let profile = IntuitionProfile {
+            sensitivity: 0.8,
+            integration_depth: 0.8,
+            trust_in_intuition: 0.8,
+        };
+        let activations = ActivationSignals {
+            entries: (0..5).map(|i| (format!("tag_{i}"), 2.0)).collect(),
+        };
+        let salience = SalienceSignals {
+            entries: (0..5)
+                .map(|i| (format!("tag_{i}"), SalienceScore::new(0.7, 0.6)))
+                .collect(),
+        };
+        let perception = PerceptionSignals {
+            entries: (0..5).map(|i| (format!("tag_{i}"), 0.7)).collect(),
+        };
+        b.iter(|| {
+            synthesize_intuition(
+                black_box(&activations),
+                black_box(&salience),
+                &MicroExpressionSignals::default(),
+                &AffectiveSignals::default(),
+                black_box(&perception),
+                &profile,
+            )
+        })
+    });
+
+    group.bench_function("synthesize_20_tags", |b| {
+        let profile = IntuitionProfile {
+            sensitivity: 0.8,
+            integration_depth: 0.8,
+            trust_in_intuition: 0.8,
+        };
+        let activations = ActivationSignals {
+            entries: (0..20).map(|i| (format!("tag_{i}"), 1.5)).collect(),
+        };
+        let salience = SalienceSignals {
+            entries: (0..10)
+                .map(|i| (format!("tag_{i}"), SalienceScore::new(0.6, 0.5)))
+                .collect(),
+        };
+        b.iter(|| {
+            synthesize_intuition(
+                black_box(&activations),
+                black_box(&salience),
+                &MicroExpressionSignals::default(),
+                &AffectiveSignals::default(),
+                &PerceptionSignals::default(),
+                &profile,
+            )
+        })
+    });
+
+    group.bench_function("profile_from_personality", |b| {
+        let profile = bhava::traits::PersonalityProfile::new("test");
+        b.iter(|| IntuitionProfile::from_personality(black_box(&profile)))
+    });
+
+    group.bench_function("active_layer", |b| {
+        b.iter(|| {
+            active_layer(
+                black_box(0.5),
+                black_box(0.6),
+                black_box(0.7),
+                black_box(0.3),
+            )
+        })
+    });
+
+    group.finish();
+}
