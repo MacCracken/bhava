@@ -58,10 +58,11 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "bhava"
-version = "1.1.0"
+version = "1.1.1"
 dependencies = [
  "chrono",
  "criterion",
+ "jantu",
  "reqwest",
  "rusqlite",
  "serde",
@@ -812,6 +813,17 @@ name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
+
+[[package]]
+name = "jantu"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "963f893c54e2bd6cdab9eed93cb474eefcd5e293da93579b93e76330fa4ea6be"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tracing",
+]
 
 [[package]]
 name = "js-sys"

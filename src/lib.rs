@@ -39,6 +39,7 @@
 //! - [`preference`] — Adaptive preference learning from interaction outcomes
 //! - [`belief`] — Belief system — memories crystallize into beliefs, beliefs form self-concept, self-understanding deepens into cosmic understanding
 //! - [`intuition`] — Subconscious pattern integration — gut feelings from converging subsystems
+//! - [`compat`] — Jantu creature behavior integration (feature: `instinct`)
 //! - [`error`] — Error types
 
 pub mod error;
@@ -126,6 +127,9 @@ pub mod belief;
 
 #[cfg(all(feature = "mood", feature = "traits"))]
 pub mod intuition;
+
+#[cfg(feature = "instinct")]
+pub mod compat;
 
 #[cfg(feature = "ai")]
 pub mod ai;

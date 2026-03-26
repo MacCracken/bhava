@@ -1,5 +1,50 @@
 # Changelog
 
+## [1.1.1] - 2026-03-26
+
+Jantu 1.0.0 creature behavior integration — 15 bridge functions connecting animal instincts to human personality.
+
+### Added
+
+- **`instinct` feature** — optional jantu creature behavior integration via `compat` module
+  - Jantu dependency on crates.io (`version = "1"`, `default-features = false`, no_std compatible)
+
+#### Core Bridges
+- **compat** — `mood_from_threat_response()` — maps fight/flight/freeze/fawn to PAD mood dimensions
+- **compat** — `load_from_stress()` — converts jantu's two-tier stress model to bhava allostatic load input
+- **compat** — `mood_shift_from_instinct()` — maps jantu instinct urgency to emotion dimensions
+- **compat** — `dominance_from_rank()` — feeds jantu hierarchy position into bhava dominance
+- **compat** — `instinct_layer_score()` — provides Layer 1 (Instinct) score for the intuition system
+
+#### Contagion & Social
+- **compat** — `mood_from_contagion()` — maps jantu emotional contagion pressure (Fear/Aggression/Calm/Excitement) to bhava mood shift
+- **compat** — `trust_from_cohesion()` — converts jantu group cohesion to bhava trust delta for relationship system
+- **compat** — `mood_from_territorial()` — maps territorial aggression response to dominance/frustration mood shift
+
+#### Learning & Memory
+- **compat** — `reactivity_from_habituation()` — converts jantu habituation response multiplier to emotional reactivity scalar (0.0–2.0)
+- **compat** — `actr_seed_from_memory()` — extracts valence/strength from jantu memory traces for bhava ACT-R activation system
+
+#### Environment & Body
+- **compat** — `stress_from_landscape()` — converts jantu perceived risk (landscape of fear) to bhava stress input with quadratic nonlinearity
+- **compat** — `energy_drain_from_drives()` — maps active jantu instinct drives to bhava energy exertion (rest drive reduces drain)
+- **compat** — `alertness_from_activity()` — bridges jantu circadian activity level to bhava alertness via smoothstep
+
+#### Genetics → Personality
+- **compat** — `TraitSeeds` struct — 7 personality trait seed values derived from animal behavioral genome
+- **compat** — `trait_seeds_from_genome()` — maps jantu's 5-axis behavioral genome (aggression, boldness, sociability, activity, exploration) to 7 bhava personality dimensions (warmth, empathy, patience, confidence, curiosity, risk_tolerance, directness)
+
+#### Signals
+- **compat** — `mood_from_signal()` — converts received jantu signals (Alarm, MatingCall, Submission, Threat, Contact, FoodCall, etc.) to mood shifts with honesty-modulated intensity
+
+### Stats
+
+- 936 tests (885 unit + 35 integration + 16 doc) — up from 875
+- 46 tests in `compat` module, 16 doc-tests
+- 15 bridge functions
+- Zero clippy warnings
+- No breaking changes — patch release
+
 ## [1.1.0] - 2026-03-25
 
 Belief system, intuition engine, personal/social emotion classification, and shadow beliefs.
