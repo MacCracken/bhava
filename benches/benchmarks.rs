@@ -1270,6 +1270,7 @@ fn bench_intuition(c: &mut Criterion) {
                 &MicroExpressionSignals::default(),
                 &AffectiveSignals::default(),
                 black_box(&perception),
+                &AestheticSignals::default(),
                 &profile,
             )
         })
@@ -1296,6 +1297,7 @@ fn bench_intuition(c: &mut Criterion) {
                 &MicroExpressionSignals::default(),
                 &AffectiveSignals::default(),
                 &PerceptionSignals::default(),
+                &AestheticSignals::default(),
                 &profile,
             )
         })

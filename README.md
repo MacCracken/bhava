@@ -9,7 +9,7 @@
 
 Shared personality and emotional state system for AI agents, game NPCs, and any entity that needs expressive behavior. Extracted from SecureYeoman's soul/brain architecture.
 
-**15-trait personalities, PAD mood vectors, cosine similarity, sentiment analysis, identity archetypes, relationship graphs, energy/circadian/flow systems, EQ, cultural display rules, ACT-R activation, preference learning, belief system, intuition engine, aesthetic attribution** — zero `unsafe`, 4 core deps, 969 tests.
+**15-trait personalities, PAD mood vectors, cosine similarity, sentiment analysis, identity archetypes, relationship graphs, energy/circadian/flow systems, EQ, cultural display rules, ACT-R activation, preference learning, belief system, intuition engine, aesthetic attribution** — zero `unsafe`, 4 core deps, 972 tests.
 
 ## Installation
 
@@ -113,7 +113,7 @@ let full_prompt = compose_identity_prompt(&identity);
 - [Architecture Overview](docs/architecture/overview.md) — module map, data flows, design principles
 - [Mathematical Reference](docs/architecture/math.md) — all algorithms and formulas
 - [Usage Guide](docs/guides/usage.md) — patterns, philosophy, code examples
-- [Testing Guide](docs/guides/testing.md) — 969 tests, testing patterns
+- [Testing Guide](docs/guides/testing.md) — 972 tests, testing patterns
 - [Roadmap](docs/development/roadmap.md) — v1.0 status, future features
 - [Threat Model](docs/development/threat-model.md) — attack surface, mitigations, privilege model
 - [Dependency Watch](docs/development/dependency-watch.md) — dependency tracking and upgrade notes

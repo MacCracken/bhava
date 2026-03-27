@@ -398,11 +398,11 @@ pub fn aesthetic_trait_pressure(profile: &AestheticProfile) -> [f32; TraitKind::
 /// Compute the mood shift from an aesthetic exposure.
 ///
 /// Maps aesthetic dimensions to existing emotion dimensions (no new categories):
-/// - Beauty -> Joy (pleasure)
-/// - Novelty -> Interest (curiosity)
-/// - Harmony -> Trust (coherence/safety)
-/// - Sublimity -> Arousal (awe as high activation)
-/// - Meaning -> Joy + Interest blend
+/// - Beauty -> Joy (pleasure) — negative intensity decreases joy
+/// - Novelty -> Interest (curiosity) — negative intensity decreases interest
+/// - Harmony -> Trust (coherence/safety) — negative intensity decreases trust
+/// - Sublimity -> Arousal (awe as high activation) — always activating regardless of sign
+/// - Meaning -> Joy + Interest blend — negative intensity decreases both
 #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn aesthetic_mood_shift(exposure: &AestheticExposure, sensitivity: f32) -> MoodVector {
@@ -834,6 +834,36 @@ mod tests {
         assert!(
             signal.is_none(),
             "low sensitivity should filter weak signals"
+        );
+    }
+
+    #[test]
+    fn test_intuition_signal_zero_sensitivity() {
+        let mut p = AestheticProfile::new();
+        p.sensitivity = 0.0;
+        for _ in 0..20 {
+            p.record_exposure(&exposure(AestheticDimension::Beauty, 0.9), now());
+        }
+        assert!(aesthetic_intuition_signal(&p).is_none());
+    }
+
+    #[test]
+    fn test_crystallize_all_zero_valence() {
+        let p = AestheticProfile::new(); // all preferences are 0.0
+        let mut bs = BeliefSystem::new(32);
+        let tags = crystallize_beliefs(&p, &mut bs, now());
+        assert!(
+            tags.is_empty(),
+            "zero-valence preferences should not crystallize"
+        );
+    }
+
+    #[test]
+    fn test_mood_shift_sublimity_negative_still_activating() {
+        let shift = aesthetic_mood_shift(&exposure(AestheticDimension::Sublimity, -0.8), 0.5);
+        assert!(
+            shift.arousal > 0.0,
+            "negative sublimity should still activate arousal (awe is always activating)"
         );
     }
 

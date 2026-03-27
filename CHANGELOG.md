@@ -8,6 +8,7 @@ Aesthetic attribution, crate-wide tracing, and performance hardening.
 
 - **belief** — `beliefs_of_kind()` now returns `impl Iterator<Item = &Belief>` instead of `Vec<&Belief>`. Migration: callers using `.len()` should use `.count()`; callers that need random access should `.collect::<Vec<_>>()` at the call site.
 - **belief** — `Belief.source_memories` field type changed from `Vec<String>` to `VecDeque<String>`. Migration: replace `.as_slice()` with `.make_contiguous()`, or iterate instead of indexing.
+- **intuition** — `synthesize_intuition()` now takes an additional `&AestheticSignals` parameter before `&IntuitionProfile`. Migration: pass `&AestheticSignals::default()` to preserve existing behavior.
 
 ### Added
 
@@ -36,7 +37,7 @@ Aesthetic attribution, crate-wide tracing, and performance hardening.
 
 ### Stats
 
-- 969 tests (918 unit + 35 integration + 16 doc)
+- 972 tests (921 unit + 35 integration + 16 doc)
 - 126 criterion benchmarks across 32 groups
 - 33 modules
 - Zero `unwrap()`/`panic!()`/`unsafe` in library code

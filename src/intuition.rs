@@ -290,6 +290,13 @@ pub struct PerceptionSignals {
     pub entries: Vec<(String, f32)>,
 }
 
+/// Pre-extracted aesthetic sensitivity signals.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct AestheticSignals {
+    /// `(tag, strength)` from aesthetic sensitivity detection.
+    pub entries: Vec<(String, f32)>,
+}
+
 // ---------------------------------------------------------------------------
 // Core algorithm
 // ---------------------------------------------------------------------------
@@ -317,6 +324,7 @@ pub fn synthesize_intuition(
     micro_expressions: &MicroExpressionSignals,
     affective: &AffectiveSignals,
     perception: &PerceptionSignals,
+    aesthetic: &AestheticSignals,
     profile: &IntuitionProfile,
 ) -> Vec<IntuitiveSignal> {
     // Step 1: Collect raw signals by tag
@@ -383,6 +391,16 @@ pub fn synthesize_intuition(
         if *strength >= threshold {
             signals.entry(tag.clone()).or_default().push((
                 SignalSource::PerceptualSensitivity,
+                *strength,
+                0.0,
+            ));
+        }
+    }
+
+    for (tag, strength) in &aesthetic.entries {
+        if *strength >= threshold {
+            signals.entry(tag.clone()).or_default().push((
+                SignalSource::AestheticSensitivity,
                 *strength,
                 0.0,
             ));
@@ -712,6 +730,7 @@ mod tests {
             &MicroExpressionSignals::default(),
             &AffectiveSignals::default(),
             &PerceptionSignals::default(),
+            &AestheticSignals::default(),
             &profile,
         );
         assert!(result.is_empty());
@@ -733,6 +752,7 @@ mod tests {
             &MicroExpressionSignals::default(),
             &AffectiveSignals::default(),
             &PerceptionSignals::default(),
+            &AestheticSignals::default(),
             &profile,
         );
         if !result.is_empty() {
@@ -765,6 +785,7 @@ mod tests {
             &MicroExpressionSignals::default(),
             &AffectiveSignals::default(),
             &PerceptionSignals::default(),
+            &AestheticSignals::default(),
             &profile,
         );
         assert!(!result.is_empty());
@@ -797,6 +818,7 @@ mod tests {
             &micro,
             &AffectiveSignals::default(),
             &PerceptionSignals::default(),
+            &AestheticSignals::default(),
             &profile,
         );
         assert!(!result.is_empty());
@@ -845,6 +867,7 @@ mod tests {
             &MicroExpressionSignals::default(),
             &AffectiveSignals::default(),
             &PerceptionSignals::default(),
+            &AestheticSignals::default(),
             &profile,
         );
         // With low sensitivity, the salience signal (0.3) should be filtered out
@@ -872,6 +895,7 @@ mod tests {
             &MicroExpressionSignals::default(),
             &AffectiveSignals::default(),
             &PerceptionSignals::default(),
+            &AestheticSignals::default(),
             &profile,
         );
         // Single source → weak, and low trust should filter it out
