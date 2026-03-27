@@ -8,7 +8,28 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 ## Status
 
-**v1.1.0 released** (2026-03-25). 32 modules, 875 tests, 119 benchmarks, zero unsafe, zero unwrap. API surface locked under semver.
+**v1.2.0 released** (2026-03-27). 33 modules, 969 tests, 126 benchmarks, zero unsafe, zero unwrap. API surface locked under semver.
+
+### v1.2.0 — Aesthetic Attribution + Performance Hardening + Tracing (2026-03-27)
+
+#### Aesthetic Attribution
+- **aesthetic** module: repeated aesthetic exposure crystallizes into beliefs and trait pressure
+- Five dimensions: Beauty, Harmony, Sublimity, Meaning, Novelty
+- Mere-exposure effect (Zajonc): aesthetic preferences decay at half rate
+- Belief crystallization: preferences above threshold become WorldBelief/SelfBelief
+- Trait pressure: sustained exposure → Creativity, Curiosity, Empathy pressure
+- Mood effects: aesthetic dimensions map to Joy, Interest, Trust, Arousal
+- Intuition integration: `SignalSource::AestheticSensitivity` for aesthetic-driven signals
+
+#### Performance Hardening
+- `coherence()` O(n^2) → O(n) single-pass grouping by kind
+- `beliefs_of_kind()` returns lazy iterator instead of Vec (zero allocation)
+- `add_source_memory()` Vec::remove(0) → VecDeque::pop_front() O(1)
+
+#### Tracing Instrumentation
+- `tracing` feature flag with `tracing` 0.1 optional dependency
+- ~160 public functions instrumented across all modules
+- Zero overhead when feature disabled
 
 ### v1.1.0 — Belief System & Intuition Engine (2026-03-25)
 
@@ -39,34 +60,6 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 ## Engineering Backlog
 
 No open items.
-
-### v1.2.0 — Aesthetic Attribution + Performance Hardening (demand-gated)
-
-#### Aesthetic Attribution
-
-Aesthetic appreciation and its relationship to beliefs through repetitive exposure. How art, music, literature, and beauty shape worldview and self-concept.
-
-**Core Concept:** Repeated exposure to aesthetic stimuli (art, music, narrative, natural beauty) creates preference patterns that crystallize into beliefs. An entity that repeatedly experiences beautiful music develops beliefs about meaning, order, and transcendence. An entity exposed to dark art develops different world-beliefs.
-
-**Integration Points:**
-- **preference** — aesthetic preferences form via existing EMA learning
-- **belief** — repeated aesthetic experiences create WorldBeliefs ("world:beautiful", "world:meaningful") and SelfBeliefs ("self:appreciative")
-- **intuition** — aesthetic intuition surfaces as perceptual sensitivity signals
-- **eq** — aesthetic sensitivity modulated by EQ perception and facilitation branches
-- **growth** — sustained aesthetic exposure creates trait pressure (Creativity, Curiosity, Empathy)
-
-**Key Questions (to resolve at build time):**
-- What aesthetic dimensions to model (beauty/sublime/grotesque/harmony/dissonance)?
-- How does mere-exposure effect (Zajonc) map to preference learning rate?
-- Should aesthetic experience have its own emotion category beyond Personal/Social?
-- Relationship between aesthetic appreciation and cosmic_understanding (art as path to insight)?
-
-#### Performance & API Hardening (from v1.1.0 audit)
-
-- **`beliefs_of_kind()` returns iterator instead of `Vec`** — currently allocates a Vec on every call, used in hot paths (`update_from_beliefs`, `check_insight`, `belief_trait_pressure`). Return `impl Iterator<Item = &Belief>` instead. Breaking API change — semver minor bump required.
-- **`coherence()` O(n) algorithm** — current O(n^2) pairwise scan. Replace with O(n) approach: group by kind, count positive/negative valence per group, compute contradiction ratio from counts. Matters when belief capacity exceeds 128.
-- **`add_source_memory` VecDeque** — replace `Vec::remove(0)` (O(n) shift) with `VecDeque::pop_front()` (O(1)). Max n=16 so impact is minimal, but it's the correct data structure for FIFO eviction.
-- **`tracing` instrumentation across all modules** — crate principle mandates "tracing on all operations" but no module currently uses tracing. Add `tracing::instrument` on key operations: `reinforce_or_create`, `challenge`, `decay`, `apply_emotion_to_beliefs`, `synthesize_intuition`, `check_insight`. This is a crate-wide initiative, not belief/intuition specific.
 
 ## Future Features (demand-gated)
 

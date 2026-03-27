@@ -63,6 +63,7 @@ impl Spirit {
     }
 
     /// Add a passion.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn add_passion(
         &mut self,
         name: impl Into<String>,
@@ -78,6 +79,7 @@ impl Spirit {
     }
 
     /// Add an inspiration.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn add_inspiration(
         &mut self,
         source: impl Into<String>,
@@ -93,6 +95,7 @@ impl Spirit {
     }
 
     /// Add a pain.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn add_pain(
         &mut self,
         trigger: impl Into<String>,
@@ -122,6 +125,7 @@ impl Spirit {
     /// Compose spirit content for prompt injection.
     ///
     /// Generates markdown text suitable for the Spirit identity layer.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn compose_prompt(&self) -> String {
         if self.is_empty() {
             return String::new();

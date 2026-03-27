@@ -130,6 +130,7 @@ pub struct AppraisalResult {
 ///
 /// Optionally takes the relationship affinity toward the causal agent to
 /// modulate attribution emotions (gratitude/anger scale with affinity).
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn appraise(appraisal: &Appraisal, affinity_to_cause: Option<f32>) -> AppraisalResult {
     let d = appraisal.desirability;
@@ -222,6 +223,7 @@ pub fn appraise(appraisal: &Appraisal, affinity_to_cause: Option<f32>) -> Apprai
 }
 
 /// Apply an appraisal result to an emotional state.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 pub fn apply_appraisal(state: &mut crate::mood::EmotionalState, result: &AppraisalResult) {
     for &emotion in Emotion::ALL {
         let val = result.mood_delta.get(emotion);

@@ -105,6 +105,7 @@ impl FlowState {
     }
 
     /// Check whether mood/energy/alertness conditions for flow are met.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     #[inline]
     pub fn check_conditions(
@@ -127,6 +128,7 @@ impl FlowState {
     ///
     /// Pass current mood, energy level (0.0–1.0), and circadian alertness (0.0–1.0).
     /// Updates phase, accumulator, and flow duration.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn tick(&mut self, mood: &MoodVector, energy: f32, alertness: f32) {
         let all_met = self.check_conditions(mood, energy, alertness).all_met();
 
@@ -285,6 +287,7 @@ impl FlowConditions {
 /// - High patience → faster build rate (sustains conditions longer)
 /// - High confidence → higher arousal ceiling (handles more excitement)
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn flow_from_personality(profile: &crate::traits::PersonalityProfile) -> FlowState {
     use crate::traits::TraitKind;

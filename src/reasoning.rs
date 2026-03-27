@@ -82,6 +82,7 @@ fn compute_scores(profile: &PersonalityProfile) -> [(ReasoningStrategy, f32); 5]
 /// Computes a score for each strategy based on relevant trait combinations
 /// and returns the highest-scoring one. Ties are broken by strategy order
 /// (analytical > intuitive > empathetic > systematic > creative).
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn select_reasoning_strategy(profile: &PersonalityProfile) -> ReasoningStrategy {
     let scores = compute_scores(profile);
@@ -96,6 +97,7 @@ pub fn select_reasoning_strategy(profile: &PersonalityProfile) -> ReasoningStrat
 ///
 /// Useful for displaying a full reasoning profile or selecting a secondary
 /// strategy when the primary is inappropriate.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn reasoning_scores(profile: &PersonalityProfile) -> Vec<(ReasoningStrategy, f32)> {
     let mut scores = compute_scores(profile).to_vec();
@@ -130,6 +132,7 @@ pub fn strategy_description(strategy: ReasoningStrategy) -> &'static str {
 /// Compose a reasoning strategy prompt fragment.
 ///
 /// Returns a markdown string suitable for system prompt injection.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn compose_reasoning_prompt(profile: &PersonalityProfile) -> String {
     let strategy = select_reasoning_strategy(profile);

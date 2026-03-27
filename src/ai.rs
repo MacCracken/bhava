@@ -45,6 +45,7 @@ impl Default for AiConfig {
 /// 2. Personality disposition (trait behavioral instructions)
 /// 3. Current mood state + tone guide (if `inject_mood` is true)
 /// 4. Spirit content (if provided)
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn compose_system_prompt(
     profile: &PersonalityProfile,
@@ -83,6 +84,7 @@ pub fn compose_system_prompt(
 ///
 /// The `scale` parameter controls how strongly the feedback affects mood
 /// (0.0 = no effect, 1.0 = full strength).
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 pub fn apply_sentiment_feedback(
     response_text: &str,
     state: &mut EmotionalState,
@@ -117,6 +119,7 @@ pub struct PersonalityMetadata {
 }
 
 /// Build personality metadata for agent registration.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn build_personality_metadata(
     profile: &PersonalityProfile,
@@ -149,6 +152,7 @@ pub fn build_personality_metadata(
 /// Apply a mood trigger based on interaction outcome.
 ///
 /// Convenience function that maps common interaction results to mood triggers.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 pub fn feedback_from_outcome(state: &mut EmotionalState, outcome: InteractionOutcome) {
     match outcome {
         InteractionOutcome::Praised => state.apply_trigger(&crate::mood::trigger_praised()),

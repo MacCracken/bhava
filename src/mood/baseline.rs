@@ -10,6 +10,7 @@ use super::types::{Emotion, MoodVector};
 /// emotional stimuli before they affect the mood vector.
 /// High neuroticism amplifies negative stimuli; high agreeableness amplifies social stimuli.
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn emotion_amplifier(
     profile: &crate::traits::PersonalityProfile,
@@ -51,6 +52,7 @@ pub fn emotion_amplifier(
 /// Returns a value from -1.0 to 1.0 that can be used to adjust trait expression.
 /// For example, high frustration amplifies directness; high joy softens formality.
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 pub fn mood_trait_influence(mood: &MoodVector, trait_kind: crate::traits::TraitKind) -> f32 {
     use crate::traits::TraitKind;
     match trait_kind {
@@ -186,6 +188,7 @@ fn trait_mood_modifier(
 /// Returns a `MoodVector` with `joy` set to the derived valence and `arousal`
 /// set to the derived arousal. Other dimensions are zero.
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn derive_mood_baseline(profile: &crate::traits::PersonalityProfile) -> MoodVector {
     use crate::traits::TraitKind;
@@ -306,6 +309,7 @@ impl AdaptiveBaseline {
     /// Update the adaptive baseline based on recent mood.
     ///
     /// Call periodically (e.g., once per session or every N interactions).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn adapt(&mut self, recent_mood: &MoodVector) {
         // Shift toward recent mood
         self.adapted = self.adapted.blend(recent_mood, self.adaptation_rate);
@@ -320,6 +324,7 @@ impl AdaptiveBaseline {
     }
 
     /// How far the adapted baseline has drifted from core.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn drift(&self) -> f32 {
         let dj = self.adapted.joy - self.core.joy;

@@ -6,280 +6,282 @@
 
 | | Run 1 | Run 2 | Run 3 | 
 |---|---|---|---|
-| **Date** | `2026-03-24T20:18:08Z` | `2026-03-26T04:10:17Z` | `2026-03-26T04:41:38Z` | 
-| **Commit** | `d3a1b39` | `dde66a8` | `dde66a8` | 
+| **Date** | `2026-03-27T14:47:27Z` | `2026-03-27T15:00:22Z` | `2026-03-27T15:11:05Z` | 
+| **Commit** | `45db354` | `45db354` | `45db354` | 
 | **Toolchain** | `rustc 1.93.0 (254b59607 2026-01-19)` | `rustc 1.93.0 (254b59607 2026-01-19)` | `rustc 1.93.0 (254b59607 2026-01-19)` | 
 
 ## Results
 
 ### traits
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| behavior_lookup | 2.77 ns | 2.09 ns | 2.09 ns | -24.5% |
-| level_name | 2.62 ns | 1.88 ns | 1.88 ns | -28.1% |
-| level_from_numeric | 8.70 ns | 7.17 ns | 7.17 ns | -17.6% |
+| behavior_lookup | 2.95 ns | 2.95 ns | 2.95 ns | — |
+| level_name | 2.49 ns | 2.49 ns | 2.49 ns | — |
+| level_from_numeric | 8.07 ns | 8.07 ns | 8.07 ns | — |
 
 ### personality
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| compose_prompt | 69.75 ns | 58.12 ns | 58.12 ns | -16.7% |
-| behavioral_instructions | 47.44 ns | 37.20 ns | 37.20 ns | -21.6% |
-| active_traits | 28.02 ns | 17.77 ns | 17.77 ns | -36.6% |
-| distance | 15.49 ns | 12.49 ns | 12.49 ns | -19.4% |
-| compatibility | 23.27 ns | 15.45 ns | 15.45 ns | -33.6% |
-| blend | 150.03 ns | 111.27 ns | 111.27 ns | -25.8% |
-| group_average | 4.98 ns | 3.78 ns | 3.78 ns | -24.1% |
-| mutate_toward | 51.49 ns | 41.63 ns | 41.63 ns | -19.2% |
-| group_compatibility | 9.49 ns | 7.90 ns | 7.90 ns | -16.8% |
+| compose_prompt | 80.32 ns | 80.32 ns | 80.32 ns | — |
+| behavioral_instructions | 45.87 ns | 45.87 ns | 45.87 ns | — |
+| active_traits | 21.80 ns | 21.80 ns | 21.80 ns | — |
+| distance | 13.64 ns | 13.64 ns | 13.64 ns | — |
+| compatibility | 16.72 ns | 16.72 ns | 16.72 ns | — |
+| blend | 122.56 ns | 122.56 ns | 122.56 ns | — |
+| group_average | 4.54 ns | 4.54 ns | 4.54 ns | — |
+| mutate_toward | 58.37 ns | 58.37 ns | 58.37 ns | — |
+| group_compatibility | 9.70 ns | 9.70 ns | 9.70 ns | — |
 
 ### mood
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| stimulate | 56.58 ns | 52.34 ns | 52.34 ns | -7.5% |
-| intensity | 2.08 ns | 1.79 ns | 1.79 ns | -13.7% |
-| blend | 3.31 ns | 2.79 ns | 2.79 ns | -15.6% |
-| decay | 448.60 ps | 515.20 ps | 515.20 ps | +14.8% |
-| dominant_emotion | 2.45 ns | 2.06 ns | 2.06 ns | -15.9% |
-| nudge | 1.54 ns | 1.29 ns | 1.29 ns | -16.3% |
-| deviation | 2.56 ns | 2.50 ns | 2.50 ns | -2.5% |
-| apply_decay | 47.65 ns | 43.51 ns | 43.51 ns | -8.7% |
-| classify | 5.02 ns | 4.39 ns | 4.39 ns | -12.6% |
-| apply_trigger | 62.96 ns | 57.15 ns | 57.15 ns | -9.2% |
-| snapshot | 10.22 ns | 8.92 ns | 8.92 ns | -12.7% |
-| mood_trait_influence | 2.49 ns | 2.32 ns | 2.32 ns | -6.5% |
-| history_record | 45.28 ns | 35.97 ns | 35.97 ns | -20.6% |
-| history_deviation_trend | 33.12 ns | 30.39 ns | 30.39 ns | -8.2% |
-| derive_baseline | 32.50 ns | 29.65 ns | 29.65 ns | -8.8% |
-| compose_mood_prompt | 149.52 ns | 126.13 ns | 126.13 ns | -15.6% |
-| mood_tone_guide | 1.08 ns | 1.47 ns | 1.47 ns | +36.5% |
-| action_tendency | 6.97 ns | 6.06 ns | 6.06 ns | -13.1% |
-| contagion | 3.57 ns | 2.97 ns | 2.97 ns | -16.8% |
-| compound_emotions | 20.57 ns | 18.67 ns | 18.67 ns | -9.2% |
-| damped_step | 589.90 ps | 287.40 ps | 287.40 ps | -51.3% |
-| memory_recall | 57.19 ns | 53.45 ns | 53.45 ns | -6.5% |
-| adaptive_baseline_adapt | 11.51 ns | 10.63 ns | 10.63 ns | -7.7% |
+| stimulate | 61.65 ns | 61.65 ns | 61.65 ns | — |
+| intensity | 2.17 ns | 2.17 ns | 2.17 ns | — |
+| blend | 3.31 ns | 3.31 ns | 3.31 ns | — |
+| decay | 566.60 ps | 566.60 ps | 566.60 ps | — |
+| dominant_emotion | 2.35 ns | 2.35 ns | 2.35 ns | — |
+| nudge | 1.62 ns | 1.62 ns | 1.62 ns | — |
+| deviation | 2.95 ns | 2.95 ns | 2.95 ns | — |
+| apply_decay | 45.98 ns | 45.98 ns | 45.98 ns | — |
+| classify | 5.89 ns | 5.89 ns | 5.89 ns | — |
+| apply_trigger | 64.93 ns | 64.93 ns | 64.93 ns | — |
+| snapshot | 11.56 ns | 11.56 ns | 11.56 ns | — |
+| mood_trait_influence | 2.60 ns | 2.60 ns | 2.60 ns | — |
+| history_record | 52.22 ns | 52.22 ns | 52.22 ns | — |
+| history_deviation_trend | 40.03 ns | 40.03 ns | 40.03 ns | — |
+| derive_baseline | 47.11 ns | 47.11 ns | 47.11 ns | — |
+| compose_mood_prompt | 150.73 ns | 150.73 ns | 150.73 ns | — |
+| mood_tone_guide | 1.23 ns | 1.23 ns | 1.23 ns | — |
+| action_tendency | 7.25 ns | 7.25 ns | 7.25 ns | — |
+| contagion | 3.34 ns | 3.34 ns | 3.34 ns | — |
+| compound_emotions | 22.08 ns | 22.08 ns | 22.08 ns | — |
+| damped_step | 616.70 ps | 616.70 ps | 616.70 ps | — |
+| memory_recall | 65.48 ns | 65.48 ns | 65.48 ns | — |
+| adaptive_baseline_adapt | 11.29 ns | 11.29 ns | 11.29 ns | — |
 
 ### sentiment
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| positive_short | 134.74 ns | 127.36 ns | 127.36 ns | -5.5% |
-| negative_medium | 324.82 ns | 322.52 ns | 322.52 ns | -0.7% |
-| neutral_long | 355.35 ns | 336.80 ns | 336.80 ns | -5.2% |
-| mixed_emotions | 359.34 ns | 346.92 ns | 346.92 ns | -3.5% |
-| keyword_dense | 618.74 ns | 630.90 ns | 630.90 ns | +2.0% |
-| negation | 199.21 ns | 184.57 ns | 184.57 ns | -7.3% |
-| intensifiers | 272.67 ns | 262.95 ns | 262.95 ns | -3.6% |
-| sentences_3 | 546.22 ns | 525.55 ns | 525.55 ns | -3.8% |
+| positive_short | 162.16 ns | 162.16 ns | 162.16 ns | — |
+| negative_medium | 383.29 ns | 383.29 ns | 383.29 ns | — |
+| neutral_long | 407.61 ns | 407.61 ns | 407.61 ns | — |
+| mixed_emotions | 394.12 ns | 394.12 ns | 394.12 ns | — |
+| keyword_dense | 667.68 ns | 667.68 ns | 667.68 ns | — |
+| negation | 226.96 ns | 226.96 ns | 226.96 ns | — |
+| intensifiers | 333.13 ns | 333.13 ns | 333.13 ns | — |
+| sentences_3 | 611.24 ns | 611.24 ns | 611.24 ns | — |
 
 ### archetype
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| compose_preamble | 230.58 ns | 202.77 ns | 202.77 ns | -12.1% |
-| compose_identity_2_layers | 307.34 ns | 297.02 ns | 297.02 ns | -3.4% |
-| compose_identity_5_layers | 462.69 ns | 346.44 ns | 346.44 ns | -25.1% |
-| validate | 14.07 ns | 11.89 ns | 11.89 ns | -15.5% |
-| template_apply | 74.69 ns | 71.17 ns | 71.17 ns | -4.7% |
-| crew_prompt_3 | 803.02 ns | 660.55 ns | 660.55 ns | -17.7% |
-| merge | 331.59 ns | 307.94 ns | 307.94 ns | -7.1% |
+| compose_preamble | 277.49 ns | 277.49 ns | 277.49 ns | — |
+| compose_identity_2_layers | 381.58 ns | 381.58 ns | 381.58 ns | — |
+| compose_identity_5_layers | 477.21 ns | 477.21 ns | 477.21 ns | — |
+| validate | 16.90 ns | 16.90 ns | 16.90 ns | — |
+| template_apply | 88.70 ns | 88.70 ns | 88.70 ns | — |
+| crew_prompt_3 | 828.52 ns | 828.52 ns | 828.52 ns | — |
+| merge | 408.27 ns | 408.27 ns | 408.27 ns | — |
 
 ### presets
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| get_preset | 79.61 ns | 66.86 ns | 66.86 ns | -16.0% |
-| list_presets | 597.50 ps | 512.60 ps | 512.60 ps | -14.2% |
-| preset_full_prompt | 916.34 ns | 681.22 ns | 681.22 ns | -25.7% |
+| get_preset | 76.42 ns | 76.42 ns | 76.42 ns | — |
+| list_presets | 647.50 ps | 647.50 ps | 647.50 ps | — |
+| preset_full_prompt | 1.16 µs | 1.16 µs | 1.16 µs | — |
 
 ### appraisal
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| positive_event | 25.44 ns | 18.56 ns | 18.56 ns | -27.1% |
-| complex_appraisal | 28.41 ns | 20.48 ns | 20.48 ns | -27.9% |
+| positive_event | 27.83 ns | 27.83 ns | 27.83 ns | — |
+| complex_appraisal | 27.51 ns | 27.51 ns | 27.51 ns | — |
 
 ### ocean
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| to_ocean | 8.70 ns | 7.19 ns | 7.19 ns | -17.3% |
-| from_ocean | 74.48 ns | 65.29 ns | 65.29 ns | -12.3% |
-| entropy | 19.58 ns | 18.08 ns | 18.08 ns | -7.7% |
+| to_ocean | 8.99 ns | 8.99 ns | 8.99 ns | — |
+| from_ocean | 89.59 ns | 89.59 ns | 89.59 ns | — |
+| entropy | 22.99 ns | 22.99 ns | 22.99 ns | — |
 
 ### spirit
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| compose_prompt | 294.15 ns | 264.55 ns | 264.55 ns | -10.1% |
+| compose_prompt | 277.69 ns | 277.69 ns | 277.69 ns | — |
 
 ### relationship
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| record_interaction | 45.60 ns | 40.96 ns | 40.96 ns | -10.2% |
-| decay_10 | 361.52 ns | 326.53 ns | 326.53 ns | -9.7% |
+| record_interaction | 46.81 ns | 46.81 ns | 46.81 ns | — |
+| decay_10 | 537.25 ns | 537.25 ns | 537.25 ns | — |
 
 ### markdown
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| to_markdown | 933.85 ns | 811.66 ns | 811.66 ns | -13.1% |
-| from_markdown | 3.52 µs | 2.76 µs | 2.76 µs | -21.7% |
+| to_markdown | 934.26 ns | 934.26 ns | 934.26 ns | — |
+| from_markdown | 3.67 µs | 3.67 µs | 3.67 µs | — |
 
 ### ai
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| compose_system_prompt | 658.52 ns | 548.89 ns | 548.89 ns | -16.6% |
-| compose_system_prompt_minimal | 486.86 ns | 390.74 ns | 390.74 ns | -19.7% |
-| apply_sentiment_feedback | 323.51 ns | 270.93 ns | 270.93 ns | -16.3% |
-| build_personality_metadata | 278.81 ns | 259.10 ns | 259.10 ns | -7.1% |
-| feedback_from_outcome | 102.01 ns | 83.97 ns | 83.97 ns | -17.7% |
+| compose_system_prompt | 833.90 ns | 833.90 ns | 833.90 ns | — |
+| compose_system_prompt_minimal | 487.99 ns | 487.99 ns | 487.99 ns | — |
+| apply_sentiment_feedback | 368.08 ns | 368.08 ns | 368.08 ns | — |
+| build_personality_metadata | 278.85 ns | 278.85 ns | 278.85 ns | — |
+| feedback_from_outcome | 90.53 ns | 90.53 ns | 90.53 ns | — |
 
 ### monitor
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| feed_sentence | 512.45 ns | 384.83 ns | 384.83 ns | -24.9% |
-| feed_and_apply | 374.79 ns | 322.82 ns | 322.82 ns | -13.9% |
-| streaming_10_tokens | 1.30 µs | 1.13 µs | 1.13 µs | -13.6% |
+| feed_sentence | 413.80 ns | 413.80 ns | 413.80 ns | — |
+| feed_and_apply | 347.33 ns | 347.33 ns | 347.33 ns | — |
+| streaming_10_tokens | 1.16 µs | 1.16 µs | 1.16 µs | — |
 
 ### serde
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| personality_serialize | 1.08 µs | 937.64 ns | 937.64 ns | -13.5% |
-| personality_deserialize | 1.49 µs | 1.32 µs | 1.32 µs | -11.7% |
-| mood_serialize | 160.79 ns | 136.84 ns | 136.84 ns | -14.9% |
-| mood_deserialize | 209.10 ns | 183.18 ns | 183.18 ns | -12.4% |
-| emotional_state_serialize | 757.04 ns | 628.17 ns | 628.17 ns | -17.0% |
-| emotional_state_deserialize | 765.87 ns | 626.99 ns | 626.99 ns | -18.1% |
+| personality_serialize | 1.08 µs | 1.08 µs | 1.08 µs | — |
+| personality_deserialize | 1.48 µs | 1.48 µs | 1.48 µs | — |
+| mood_serialize | 215.58 ns | 215.58 ns | 215.58 ns | — |
+| mood_deserialize | 194.69 ns | 194.69 ns | 194.69 ns | — |
+| emotional_state_serialize | 859.78 ns | 859.78 ns | 859.78 ns | — |
+| emotional_state_deserialize | 713.60 ns | 713.60 ns | 713.60 ns | — |
 
 ### rhythm
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| ultradian_modulate | 18.92 ns | 16.01 ns | 16.01 ns | -15.4% |
-| seasonal_modulate | 16.12 ns | 13.61 ns | 13.61 ns | -15.6% |
-| biorhythm_modulate | 69.45 ns | 56.50 ns | 56.50 ns | -18.6% |
-| apply_all_rhythms | 110.08 ns | 95.95 ns | 95.95 ns | -12.8% |
+| ultradian_modulate | 18.68 ns | 18.68 ns | 18.68 ns | — |
+| seasonal_modulate | 14.30 ns | 14.30 ns | 14.30 ns | — |
+| biorhythm_modulate | 61.71 ns | 61.71 ns | 61.71 ns | — |
+| apply_all_rhythms | 106.66 ns | 106.66 ns | 106.66 ns | — |
 
 ### energy
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| tick_exertion | 376.20 ps | 284.10 ps | 284.10 ps | -24.5% |
-| performance | 3.68 ns | 2.99 ns | 2.99 ns | -18.7% |
-| exertion_from_mood | 2.91 ns | 2.39 ns | 2.39 ns | -17.7% |
+| tick_exertion | 352.20 ps | 352.20 ps | 352.20 ps | — |
+| performance | 3.46 ns | 3.46 ns | 3.46 ns | — |
+| exertion_from_mood | 2.48 ns | 2.48 ns | 2.48 ns | — |
 
 ### circadian
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| alertness | 73.21 ns | 61.18 ns | 61.18 ns | -16.4% |
-| mood_modulation | 73.42 ns | 64.13 ns | 64.13 ns | -12.7% |
-| decay_rate_modifier | 68.61 ns | 62.36 ns | 62.36 ns | -9.1% |
+| alertness | 62.26 ns | 62.26 ns | 62.26 ns | — |
+| mood_modulation | 65.46 ns | 65.46 ns | 65.46 ns | — |
+| decay_rate_modifier | 62.67 ns | 62.67 ns | 62.67 ns | — |
 
 ### flow
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| tick | 7.12 ns | 4.06 ns | 4.06 ns | -42.9% |
-| check_conditions | 3.43 ns | 2.60 ns | 2.60 ns | -24.1% |
+| tick | 4.32 ns | 4.32 ns | 4.32 ns | — |
+| check_conditions | 2.66 ns | 2.66 ns | 2.66 ns | — |
 
 ### eq
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| overall | 1.02 ns | 846.80 ps | 846.80 ps | -16.6% |
-| compose_prompt | 324.41 ns | 252.85 ns | 252.85 ns | -22.1% |
+| overall | 905.80 ps | 905.80 ps | 905.80 ps | — |
+| compose_prompt | 265.83 ns | 265.83 ns | 265.83 ns | — |
 
 ### display_rules
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| apply_professional | 32.36 ns | 20.06 ns | 20.06 ns | -38.0% |
-| apply_celebration | 25.46 ns | 21.69 ns | 21.69 ns | -14.8% |
+| apply_professional | 20.80 ns | 20.80 ns | 20.80 ns | — |
+| apply_celebration | 21.16 ns | 21.16 ns | 21.16 ns | — |
 
 ### microexpr
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| detect | 48.31 ns | 44.56 ns | 44.56 ns | -7.8% |
+| detect | 59.49 ns | 59.49 ns | 59.49 ns | — |
 
 ### affective
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| snapshot_complexity | 1.76 ns | 1.42 ns | 1.42 ns | -19.7% |
-| snapshot_granularity | 13.60 ns | 10.60 ns | 10.60 ns | -22.1% |
-| compute_metrics_50 | 1.18 µs | 917.87 ns | 917.87 ns | -22.3% |
+| snapshot_complexity | 1.84 ns | 1.84 ns | 1.84 ns | — |
+| snapshot_granularity | 15.37 ns | 15.37 ns | 15.37 ns | — |
+| compute_metrics_50 | 1.09 µs | 1.09 µs | 1.09 µs | — |
 
 ### proximity
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| evaluate_20_rules | 252.85 ns | 247.79 ns | 247.79 ns | -2.0% |
+| evaluate_20_rules | 274.86 ns | 274.86 ns | 274.86 ns | — |
 
 ### reasoning
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| select_strategy | 9.17 ns | 6.41 ns | 6.41 ns | -30.1% |
-| all_scores | 22.52 ns | 23.85 ns | 23.85 ns | +5.9% |
+| select_strategy | 7.57 ns | 7.57 ns | 7.57 ns | — |
+| all_scores | 23.64 ns | 23.64 ns | 23.64 ns | — |
 
 ### salience
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| classify | 1.75 ns | 1.43 ns | 1.43 ns | -18.4% |
+| classify | 1.56 ns | 1.56 ns | 1.56 ns | — |
 
 ### actr
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| rehearse_100 | 12.01 µs | 10.93 µs | 10.93 µs | -9.0% |
-| retrieve_above | 687.04 ns | 634.14 ns | 634.14 ns | -7.7% |
+| rehearse_100 | 11.44 µs | 11.44 µs | 11.44 µs | — |
+| retrieve_above | 738.77 ns | 738.77 ns | 738.77 ns | — |
 
 ### preference
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| record_100 | 12.54 µs | 9.82 µs | 9.82 µs | -21.7% |
-| top_preferences | 238.44 ns | 203.45 ns | 203.45 ns | -14.7% |
+| record_100 | 11.02 µs | 11.02 µs | 11.02 µs | — |
+| top_preferences | 223.77 ns | 223.77 ns | 223.77 ns | — |
 
 ### belief
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| reinforce_100 | — | 12.16 µs | 12.16 µs | — |
-| coherence_64 | — | 2.11 µs | 2.11 µs | — |
-| self_model_update | — | 190.38 ns | 190.38 ns | — |
-| world_model_update | — | 1.43 µs | 1.43 µs | — |
-| cosmic_understanding | — | 1.11 ns | 1.11 ns | — |
-| decay_64 | — | 2.83 µs | 2.83 µs | — |
+| reinforce_100 | 15.33 µs | 15.33 µs | 15.33 µs | — |
+| coherence_64 | 73.68 ns | 73.68 ns | 73.68 ns | — |
+| coherence_256 | 196.65 ns | 196.65 ns | 196.65 ns | — |
+| beliefs_of_kind_iterate | 25.04 ns | 25.04 ns | 25.04 ns | — |
+| self_model_update | 133.97 ns | 133.97 ns | 133.97 ns | — |
+| world_model_update | 1.44 µs | 1.44 µs | 1.44 µs | — |
+| cosmic_understanding | 1.18 ns | 1.18 ns | 1.18 ns | — |
+| decay_64 | 3.27 µs | 3.27 µs | 3.27 µs | — |
 
 ### belief_emotion
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| classify_emotion | — | 513.40 ps | 513.40 ps | — |
-| apply_emotion_100 | — | 15.04 µs | 15.04 µs | — |
-| shadow_beliefs_query | — | 551.11 ns | 551.11 ns | — |
-| decay_with_shadow | — | 2.81 µs | 2.81 µs | — |
+| classify_emotion | 554.50 ps | 554.50 ps | 554.50 ps | — |
+| apply_emotion_100 | 17.14 µs | 17.14 µs | 17.14 µs | — |
+| shadow_beliefs_query | 582.99 ns | 582.99 ns | 582.99 ns | — |
+| decay_with_shadow | 3.78 µs | 3.78 µs | 3.78 µs | — |
 
 ### intuition
 
-| Benchmark | `d3a1b39` | `dde66a8` | `dde66a8` | Δ first→last |
+| Benchmark | `45db354` | `45db354` | `45db354` | Δ first→last |
 |-----------|------|------|------|------|
-| synthesize_5_tags_3_sources | — | 1.10 µs | 1.10 µs | — |
-| synthesize_20_tags | — | 4.63 µs | 4.63 µs | — |
-| profile_from_personality | — | 3.05 ns | 3.05 ns | — |
-| active_layer | — | 3.49 ns | 3.49 ns | — |
+| synthesize_5_tags_3_sources | 1.38 µs | 1.38 µs | 1.38 µs | — |
+| synthesize_20_tags | 4.89 µs | 4.89 µs | 4.89 µs | — |
+| profile_from_personality | 3.47 ns | 3.47 ns | 3.47 ns | — |
+| active_layer | 3.98 ns | 3.98 ns | 3.98 ns | — |
 
 ---
 

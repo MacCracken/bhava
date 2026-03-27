@@ -1,5 +1,47 @@
 # Changelog
 
+## [1.2.0] - 2026-03-27
+
+Aesthetic attribution, crate-wide tracing, and performance hardening.
+
+### Breaking
+
+- **belief** — `beliefs_of_kind()` now returns `impl Iterator<Item = &Belief>` instead of `Vec<&Belief>`. Migration: callers using `.len()` should use `.count()`; callers that need random access should `.collect::<Vec<_>>()` at the call site.
+- **belief** — `Belief.source_memories` field type changed from `Vec<String>` to `VecDeque<String>`. Migration: replace `.as_slice()` with `.make_contiguous()`, or iterate instead of indexing.
+
+### Added
+
+- **aesthetic** — new module: aesthetic attribution via repeated exposure to art, music, beauty
+  - `AestheticDimension` enum: Beauty, Harmony, Sublimity, Meaning, Novelty
+  - `AestheticProfile` — per-dimension preference learning with mere-exposure effect (Zajonc)
+  - `crystallize_beliefs()` — aesthetic preferences above threshold become world/self beliefs
+  - `aesthetic_trait_pressure()` — sustained exposure creates Creativity, Curiosity, Empathy pressure
+  - `aesthetic_mood_shift()` — maps aesthetic dimensions to Joy, Interest, Trust, Arousal
+  - `aesthetic_intuition_signal()` — feeds aesthetic sensitivity into intuition synthesis
+- **intuition** — `SignalSource::AestheticSensitivity` variant for aesthetic-driven intuition signals
+- **tracing** — new `tracing` feature flag with `tracing` 0.1 optional dependency
+  - ~160 public functions instrumented with `#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]`
+  - Zero overhead when feature is disabled (compile-time elimination)
+  - Spans auto-named from function signatures for structured observability
+
+### Performance
+
+- **belief** — `coherence()`: O(n^2) pairwise scan replaced with O(n) single-pass grouping by kind
+- **belief** — `beliefs_of_kind()`: returns lazy iterator instead of collecting into Vec (zero allocation)
+- **belief** — `add_source_memory()`: `Vec::remove(0)` O(n) shift replaced with `VecDeque::pop_front()` O(1)
+
+### Changed
+
+- `tracing` added to `full` feature flag
+
+### Stats
+
+- 969 tests (918 unit + 35 integration + 16 doc)
+- 126 criterion benchmarks across 32 groups
+- 33 modules
+- Zero `unwrap()`/`panic!()`/`unsafe` in library code
+- Zero clippy warnings
+
 ## [1.1.1] - 2026-03-26
 
 Jantu 1.0.0 creature behavior integration — 15 bridge functions connecting animal instincts to human personality.

@@ -61,6 +61,7 @@ impl GrowthLedger {
     /// - Joy → Warmth+, Humor+
     /// - Fear → RiskTolerance-, Confidence-
     /// - Admiration → Empathy+, Curiosity+
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn apply_emotion(&mut self, emotion: AppraisedEmotion, intensity: f32) {
         let mappings: &[(TraitKind, f32)] = match emotion {
             AppraisedEmotion::Pride => &[(TraitKind::Confidence, 0.5), (TraitKind::Autonomy, 0.3)],
@@ -100,6 +101,7 @@ impl GrowthLedger {
     }
 
     /// Apply raw pressure to a specific trait.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn apply_pressure(&mut self, kind: TraitKind, amount: f32) {
         self.pressure[kind.index()] += amount;
     }
@@ -111,6 +113,7 @@ impl GrowthLedger {
     }
 
     /// Decay all pressures (call periodically).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn decay(&mut self) {
         for p in &mut self.pressure {
             *p *= 1.0 - self.decay_rate;
@@ -122,6 +125,7 @@ impl GrowthLedger {
     /// For each trait where pressure exceeds the threshold, shifts the trait
     /// one level in the pressure direction and resets that pressure.
     /// Returns the number of traits that changed.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn apply_growth(&mut self, profile: &mut PersonalityProfile) -> usize {
         let mut changed = 0;
         for &kind in TraitKind::ALL {

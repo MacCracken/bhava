@@ -106,6 +106,7 @@ impl fmt::Display for SalienceLevel {
 ///   Morally weighted events matter more; reinforced by prior memories.
 ///
 /// Both dimensions clamped to 0.0–1.0.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn classify_salience(
     appraisal: &Appraisal,
@@ -134,6 +135,7 @@ pub fn classify_salience(
 ///
 /// Synthesizes urgency from arousal intensity and importance from
 /// the emotional magnitude of the stored mood.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn memory_salience(memory: &EmotionalMemory) -> SalienceScore {
     let urgency = (memory.mood.arousal.abs() * memory.intensity).clamp(0.0, 1.0);
@@ -151,6 +153,7 @@ pub fn memory_salience(memory: &EmotionalMemory) -> SalienceScore {
 /// Returns matching memories paired with their salience scores,
 /// sorted by magnitude descending. Use with `recall_congruent` or
 /// any other source of `EmotionalMemory` references.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn filter_salient<'a>(
     memories: &[&'a EmotionalMemory],
@@ -180,6 +183,7 @@ pub fn filter_salient<'a>(
 ///
 /// More salient memories contribute more to the resulting mood vector.
 /// Returns neutral if no memories exceed the threshold.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn salience_weighted_mood(memories: &[&EmotionalMemory], threshold: f32) -> MoodVector {
     let mut weighted_sum = MoodVector::neutral();

@@ -110,6 +110,7 @@ impl fmt::Display for CulturalContext {
 /// Transforms the `expressed` mood vector according to the rules in
 /// the given cultural context. The `felt` mood is unchanged.
 /// Rules are applied in order — later rules can override earlier ones.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 pub fn apply_display_rules(regulated: &mut RegulatedMood, context: &CulturalContext) {
     for rule in &context.rules {
         apply_single_rule(&mut regulated.expressed, rule);
@@ -155,6 +156,7 @@ fn apply_single_rule(expressed: &mut MoodVector, rule: &DisplayRule) {
 ///
 /// Returns the Euclidean distance between pre-rule and post-rule expressed mood.
 /// Higher values mean the context demands more emotional modification.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn cultural_distortion(
     original_expressed: &MoodVector,

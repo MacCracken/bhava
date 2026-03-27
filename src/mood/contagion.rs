@@ -24,6 +24,7 @@ impl Default for ContagionParams {
 
 /// Derive contagion parameters from a personality profile.
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn contagion_from_personality(profile: &crate::traits::PersonalityProfile) -> ContagionParams {
     use crate::traits::TraitKind;
@@ -43,6 +44,7 @@ pub fn contagion_from_personality(profile: &crate::traits::PersonalityProfile) -
 /// Returns a mood delta to apply to the receiver's emotional state.
 /// The delta is modulated by sender expressiveness, receiver susceptibility,
 /// and the relationship affinity between them.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn compute_contagion(
     sender_mood: &MoodVector,
@@ -62,6 +64,7 @@ pub fn compute_contagion(
 }
 
 /// Compute the group emotional centroid (average mood of a group).
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn group_mood(members: &[&MoodVector]) -> MoodVector {
     if members.is_empty() {

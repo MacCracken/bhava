@@ -35,6 +35,7 @@ impl MoodHistory {
     }
 
     /// Record a snapshot. Drops the oldest if at capacity.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn record(&mut self, snapshot: MoodSnapshot) {
         if self.snapshots.len() >= self.capacity {
             self.snapshots.pop_front();
@@ -68,6 +69,7 @@ impl MoodHistory {
     }
 
     /// Average deviation across all snapshots.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn average_deviation(&self) -> f32 {
         if self.snapshots.is_empty() {
@@ -83,6 +85,7 @@ impl MoodHistory {
     }
 
     /// Count occurrences of each mood state in history.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn state_distribution(&self) -> Vec<(MoodState, usize)> {
         use std::collections::HashMap;
@@ -97,6 +100,7 @@ impl MoodHistory {
 
     /// Trend: is deviation increasing or decreasing?
     /// Returns positive for escalating, negative for calming, near-zero for stable.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn deviation_trend(&self) -> f32 {
         if self.snapshots.len() < 2 {
@@ -114,6 +118,7 @@ impl MoodHistory {
     ///
     /// High volatility means the agent's emotional state swings wildly.
     /// Low volatility means stable, predictable emotional behavior.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn volatility(&self) -> f32 {
         if self.snapshots.len() < 2 {
@@ -133,6 +138,7 @@ impl MoodHistory {
     ///
     /// Positive = escalating emotional intensity. Negative = calming down.
     /// More precise than `deviation_trend()` which only compares halves.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn momentum(&self) -> f32 {
         let n = self.snapshots.len();

@@ -113,6 +113,7 @@ impl ProximitySystem {
     ///
     /// Returns all rules matching the location tag where the entity is
     /// within radius, with intensity scaled by the falloff function.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn evaluate(&self, location_tag: &str, distance: f32) -> Vec<ProximityHit> {
         self.rules
@@ -135,6 +136,7 @@ impl ProximitySystem {
     /// Evaluate all rules against multiple nearby locations.
     ///
     /// Each entry in `locations` is `(tag, distance)`. Returns combined hits.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn evaluate_many(&self, locations: &[(&str, f32)]) -> Vec<ProximityHit> {
         locations
@@ -146,6 +148,7 @@ impl ProximitySystem {
     /// Remove all rules for a given location tag.
     ///
     /// Returns the number of rules removed.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn remove_location(&mut self, location_tag: &str) -> usize {
         let before = self.rules.len();
         self.rules.retain(|r| r.location_tag != location_tag);

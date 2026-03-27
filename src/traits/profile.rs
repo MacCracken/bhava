@@ -93,6 +93,7 @@ impl PersonalityProfile {
     }
 
     /// Get all non-balanced traits, in deterministic trait-kind order.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn active_traits(&self) -> Vec<TraitValue> {
         TraitKind::ALL
@@ -108,6 +109,7 @@ impl PersonalityProfile {
     /// Generate behavioral instructions for this personality.
     ///
     /// Returns instructions in deterministic trait-kind order.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn behavioral_instructions(&self) -> Vec<&'static str> {
         TraitKind::ALL
@@ -117,6 +119,7 @@ impl PersonalityProfile {
     }
 
     /// Compose a system prompt preamble from this personality's traits.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn compose_prompt(&self) -> String {
         let instructions = self.behavioral_instructions();
@@ -139,6 +142,7 @@ impl PersonalityProfile {
     }
 
     /// Distance between two profiles (Euclidean in trait space).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn distance(&self, other: &PersonalityProfile) -> f32 {
         let sum_sq: f32 = TraitKind::ALL
@@ -164,6 +168,7 @@ impl PersonalityProfile {
     /// Get the average normalized value for a trait group.
     ///
     /// Returns a value from -1.0 (all Lowest) to 1.0 (all Highest).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn group_average(&self, group: TraitGroup) -> f32 {
         let traits = group.traits();
@@ -180,6 +185,7 @@ impl PersonalityProfile {
     /// capturing behavioral pattern similarity regardless of intensity differences.
     ///
     /// For two all-Balanced profiles (zero vectors), returns 1.0 by convention.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn compatibility(&self, other: &PersonalityProfile) -> f32 {
         cosine_similarity(
@@ -193,6 +199,7 @@ impl PersonalityProfile {
     }
 
     /// Compatibility score restricted to a specific trait group.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn group_compatibility(&self, other: &PersonalityProfile, group: TraitGroup) -> f32 {
         let traits = group.traits();
@@ -208,6 +215,7 @@ impl PersonalityProfile {
     ///
     /// `t` controls the mix: 0.0 = fully `self`, 1.0 = fully `other`.
     /// Trait levels are interpolated in normalized space and snapped to the nearest level.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn blend(&self, other: &PersonalityProfile, t: f32) -> PersonalityProfile {
         let t = t.clamp(0.0, 1.0);
@@ -228,6 +236,7 @@ impl PersonalityProfile {
     /// `rate` controls how far to shift per step: 0.0 = no change, 1.0 = jump to target.
     /// Each trait moves at most one level per call when rate < 0.5, preserving gradual drift.
     /// Returns the number of traits that changed.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn mutate_toward(&mut self, target: &PersonalityProfile, rate: f32) -> usize {
         let rate = rate.clamp(0.0, 1.0);
         if rate < f32::EPSILON {
@@ -265,6 +274,7 @@ impl PersonalityProfile {
     // --- Serialization (SY parity) ---
 
     /// Export personality to a portable markdown format.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn to_markdown(&self) -> String {
         use std::fmt::Write;
@@ -288,6 +298,7 @@ impl PersonalityProfile {
     ///
     /// Expects the format produced by `to_markdown()`. Unrecognized traits
     /// default to Balanced. Returns None if the name line is missing.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn from_markdown(md: &str) -> Option<Self> {
         let mut lines = md.lines();

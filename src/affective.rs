@@ -96,6 +96,7 @@ fn mood_distance(a: &MoodVector, b: &MoodVector) -> f32 {
 ///
 /// Requires at least 2 snapshots for inertia and variability.
 /// Returns `AffectiveMetrics::zero()` for empty histories.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn compute_affective_metrics(history: &MoodHistory) -> AffectiveMetrics {
     if history.is_empty() {

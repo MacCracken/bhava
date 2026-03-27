@@ -52,6 +52,7 @@ impl MicroExpression {
 /// Stronger suppression gaps produce larger, longer micro-expressions.
 ///
 /// Returns an empty vec if the entity is not suppressing anything.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn detect_micro_expressions(regulated: &RegulatedMood) -> Vec<MicroExpression> {
     if !regulated.is_suppressing() {
@@ -101,6 +102,7 @@ pub fn stress_leak_multiplier(stress_load: f32) -> f32 {
 /// Apply stress-modulated micro-expression detection.
 ///
 /// Like `detect_micro_expressions` but scales leak intensity by stress.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn detect_micro_expressions_stressed(
     regulated: &RegulatedMood,
@@ -118,6 +120,7 @@ pub fn detect_micro_expressions_stressed(
 ///
 /// Useful for NPC renderers that need a single mood vector representing
 /// what an observer might glimpse during micro-expressions.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn leak_vector(expressions: &[MicroExpression]) -> MoodVector {
     let mut v = MoodVector::neutral();
@@ -132,6 +135,7 @@ pub fn leak_vector(expressions: &[MicroExpression]) -> MoodVector {
 /// Combines stress and personality factors: susceptible personalities leak
 /// more, controlled personalities leak less.
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn detect_micro_expressions_personality(
     regulated: &RegulatedMood,
@@ -155,6 +159,7 @@ pub fn detect_micro_expressions_personality(
 ///
 /// Returns 0.0 (stone-faced) to 1.0 (highly expressive/leaky).
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn micro_expression_susceptibility(profile: &crate::traits::PersonalityProfile) -> f32 {
     use crate::traits::TraitKind;

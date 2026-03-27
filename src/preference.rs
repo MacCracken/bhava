@@ -86,6 +86,7 @@ impl PreferenceBias {
 /// - Warm agents: positive_gain boosted (form positive preferences faster)
 /// - Skeptical agents: negative_gain boosted (weight negative experiences more)
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn bias_from_personality(profile: &crate::traits::PersonalityProfile) -> PreferenceBias {
     use crate::traits::TraitKind;
@@ -133,6 +134,7 @@ impl PreferenceStore {
     /// `outcome` ranges from -1.0 (terrible) to 1.0 (excellent).
     /// Creates a new entry if the tag is not found. Evicts the entry
     /// with the weakest |valence| when at capacity.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn record_outcome(&mut self, tag: impl Into<String>, outcome: f32, now: DateTime<Utc>) {
         let tag = tag.into();
         let outcome = outcome.clamp(-1.0, 1.0);
@@ -176,6 +178,7 @@ impl PreferenceStore {
     ///
     /// `valence *= (1.0 - rate)`. Removes entries where |valence| < 0.01
     /// and exposure_count < 2 (weak, barely-formed preferences).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn decay(&mut self, rate: f32) {
         let rate = rate.clamp(0.0, 1.0);
         for entry in &mut self.entries {
@@ -186,6 +189,7 @@ impl PreferenceStore {
     }
 
     /// Top N strongest positive preferences, sorted by valence descending.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn top_preferences(&self, n: usize) -> Vec<(&str, f32)> {
         let mut positive: Vec<_> = self
@@ -200,6 +204,7 @@ impl PreferenceStore {
     }
 
     /// Top N strongest negative preferences (aversions), sorted by valence ascending.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn bottom_preferences(&self, n: usize) -> Vec<(&str, f32)> {
         let mut negative: Vec<_> = self

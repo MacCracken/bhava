@@ -32,11 +32,13 @@ impl DampedResponse {
     }
 
     /// Apply an impulse (e.g., emotional stimulus).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn impulse(&mut self, force: f32) {
         self.velocity += force;
     }
 
     /// Step the simulation forward by `dt` seconds.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn step(&mut self, dt: f32) {
         let accel =
             -2.0 * self.zeta * self.omega * self.velocity - self.omega * self.omega * self.position;

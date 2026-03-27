@@ -47,6 +47,7 @@ impl StressState {
     ///
     /// High arousal + frustration increases load; calm periods decrease it.
     /// Call this periodically (e.g., once per interaction or tick).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn tick(&mut self, mood: &MoodVector) {
         let stress_input = (mood.arousal.max(0.0) * 0.4
             + mood.frustration.max(0.0) * 0.4
@@ -131,6 +132,7 @@ impl std::fmt::Display for StressLevel {
 
 /// Derive stress accumulation/recovery rates from personality.
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn stress_from_personality(profile: &crate::traits::PersonalityProfile) -> StressState {
     use crate::traits::TraitKind;

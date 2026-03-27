@@ -67,6 +67,7 @@ impl EnergyState {
     ///
     /// `exertion` is 0.0 (resting) to 1.0 (maximum effort). Drains energy,
     /// updates Banister fitness/fatigue impulse-response variables.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn tick(&mut self, exertion: f32) {
         let exertion = exertion.clamp(0.0, 1.0);
 
@@ -150,6 +151,7 @@ impl EnergyState {
     ///
     /// Modifier > 1.0 accelerates recovery; < 1.0 slows it.
     /// Only applies bonus recovery — does not drain.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn apply_recovery_modifier(&mut self, modifier: f32) {
         let bonus = self.recovery_rate * (modifier - 1.0).max(0.0);
         self.energy = (self.energy + bonus).min(1.0);
@@ -190,6 +192,7 @@ impl fmt::Display for EnergyLevel {
 /// Any intense emotional state costs energy, not just negative ones.
 /// Uses mood intensity (L2 norm) as a proxy for cognitive load.
 /// Returns 0.0 (neutral) to 1.0 (maximum intensity).
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 #[inline]
 pub fn exertion_from_mood(mood: &MoodVector) -> f32 {
@@ -203,6 +206,7 @@ pub fn exertion_from_mood(mood: &MoodVector) -> f32 {
 /// - High patience + confidence → better recovery (resilient)
 /// - High curiosity → slightly higher drain (active mind)
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn energy_from_personality(profile: &crate::traits::PersonalityProfile) -> EnergyState {
     use crate::traits::TraitKind;

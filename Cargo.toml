@@ -1,6 +1,6 @@
 [package]
 name = "bhava"
-version = "1.1.1"
+version = "1.2.0"
 edition = "2024"
 rust-version = "1.89"
 license = "GPL-3.0-only"
@@ -23,7 +23,8 @@ presets = ["traits", "archetype"]
 ai = ["traits", "mood", "archetype", "sentiment", "dep:reqwest", "dep:tokio", "dep:serde_json"]
 sqlite = ["traits", "mood", "archetype", "sentiment", "dep:rusqlite", "dep:serde_json"]
 instinct = ["mood", "traits", "dep:jantu"]
-full = ["traits", "mood", "archetype", "sentiment", "presets", "ai", "sqlite", "instinct"]
+tracing = ["dep:tracing"]
+full = ["traits", "mood", "archetype", "sentiment", "presets", "ai", "sqlite", "instinct", "tracing"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
@@ -34,6 +35,9 @@ chrono = { version = "0.4", features = ["serde"] }
 reqwest = { version = "0.12", features = ["json"], optional = true }
 tokio = { version = "1", features = ["full"], optional = true }
 serde_json = { version = "1", optional = true }
+
+# Optional (tracing feature)
+tracing = { version = "0.1", optional = true }
 
 # Optional (instinct feature — jantu creature behavior substrate)
 jantu = { version = "1", optional = true, default-features = false }

@@ -108,6 +108,7 @@ impl MoodVector {
     }
 
     /// Magnitude of the mood vector (distance from neutral).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn intensity(&self) -> f32 {
         let sum = self.joy * self.joy
@@ -120,6 +121,7 @@ impl MoodVector {
     }
 
     /// Dominant emotion (highest absolute value).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn dominant_emotion(&self) -> Emotion {
         let mut best = Emotion::Joy;
@@ -135,6 +137,7 @@ impl MoodVector {
     }
 
     /// Decay toward neutral by a factor (0.0 = no decay, 1.0 = instant reset).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn decay(&mut self, factor: f32) {
         let f = factor.clamp(0.0, 1.0);
         self.joy *= 1.0 - f;
@@ -146,6 +149,7 @@ impl MoodVector {
     }
 
     /// Blend with another mood vector (linear interpolation).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn blend(&self, other: &MoodVector, t: f32) -> MoodVector {
         let t = t.clamp(0.0, 1.0);
@@ -224,6 +228,7 @@ impl EmotionalState {
 
     /// Apply time-based decay toward baseline.
     /// Call this before reading the mood to get the current state.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn apply_decay(&mut self, now: DateTime<Utc>) {
         let elapsed = (now - self.last_updated).num_milliseconds() as f64 / 1000.0;
         if elapsed <= 0.0 {
@@ -242,6 +247,7 @@ impl EmotionalState {
     }
 
     /// Apply an emotional stimulus.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn stimulate(&mut self, emotion: Emotion, intensity: f32) {
         self.mood.nudge(emotion, intensity);
         self.last_updated = Utc::now();
@@ -260,6 +266,7 @@ impl EmotionalState {
     }
 
     /// Classify the current mood into a named emotional state.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn classify(&self) -> MoodState {
         let intensity = self.mood.intensity();
@@ -292,6 +299,7 @@ impl EmotionalState {
     /// Apply a trigger, stimulating all its emotion responses.
     ///
     /// Batches all nudges and updates the timestamp once (avoids repeated `Utc::now()` calls).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn apply_trigger(&mut self, trigger: &super::MoodTrigger) {
         for &(emotion, intensity) in &trigger.responses {
             self.mood.nudge(emotion, intensity);
@@ -302,6 +310,7 @@ impl EmotionalState {
     // --- Mood History (v0.3) ---
 
     /// Take a snapshot of the current mood with a timestamp.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn snapshot(&self) -> super::MoodSnapshot {
         super::MoodSnapshot {

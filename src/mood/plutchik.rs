@@ -35,6 +35,7 @@ impl std::fmt::Display for CompoundEmotion {
 /// Detect compound emotions present in a mood vector.
 ///
 /// Returns all compound emotions whose constituent dimensions exceed the threshold.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn detect_compound_emotions(mood: &MoodVector, threshold: f32) -> Vec<(CompoundEmotion, f32)> {
     let t = threshold;

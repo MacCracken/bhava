@@ -69,6 +69,7 @@ impl Relationship {
     }
 
     /// Apply affinity and trust deltas from an interaction.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn interact(&mut self, affinity_delta: f32, trust_delta: f32) {
         self.affinity = (self.affinity + affinity_delta).clamp(-1.0, 1.0);
         self.trust = (self.trust + trust_delta).clamp(0.0, 1.0);
@@ -76,6 +77,7 @@ impl Relationship {
     }
 
     /// Decay affinity toward 0 and trust toward 0.5.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn decay(&mut self) {
         if self.decay_rate <= 0.0 {
             return;
@@ -110,6 +112,7 @@ impl RelationshipGraph {
     }
 
     /// Add or update a relationship. If one exists between source→target, updates it.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn upsert(&mut self, rel: Relationship) {
         if let Some(existing) = self
             .relationships
@@ -140,6 +143,7 @@ impl RelationshipGraph {
     ///
     /// Auto-creates the relationship if it doesn't exist.
     /// Returns a mutable reference to the updated relationship.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn record_interaction(
         &mut self,
         source: &str,
@@ -157,6 +161,7 @@ impl RelationshipGraph {
     }
 
     /// Remove a relationship.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn remove(&mut self, source: &str, target: &str) -> bool {
         let before = self.relationships.len();
         self.relationships
@@ -165,6 +170,7 @@ impl RelationshipGraph {
     }
 
     /// All relationships for a given source entity.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn relationships_for(&self, source: &str) -> Vec<&Relationship> {
         self.relationships
             .iter()
@@ -188,6 +194,7 @@ impl RelationshipGraph {
     }
 
     /// Decay all relationships one tick.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn decay_all(&mut self) {
         for rel in &mut self.relationships {
             rel.decay();
@@ -195,6 +202,7 @@ impl RelationshipGraph {
     }
 
     /// Average affinity across all relationships for a source entity.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn average_affinity(&self, source: &str) -> f32 {
         let mut sum = 0.0f32;
         let mut count = 0u32;
@@ -208,6 +216,7 @@ impl RelationshipGraph {
     }
 
     /// Average trust across all relationships for a source entity.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn average_trust(&self, source: &str) -> f32 {
         let mut sum = 0.0f32;
         let mut count = 0u32;
@@ -221,6 +230,7 @@ impl RelationshipGraph {
     }
 
     /// Allies (positive affinity) of a source entity.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn allies(&self, source: &str) -> Vec<&Relationship> {
         self.relationships
             .iter()
@@ -229,6 +239,7 @@ impl RelationshipGraph {
     }
 
     /// Rivals (negative affinity) of a source entity.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn rivals(&self, source: &str) -> Vec<&Relationship> {
         self.relationships
             .iter()
@@ -239,6 +250,7 @@ impl RelationshipGraph {
     /// Reciprocity between two entities (0.0 = one-sided, 1.0 = perfectly mutual).
     ///
     /// Returns `None` if either direction is missing.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn reciprocity(&self, a: &str, b: &str) -> Option<f32> {
         let ab = self.get(a, b)?;
@@ -249,6 +261,7 @@ impl RelationshipGraph {
     }
 
     /// Fraction of an entity's relationships that are reciprocated.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn reciprocity_ratio(&self, source: &str) -> f32 {
         let rels = self.relationships_for(source);
@@ -263,6 +276,7 @@ impl RelationshipGraph {
     }
 
     /// Trust asymmetry for a pair — positive means A trusts B more than B trusts A.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn trust_asymmetry(&self, a: &str, b: &str) -> Option<f32> {
         let ab = self.get(a, b)?;

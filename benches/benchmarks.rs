@@ -1012,6 +1012,41 @@ fn bench_belief(c: &mut Criterion) {
         b.iter(|| sys.coherence())
     });
 
+    group.bench_function("coherence_256", |b| {
+        let mut sys = BeliefSystem::new(256);
+        let now = chrono::Utc::now();
+        let kinds = [
+            BeliefKind::SelfBelief,
+            BeliefKind::WorldBelief,
+            BeliefKind::OtherBelief,
+            BeliefKind::UniversalBelief,
+        ];
+        for i in 0..256 {
+            let valence = if i % 3 == 0 { -0.5 } else { 0.5 };
+            sys.reinforce_or_create(kinds[i % 4], format!("tag_{i}"), valence, "evidence", now);
+        }
+        b.iter(|| sys.coherence())
+    });
+
+    group.bench_function("beliefs_of_kind_iterate", |b| {
+        let mut sys = BeliefSystem::new(64);
+        let now = chrono::Utc::now();
+        for i in 0..64 {
+            let kind = if i % 2 == 0 {
+                BeliefKind::SelfBelief
+            } else {
+                BeliefKind::WorldBelief
+            };
+            sys.reinforce_or_create(kind, format!("tag_{i}"), 0.5, "ev", now);
+        }
+        b.iter(|| {
+            let count: usize = sys
+                .beliefs_of_kind(black_box(BeliefKind::SelfBelief))
+                .count();
+            black_box(count)
+        })
+    });
+
     group.bench_function("self_model_update", |b| {
         let mut sys = BeliefSystem::new(64);
         let now = chrono::Utc::now();
@@ -1120,6 +1155,7 @@ criterion_group!(
     bench_belief,
     bench_belief_emotion,
     bench_intuition,
+    bench_aesthetic,
 );
 criterion_main!(benches);
 
@@ -1279,6 +1315,107 @@ fn bench_intuition(c: &mut Criterion) {
                 black_box(0.3),
             )
         })
+    });
+
+    group.finish();
+}
+
+fn bench_aesthetic(c: &mut Criterion) {
+    use bhava::aesthetic::*;
+    use bhava::belief::BeliefSystem;
+
+    let mut group = c.benchmark_group("aesthetic");
+
+    group.bench_function("record_exposure", |b| {
+        let exposure = AestheticExposure {
+            dimension: AestheticDimension::Beauty,
+            tag: "music:classical".to_owned(),
+            intensity: 0.8,
+        };
+        b.iter_batched(
+            AestheticProfile::new,
+            |mut profile| profile.record_exposure(black_box(&exposure), chrono::Utc::now()),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("record_exposure_50", |b| {
+        b.iter_batched(
+            || {
+                let mut profile = AestheticProfile::new();
+                let now = chrono::Utc::now();
+                for i in 0..50 {
+                    let dim = AestheticDimension::ALL[i % 5];
+                    profile.record_exposure(
+                        &AestheticExposure {
+                            dimension: dim,
+                            tag: format!("art:{i}"),
+                            intensity: 0.7,
+                        },
+                        now,
+                    );
+                }
+                profile
+            },
+            |mut profile| {
+                profile.record_exposure(
+                    &AestheticExposure {
+                        dimension: AestheticDimension::Meaning,
+                        tag: "test".to_owned(),
+                        intensity: 0.8,
+                    },
+                    chrono::Utc::now(),
+                );
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("crystallize_beliefs", |b| {
+        let mut profile = AestheticProfile::new();
+        let now = chrono::Utc::now();
+        for _ in 0..20 {
+            for &dim in AestheticDimension::ALL {
+                profile.record_exposure(
+                    &AestheticExposure {
+                        dimension: dim,
+                        tag: format!("test:{dim}"),
+                        intensity: 0.8,
+                    },
+                    now,
+                );
+            }
+        }
+        b.iter_batched(
+            || BeliefSystem::new(32),
+            |mut bs| crystallize_beliefs(black_box(&profile), &mut bs, now),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("aesthetic_trait_pressure", |b| {
+        let mut profile = AestheticProfile::new();
+        let now = chrono::Utc::now();
+        for _ in 0..20 {
+            profile.record_exposure(
+                &AestheticExposure {
+                    dimension: AestheticDimension::Beauty,
+                    tag: "art:test".to_owned(),
+                    intensity: 0.8,
+                },
+                now,
+            );
+        }
+        b.iter(|| aesthetic_trait_pressure(black_box(&profile)))
+    });
+
+    group.bench_function("aesthetic_mood_shift", |b| {
+        let exposure = AestheticExposure {
+            dimension: AestheticDimension::Sublimity,
+            tag: "nature:mountains".to_owned(),
+            intensity: 0.9,
+        };
+        b.iter(|| aesthetic_mood_shift(black_box(&exposure), black_box(0.7)))
     });
 
     group.finish();

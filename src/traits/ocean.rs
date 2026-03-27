@@ -24,6 +24,7 @@ pub struct OceanScores {
 
 impl PersonalityProfile {
     /// Convert this profile to Big Five (OCEAN) scores.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn to_ocean(&self) -> OceanScores {
         let n = |k: TraitKind| self.get_trait(k).normalized();
@@ -61,6 +62,7 @@ impl PersonalityProfile {
 /// Create a personality profile from Big Five (OCEAN) scores.
 ///
 /// Each score should be in the range -1.0 to 1.0.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn profile_from_ocean(name: impl Into<String>, ocean: &OceanScores) -> PersonalityProfile {
     let mut p = PersonalityProfile::new(name);
@@ -114,6 +116,7 @@ pub fn profile_from_ocean(name: impl Into<String>, ocean: &OceanScores) -> Perso
 }
 
 /// Personality entropy — how scattered the trait distribution is (0.0–1.0).
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn personality_entropy(profile: &PersonalityProfile) -> f32 {
     let mut counts = [0u32; 5];
@@ -133,6 +136,7 @@ pub fn personality_entropy(profile: &PersonalityProfile) -> f32 {
 }
 
 /// Personality extremity — average absolute deviation from Balanced (0.0–1.0).
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn personality_extremity(profile: &PersonalityProfile) -> f32 {
     let sum: f32 = TraitKind::ALL

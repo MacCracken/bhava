@@ -105,6 +105,7 @@ impl ActivationStore {
     ///
     /// Creates a new entry if the tag is not found. Evicts the
     /// lowest-activation entry when at capacity.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn rehearse(&mut self, tag: impl Into<String>, now: f64) {
         let tag = tag.into();
         if let Some(entry) = self.entries.iter_mut().find(|e| e.tag == tag) {
@@ -131,6 +132,7 @@ impl ActivationStore {
     ///
     /// Strength approaches 1.0 asymptotically:
     /// `s_new = s_old + delta × (1.0 - s_old)`.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn strengthen_link(
         &mut self,
         tag_a: impl Into<String>,
@@ -182,6 +184,7 @@ impl ActivationStore {
     }
 
     /// Retrieve all entries with activation above threshold, sorted descending.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn retrieve_above(&self, threshold: f64, now: f64) -> Vec<(&ActivationEntry, f64)> {
         let mut results: Vec<_> = self
@@ -200,6 +203,7 @@ impl ActivationStore {
     /// For each link from source, adds `source_activation × link_strength × 0.1`
     /// to the linked entry's hebbian_boost. The 0.1 dampening factor prevents
     /// runaway activation. Hebbian boosts clamped to 0.0–5.0.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn spread_activation(&mut self, source: &str, now: f64) {
         let source_activation = match self.retrieve(source, now) {
             Some(a) => a,

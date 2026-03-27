@@ -25,6 +25,7 @@ impl SqliteStore {
     ///
     /// # Errors
     /// Returns `BhavaError::Storage` if the database cannot be opened or tables cannot be created.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn open(path: &str) -> Result<Self> {
         let conn = Connection::open(path).map_err(|e| BhavaError::Storage(e.to_string()))?;
         let store = Self { conn };
@@ -36,6 +37,7 @@ impl SqliteStore {
     ///
     /// # Errors
     /// Returns `BhavaError::Storage` if tables cannot be created.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn open_in_memory() -> Result<Self> {
         let conn = Connection::open_in_memory().map_err(|e| BhavaError::Storage(e.to_string()))?;
         let store = Self { conn };
@@ -85,6 +87,7 @@ impl SqliteStore {
     // --- PersonalityProfile ---
 
     /// Save a personality profile.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn save_profile(&self, id: &str, profile: &PersonalityProfile) -> Result<()> {
         let data =
             serde_json::to_string(profile).map_err(|e| BhavaError::Storage(e.to_string()))?;
@@ -98,6 +101,7 @@ impl SqliteStore {
     }
 
     /// Load a personality profile.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn load_profile(&self, id: &str) -> Option<PersonalityProfile> {
         self.conn
@@ -111,6 +115,7 @@ impl SqliteStore {
     }
 
     /// Delete a personality profile.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn delete_profile(&self, id: &str) -> Result<bool> {
         let affected = self
             .conn
@@ -123,6 +128,7 @@ impl SqliteStore {
     }
 
     /// List all stored profile IDs.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn list_profile_ids(&self) -> Vec<String> {
         let mut stmt = match self
@@ -141,6 +147,7 @@ impl SqliteStore {
     // --- EmotionalState ---
 
     /// Save an emotional state.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn save_emotional_state(&self, id: &str, state: &EmotionalState) -> Result<()> {
         let data = serde_json::to_string(state).map_err(|e| BhavaError::Storage(e.to_string()))?;
         self.conn
@@ -153,6 +160,7 @@ impl SqliteStore {
     }
 
     /// Load an emotional state.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn load_emotional_state(&self, id: &str) -> Option<EmotionalState> {
         self.conn
@@ -168,6 +176,7 @@ impl SqliteStore {
     // --- MoodHistory ---
 
     /// Save a mood history.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn save_mood_history(&self, id: &str, history: &MoodHistory) -> Result<()> {
         let data =
             serde_json::to_string(history).map_err(|e| BhavaError::Storage(e.to_string()))?;
@@ -181,6 +190,7 @@ impl SqliteStore {
     }
 
     /// Load a mood history.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn load_mood_history(&self, id: &str) -> Option<MoodHistory> {
         self.conn
@@ -194,6 +204,7 @@ impl SqliteStore {
     }
 
     /// Append a single mood snapshot (for streaming/incremental writes).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn append_snapshot(&self, id: &str, snapshot: &MoodSnapshot) -> Result<()> {
         let data =
             serde_json::to_string(snapshot).map_err(|e| BhavaError::Storage(e.to_string()))?;
@@ -215,6 +226,7 @@ impl SqliteStore {
     }
 
     /// Load recent mood snapshots.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn load_snapshots(&self, id: &str, limit: usize) -> Vec<MoodSnapshot> {
         let mut stmt = match self
             .conn
@@ -239,6 +251,7 @@ impl SqliteStore {
     // --- RelationshipGraph ---
 
     /// Save a relationship graph.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn save_relationships(&self, id: &str, graph: &RelationshipGraph) -> Result<()> {
         let data = serde_json::to_string(graph).map_err(|e| BhavaError::Storage(e.to_string()))?;
         self.conn
@@ -251,6 +264,7 @@ impl SqliteStore {
     }
 
     /// Load a relationship graph.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn load_relationships(&self, id: &str) -> Option<RelationshipGraph> {
         self.conn
@@ -266,6 +280,7 @@ impl SqliteStore {
     // --- Spirit ---
 
     /// Save a spirit.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn save_spirit(&self, id: &str, spirit: &Spirit) -> Result<()> {
         let data = serde_json::to_string(spirit).map_err(|e| BhavaError::Storage(e.to_string()))?;
         self.conn
@@ -278,6 +293,7 @@ impl SqliteStore {
     }
 
     /// Load a spirit.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn load_spirit(&self, id: &str) -> Option<Spirit> {
         self.conn

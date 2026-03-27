@@ -75,6 +75,7 @@ impl SentimentMonitor {
     ///
     /// Analyzes and emits results whenever a sentence boundary (`.`, `!`, `?`) is detected.
     /// Returns any sentence results produced by this chunk.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn feed(&mut self, chunk: &str) -> Vec<SentimentResult> {
         self.buffer.push_str(chunk);
         self.drain_sentences()
@@ -83,6 +84,7 @@ impl SentimentMonitor {
     /// Feed a chunk and immediately apply any results to an emotional state.
     ///
     /// Convenience method that combines `feed()` + `apply_to_mood()`.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn feed_and_apply(&mut self, chunk: &str, state: &mut EmotionalState) {
         let results = self.feed(chunk);
         for result in &results {
@@ -93,6 +95,7 @@ impl SentimentMonitor {
     /// Flush remaining buffered text (call at end of stream).
     ///
     /// Analyzes any remaining text that didn't end with sentence punctuation.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn flush(&mut self) -> Vec<SentimentResult> {
         let trimmed_is_empty = self.buffer.trim().is_empty();
         if trimmed_is_empty {
@@ -106,6 +109,7 @@ impl SentimentMonitor {
     }
 
     /// Apply a sentiment result to an emotional state using this monitor's scale.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn apply_to_mood(&self, state: &mut EmotionalState, result: &SentimentResult) {
         for &(emotion, intensity) in &result.emotions {
             state.stimulate(emotion, intensity * self.scale);
@@ -135,6 +139,7 @@ impl SentimentMonitor {
     }
 
     /// Overall sentiment summary.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn summary(&self) -> MonitorSummary {
         let count = self.results.len();
@@ -151,6 +156,7 @@ impl SentimentMonitor {
     }
 
     /// Reset the monitor, clearing buffer and results.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn reset(&mut self) {
         self.buffer.clear();
         self.results.clear();

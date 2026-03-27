@@ -143,6 +143,7 @@ impl IdentityContent {
     /// Validate this identity content against a set of constraints.
     ///
     /// Returns a list of validation errors. Empty means valid.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn validate(&self, rules: &ValidationRules) -> Vec<ValidationError> {
         let mut errors = Vec::new();
 
@@ -190,6 +191,7 @@ impl IdentityContent {
     ///
     /// For each layer, if the other has content and self doesn't, take it.
     /// If both have content, join them with a separator.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn merge(&self, other: &IdentityContent, separator: &str) -> IdentityContent {
         let mut result = IdentityContent::default();
         for &layer in IdentityLayer::ALL {
@@ -210,6 +212,7 @@ impl IdentityContent {
 ///
 /// This is the "In Our Image" opening that establishes the agent's
 /// place in the archetype hierarchy.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn compose_preamble() -> String {
     use std::fmt::Write;
@@ -227,6 +230,7 @@ pub fn compose_preamble() -> String {
 }
 
 /// Compose a full identity prompt from archetype preamble + layer content.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn compose_identity_prompt(content: &IdentityContent) -> String {
     use std::fmt::Write;
@@ -459,6 +463,7 @@ pub struct CrewMember {
 /// Compose a crew prompt that introduces multiple agents and their roles.
 ///
 /// Generates a preamble followed by each agent's identity layers.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn compose_crew_prompt(members: &[CrewMember]) -> String {
     use std::fmt::Write;

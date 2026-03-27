@@ -131,6 +131,7 @@ impl CircadianRhythm {
     ///
     /// Returns 0.0 (minimum alertness, ~04:00 local) to 1.0 (peak, ~10:00 local).
     /// The exact timing depends on chronotype and UTC offset.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     #[inline]
     pub fn alertness(&self, now: DateTime<Utc>) -> f32 {
@@ -151,6 +152,7 @@ impl CircadianRhythm {
     ///
     /// Higher alertness slightly boosts joy and interest;
     /// low alertness slightly reduces arousal.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn mood_modulation(&self, now: DateTime<Utc>) -> MoodVector {
         let a = self.alertness(now);
@@ -167,6 +169,7 @@ impl CircadianRhythm {
     ///
     /// Higher alertness = faster emotional processing = faster decay.
     /// Returns 0.7 (sluggish, low alertness) to 1.3 (sharp, high alertness).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     #[inline]
     pub fn decay_rate_modifier(&self, now: DateTime<Utc>) -> f32 {
@@ -178,6 +181,7 @@ impl CircadianRhythm {
     ///
     /// Recovery is faster during high-alertness periods.
     /// Returns 0.6 (low alertness) to 1.4 (peak alertness).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     #[inline]
     pub fn energy_recovery_modifier(&self, now: DateTime<Utc>) -> f32 {
@@ -191,6 +195,7 @@ impl CircadianRhythm {
 /// - High precision + formality → early bird (structured, early riser)
 /// - High creativity + risk tolerance → night owl (unconventional schedule)
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn circadian_from_personality(profile: &crate::traits::PersonalityProfile) -> CircadianRhythm {
     use crate::traits::TraitKind;

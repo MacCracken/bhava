@@ -254,6 +254,7 @@ impl fmt::Display for EqLevel {
 /// - **Understanding** ← empathy + patience + pedagogy (emotional vocabulary depth)
 /// - **Management** ← patience + confidence + formality (self-regulation capacity)
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn eq_from_personality(profile: &crate::traits::PersonalityProfile) -> EqProfile {
     use crate::traits::TraitKind;
@@ -278,6 +279,7 @@ pub fn eq_from_personality(profile: &crate::traits::PersonalityProfile) -> EqPro
 }
 
 /// Compose an EQ summary for system prompt injection.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn compose_eq_prompt(eq: &EqProfile) -> String {
     use std::fmt::Write;

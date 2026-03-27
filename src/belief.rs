@@ -29,9 +29,11 @@
 //! - `world:safe`, `world:hostile`, `world:meaningful` — map to trust/meaning signals
 //! - `other:alice:trustworthy` — entity-specific beliefs
 
+use std::collections::VecDeque;
+use std::fmt;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::appraisal::AppraisedEmotion;
 use crate::eq::EqProfile;
@@ -118,7 +120,7 @@ pub struct Belief {
     /// Number of contradicting evidence observations.
     pub contradicting_evidence: u32,
     /// Tags of source memories that contributed to this belief (capped at 16).
-    pub source_memories: Vec<String>,
+    pub source_memories: VecDeque<String>,
     /// When this belief first formed.
     pub formed_at: DateTime<Utc>,
     /// When this belief was last reinforced or challenged.
@@ -134,6 +136,7 @@ impl Belief {
     /// Reinforce this belief with supporting evidence.
     ///
     /// Conviction grows asymptotically toward 1.0.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn reinforce(&mut self, evidence_tag: &str, now: DateTime<Utc>) {
         self.supporting_evidence = self.supporting_evidence.saturating_add(1);
         self.conviction =
@@ -145,6 +148,7 @@ impl Belief {
     /// Challenge this belief with contradicting evidence.
     ///
     /// Conviction decreases but never drops below 0.05 (beliefs are sticky).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn challenge(&mut self, evidence_tag: &str, now: DateTime<Utc>) {
         self.contradicting_evidence = self.contradicting_evidence.saturating_add(1);
         self.conviction = (self.conviction * CHALLENGE_FACTOR).max(CONVICTION_FLOOR);
@@ -153,6 +157,7 @@ impl Belief {
     }
 
     /// Confidence in this belief — supporting evidence ratio weighted by conviction.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     #[inline]
     pub fn confidence(&self) -> f32 {
@@ -164,6 +169,7 @@ impl Belief {
     }
 
     /// Seconds since this belief formed.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     #[inline]
     pub fn age_seconds(&self, now: DateTime<Utc>) -> f64 {
@@ -171,6 +177,7 @@ impl Belief {
     }
 
     /// Seconds since last reinforcement or challenge.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     #[inline]
     pub fn staleness_seconds(&self, now: DateTime<Utc>) -> f64 {
@@ -180,9 +187,9 @@ impl Belief {
     /// Add a source memory tag, evicting the oldest if at capacity.
     fn add_source_memory(&mut self, tag: &str) {
         if self.source_memories.len() >= MAX_SOURCE_MEMORIES {
-            self.source_memories.remove(0);
+            self.source_memories.pop_front();
         }
-        self.source_memories.push(tag.to_owned());
+        self.source_memories.push_back(tag.to_owned());
     }
 }
 
@@ -224,6 +231,7 @@ impl BeliefSystem {
     /// If a belief with the given tag exists, it is reinforced.
     /// Otherwise, a new belief is created with initial conviction.
     /// At capacity, the weakest belief is evicted.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn reinforce_or_create(
         &mut self,
         kind: BeliefKind,
@@ -248,7 +256,7 @@ impl BeliefSystem {
             conviction: INITIAL_CONVICTION,
             supporting_evidence: 1,
             contradicting_evidence: 0,
-            source_memories: vec![evidence_tag.to_owned()],
+            source_memories: VecDeque::from([evidence_tag.to_owned()]),
             formed_at: now,
             last_updated: now,
             suppression_depth: 0.0,
@@ -258,6 +266,7 @@ impl BeliefSystem {
     /// Challenge a belief by tag with contradicting evidence.
     ///
     /// No-op if the tag does not exist.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn challenge(&mut self, tag: &str, evidence_tag: &str, now: DateTime<Utc>) {
         if let Some(belief) = self.beliefs.iter_mut().find(|b| b.tag == tag) {
             belief.challenge(evidence_tag, now);
@@ -272,9 +281,9 @@ impl BeliefSystem {
     }
 
     /// All beliefs of a given kind.
-    #[must_use]
-    pub fn beliefs_of_kind(&self, kind: BeliefKind) -> Vec<&Belief> {
-        self.beliefs.iter().filter(|b| b.kind == kind).collect()
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
+    pub fn beliefs_of_kind(&self, kind: BeliefKind) -> impl Iterator<Item = &Belief> {
+        self.beliefs.iter().filter(move |b| b.kind == kind)
     }
 
     /// Decay all convictions. Removes beliefs with conviction < 0.01
@@ -282,6 +291,7 @@ impl BeliefSystem {
     ///
     /// Shadow beliefs (high `suppression_depth`) decay at half rate —
     /// what you deny persists longer than what you acknowledge.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn decay(&mut self, rate: f32) {
         let rate = rate.clamp(0.0, 1.0);
         for belief in &mut self.beliefs {
@@ -296,27 +306,46 @@ impl BeliefSystem {
     ///
     /// For each pair of same-kind beliefs with opposing valence (sign differs),
     /// that counts as a contradiction. Returns 1.0 (fully coherent) to 0.0.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn coherence(&self) -> f32 {
         if self.beliefs.len() < 2 {
             return 1.0;
         }
-        let mut contradictions = 0u32;
-        let mut total_pairs = 0u32;
-        for i in 0..self.beliefs.len() {
-            for j in (i + 1)..self.beliefs.len() {
-                let a = &self.beliefs[i];
-                let b = &self.beliefs[j];
-                if a.kind == b.kind {
-                    total_pairs += 1;
-                    // Opposing valence = contradiction
-                    if (a.valence > 0.0 && b.valence < 0.0) || (a.valence < 0.0 && b.valence > 0.0)
-                    {
-                        contradictions += 1;
-                    }
-                }
+
+        // O(n) single-pass: count positive/negative/total per kind.
+        const N_KINDS: usize = 4;
+        let mut kind_counts = [0u32; N_KINDS];
+        let mut pos_counts = [0u32; N_KINDS];
+        let mut neg_counts = [0u32; N_KINDS];
+
+        for belief in &self.beliefs {
+            let idx = match belief.kind {
+                BeliefKind::SelfBelief => 0,
+                BeliefKind::WorldBelief => 1,
+                BeliefKind::OtherBelief => 2,
+                BeliefKind::UniversalBelief => 3,
+            };
+            kind_counts[idx] += 1;
+            if belief.valence > 0.0 {
+                pos_counts[idx] += 1;
+            } else if belief.valence < 0.0 {
+                neg_counts[idx] += 1;
             }
         }
+
+        let mut contradictions = 0u32;
+        let mut total_pairs = 0u32;
+
+        for i in 0..N_KINDS {
+            let n = kind_counts[i];
+            if n < 2 {
+                continue;
+            }
+            total_pairs += n * (n - 1) / 2;
+            contradictions += pos_counts[i] * neg_counts[i];
+        }
+
         if total_pairs == 0 {
             return 1.0;
         }
@@ -338,6 +367,7 @@ impl BeliefSystem {
     }
 
     /// Top N beliefs by conviction, sorted descending.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn strongest_beliefs(&self, n: usize) -> Vec<&Belief> {
         let mut sorted: Vec<&Belief> = self.beliefs.iter().collect();
@@ -405,6 +435,7 @@ impl SelfModel {
     ///
     /// Scans all [`BeliefKind::SelfBelief`] entries, maps their tags to trait
     /// dimensions, and updates perceived traits as conviction-weighted averages.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn update_from_beliefs(&mut self, beliefs: &BeliefSystem) {
         // Reset
         self.perceived_traits = [0.0; TraitKind::COUNT];
@@ -572,17 +603,16 @@ impl WorldModel {
     /// Scans all [`BeliefKind::WorldBelief`] and [`BeliefKind::OtherBelief`] entries.
     /// Beliefs with trust-related tags contribute to the trust signal;
     /// beliefs with meaning-related tags contribute to the meaning signal.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn update_from_beliefs(&mut self, beliefs: &BeliefSystem) {
         let mut trust_sum = 0.0f32;
         let mut trust_weight = 0.0f32;
         let mut meaning_sum = 0.0f32;
         let mut meaning_weight = 0.0f32;
 
-        let relevant: Vec<&Belief> = beliefs
+        let relevant = beliefs
             .beliefs_of_kind(BeliefKind::WorldBelief)
-            .into_iter()
-            .chain(beliefs.beliefs_of_kind(BeliefKind::OtherBelief))
-            .collect();
+            .chain(beliefs.beliefs_of_kind(BeliefKind::OtherBelief));
 
         for belief in relevant {
             let tag_lower = belief.tag.to_lowercase();
@@ -673,6 +703,7 @@ pub struct InsightEvent {
 /// Combines EQ understanding capacity with self-model clarity and belief coherence.
 ///
 /// `self_understanding = eq.understanding * 0.4 + self_clarity * 0.3 + coherence * 0.3`
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 #[inline]
 pub fn self_understanding(eq: &EqProfile, self_model: &SelfModel, coherence: f32) -> f32 {
@@ -687,6 +718,7 @@ pub fn self_understanding(eq: &EqProfile, self_model: &SelfModel, coherence: f32
 /// dissolves.
 ///
 /// Only meaningful when `self_understanding > 0` and the world model has signal.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn cosmic_understanding(
     self_understanding: f32,
@@ -708,14 +740,15 @@ pub fn cosmic_understanding(
 /// An insight occurs when cosmic understanding exceeds a threshold and there
 /// exist both a self-belief and a world-belief with matching valence sign —
 /// the entity sees itself reflected in the world.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn check_insight(beliefs: &BeliefSystem, cosmic: f32, threshold: f32) -> Option<InsightEvent> {
     if cosmic < threshold {
         return None;
     }
 
-    let self_beliefs = beliefs.beliefs_of_kind(BeliefKind::SelfBelief);
-    let world_beliefs = beliefs.beliefs_of_kind(BeliefKind::WorldBelief);
+    let self_beliefs: Vec<&Belief> = beliefs.beliefs_of_kind(BeliefKind::SelfBelief).collect();
+    let world_beliefs: Vec<&Belief> = beliefs.beliefs_of_kind(BeliefKind::WorldBelief).collect();
 
     // Find the strongest matching pair (same valence sign)
     let mut best: Option<InsightEvent> = None;
@@ -751,6 +784,7 @@ pub fn check_insight(beliefs: &BeliefSystem, cosmic: f32, threshold: f32) -> Opt
 /// "I am brave" (high conviction, positive valence) pushes Confidence and
 /// RiskTolerance up. The output can be fed into
 /// [`GrowthLedger::apply_pressure()`](crate::growth::GrowthLedger::apply_pressure).
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn belief_trait_pressure(beliefs: &BeliefSystem) -> [f32; TraitKind::COUNT] {
     let mut pressure = [0.0f32; TraitKind::COUNT];
@@ -993,6 +1027,7 @@ impl BeliefSystem {
     /// `suppression_depth` on creation and blends it on reinforcement.
     /// When `suppression_gap > 0`, conviction is modulated downward:
     /// suppressed emotions form weaker conscious beliefs.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn reinforce_or_create_with_suppression(
         &mut self,
         kind: BeliefKind,
@@ -1026,7 +1061,7 @@ impl BeliefSystem {
             conviction,
             supporting_evidence: 1,
             contradicting_evidence: 0,
-            source_memories: vec![evidence_tag.to_owned()],
+            source_memories: VecDeque::from([evidence_tag.to_owned()]),
             formed_at: now,
             last_updated: now,
             suppression_depth: supp,
@@ -1043,6 +1078,7 @@ impl BeliefSystem {
 /// - Tracks suppression depth for shadow belief formation
 ///
 /// Returns the tag of the affected belief.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 pub fn apply_emotion_to_beliefs(
     beliefs: &mut BeliefSystem,
     emotion: AppraisedEmotion,
@@ -1068,6 +1104,7 @@ pub fn apply_emotion_to_beliefs(
 /// `suppression_depth` above the given threshold. Shadow beliefs are
 /// what the entity knows but won't consciously acknowledge — they
 /// surface as gut feelings in the intuition module.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn shadow_beliefs(beliefs: &BeliefSystem, threshold: f32) -> Vec<(String, f32, f32)> {
     beliefs
@@ -1141,7 +1178,7 @@ mod tests {
             conviction,
             supporting_evidence: 1,
             contradicting_evidence: 0,
-            source_memories: vec!["initial".to_owned()],
+            source_memories: VecDeque::from(["initial".to_owned()]),
             formed_at: now(),
             last_updated: now(),
             suppression_depth: 0.0,
@@ -1333,6 +1370,60 @@ mod tests {
     }
 
     #[test]
+    fn test_coherence_stress_matches_brute_force() {
+        // Verify O(n) algorithm matches O(n^2) brute-force for 200+ beliefs.
+        let mut bs = BeliefSystem::new(256);
+        let t = now();
+        // Mix all four kinds with positive and negative valence.
+        let kinds = [
+            BeliefKind::SelfBelief,
+            BeliefKind::WorldBelief,
+            BeliefKind::OtherBelief,
+            BeliefKind::UniversalBelief,
+        ];
+        for i in 0..200 {
+            let kind = kinds[i % 4];
+            let valence = if i % 3 == 0 {
+                -0.5
+            } else if i % 3 == 1 {
+                0.5
+            } else {
+                0.0 // neutral
+            };
+            bs.reinforce_or_create(kind, format!("tag{i}"), valence, "ev", t);
+        }
+
+        // Brute-force O(n^2) reference
+        let beliefs = &bs.beliefs;
+        let mut contradictions = 0u32;
+        let mut total_pairs = 0u32;
+        for i in 0..beliefs.len() {
+            for j in (i + 1)..beliefs.len() {
+                if beliefs[i].kind == beliefs[j].kind {
+                    total_pairs += 1;
+                    if (beliefs[i].valence > 0.0 && beliefs[j].valence < 0.0)
+                        || (beliefs[i].valence < 0.0 && beliefs[j].valence > 0.0)
+                    {
+                        contradictions += 1;
+                    }
+                }
+            }
+        }
+        let expected = if total_pairs == 0 {
+            1.0
+        } else {
+            1.0 - (contradictions as f32 / total_pairs as f32).min(1.0)
+        };
+
+        assert!(
+            (bs.coherence() - expected).abs() < 0.0001,
+            "O(n) coherence {} != brute-force {}",
+            bs.coherence(),
+            expected
+        );
+    }
+
+    #[test]
     fn test_strongest_beliefs() {
         let mut bs = BeliefSystem::new(32);
         let t = now();
@@ -1354,9 +1445,9 @@ mod tests {
         bs.reinforce_or_create(BeliefKind::SelfBelief, "self:warm", 0.8, "ev", t);
         bs.reinforce_or_create(BeliefKind::WorldBelief, "world:safe", 0.6, "ev", t);
         bs.reinforce_or_create(BeliefKind::SelfBelief, "self:brave", 0.7, "ev", t);
-        assert_eq!(bs.beliefs_of_kind(BeliefKind::SelfBelief).len(), 2);
-        assert_eq!(bs.beliefs_of_kind(BeliefKind::WorldBelief).len(), 1);
-        assert_eq!(bs.beliefs_of_kind(BeliefKind::OtherBelief).len(), 0);
+        assert_eq!(bs.beliefs_of_kind(BeliefKind::SelfBelief).count(), 2);
+        assert_eq!(bs.beliefs_of_kind(BeliefKind::WorldBelief).count(), 1);
+        assert_eq!(bs.beliefs_of_kind(BeliefKind::OtherBelief).count(), 0);
     }
 
     // ---- SelfModel ----

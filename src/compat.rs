@@ -66,6 +66,7 @@ use crate::mood::{Emotion, MoodVector};
 /// assert!(mood.arousal > 0.5);
 /// assert!(mood.dominance > 0.0);
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn mood_from_threat_response(response: jantu::ThreatResponse) -> MoodVector {
     match response {
@@ -130,6 +131,7 @@ pub fn mood_from_threat_response(response: jantu::ThreatResponse) -> MoodVector 
 /// }
 /// assert!(load_from_stress(&s) > 0.1);
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn load_from_stress(stress: &jantu::stress::StressState) -> f32 {
     // Chronic stress is the primary driver of allostatic load;
@@ -157,6 +159,7 @@ pub fn load_from_stress(stress: &jantu::stress::StressState) -> f32 {
 /// assert_eq!(emotion, Emotion::Arousal);
 /// assert!(magnitude > 0.5);
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn mood_shift_from_instinct(instinct: &jantu::Instinct) -> (Emotion, f32) {
     let intensity = instinct.priority.clamp(0.0, 1.0);
@@ -188,6 +191,7 @@ pub fn mood_shift_from_instinct(instinct: &jantu::Instinct) -> (Emotion, f32) {
 /// assert!(alpha > 0.0);  // dominant → positive
 /// assert!(omega < 0.0);  // subordinate → negative
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn dominance_from_rank(position: jantu::HierarchyPosition) -> f32 {
     // Map [0.0, 1.0] rank to [-1.0, 1.0] dominance
@@ -214,6 +218,7 @@ pub fn dominance_from_rank(position: jantu::HierarchyPosition) -> f32 {
 /// let score = instinct_layer_score(&instincts);
 /// assert!(score > 0.7); // strong instinct → high layer score
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn instinct_layer_score(instincts: &[jantu::Instinct]) -> f32 {
     jantu::instinct::dominant_instinct(instincts)
@@ -237,6 +242,7 @@ pub fn instinct_layer_score(instincts: &[jantu::Instinct]) -> f32 {
 /// assert!(mood.arousal > 0.0);
 /// assert!(mood.trust < 0.0);
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn mood_from_contagion(state: jantu::contagion::EmotionalState, magnitude: f32) -> MoodVector {
     let mag = magnitude.clamp(0.0, 1.0);
@@ -301,6 +307,7 @@ pub fn mood_from_contagion(state: jantu::contagion::EmotionalState, magnitude: f
 /// assert!(tight_group > 0.0);
 /// assert!(scattered < 0.0);
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 #[inline]
 pub fn trust_from_cohesion(cohesion: f32) -> f32 {
@@ -324,6 +331,7 @@ pub fn trust_from_cohesion(cohesion: f32) -> f32 {
 /// let weak_response = mood_from_territorial(0.1);
 /// assert!(weak_response.dominance < strong_defense.dominance);
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 #[inline]
 pub fn mood_from_territorial(response_intensity: f32) -> MoodVector {
@@ -365,6 +373,7 @@ pub fn mood_from_territorial(response_intensity: f32) -> MoodVector {
 /// }
 /// assert!(reactivity_from_habituation(&habituated) < 1.0);
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 #[inline]
 pub fn reactivity_from_habituation(response: &jantu::habituation::StimulusResponse) -> f32 {
@@ -390,6 +399,7 @@ pub fn reactivity_from_habituation(response: &jantu::habituation::StimulusRespon
 /// assert!(valence < 0.0);  // negative memory
 /// assert!(strength > 0.5); // strong trace
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 #[inline]
 pub fn actr_seed_from_memory(trace: &jantu::memory::MemoryTrace) -> (f32, f32) {
@@ -417,6 +427,7 @@ pub fn actr_seed_from_memory(trace: &jantu::memory::MemoryTrace) -> (f32, f32) {
 /// assert!(dangerous > safe);
 /// assert!(dangerous > 0.5);
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 #[inline]
 pub fn stress_from_landscape(perceived_risk: f32) -> f32 {
@@ -450,6 +461,7 @@ pub fn stress_from_landscape(perceived_risk: f32) -> f32 {
 /// let resting = energy_drain_from_drives(&[rest]);
 /// assert!(active > resting);
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn energy_drain_from_drives(instincts: &[jantu::Instinct]) -> f32 {
     if instincts.is_empty() {
@@ -491,6 +503,7 @@ pub fn energy_drain_from_drives(instincts: &[jantu::Instinct]) -> f32 {
 /// let midnight = alertness_from_activity(clock.activity_level(0.0));
 /// assert!(midday > midnight);
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 #[inline]
 pub fn alertness_from_activity(activity_level: f32) -> f32 {
@@ -551,6 +564,7 @@ pub struct TraitSeeds {
 /// assert!(seeds.warmth > 0.0);
 /// assert!(seeds.curiosity > 0.0);
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn trait_seeds_from_genome(genome: &jantu::genetics::BehavioralGenome) -> TraitSeeds {
     // Use genotype values — the raw genetic potential, not environmentally expressed.
@@ -588,6 +602,7 @@ pub fn trait_seeds_from_genome(genome: &jantu::genetics::BehavioralGenome) -> Tr
 /// assert!(mood.arousal > 0.0);
 /// assert!(mood.trust < 0.0);
 /// ```
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn mood_from_signal(signal: &jantu::signals::Signal) -> MoodVector {
     // Effective intensity: raw intensity modulated by honesty.

@@ -33,6 +33,7 @@ impl EmotionalMemoryBank {
     }
 
     /// Record an emotional memory. Overwrites if tag already exists.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn record(&mut self, tag: impl Into<String>, mood: &MoodVector, intensity: f32) {
         let tag = tag.into();
         if let Some(existing) = self.memories.iter_mut().find(|m| m.tag == tag) {
@@ -64,6 +65,7 @@ impl EmotionalMemoryBank {
     }
 
     /// Recall the emotional memory for a tag, attenuated by intensity.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn recall(&self, tag: &str) -> Option<MoodVector> {
         self.memories.iter().find(|m| m.tag == tag).map(|m| {
@@ -76,6 +78,7 @@ impl EmotionalMemoryBank {
     }
 
     /// Decay all memory intensities.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn decay(&mut self, rate: f32) {
         let r = rate.clamp(0.0, 1.0);
         self.memories.retain_mut(|m| {
@@ -101,6 +104,7 @@ impl EmotionalMemoryBank {
     /// Scores each memory by similarity to current mood × intensity,
     /// returns the top N most congruent memories. Sad agents recall sad
     /// memories; happy agents recall happy ones (Bower 1981).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn recall_congruent(
         &self,
@@ -124,6 +128,7 @@ impl EmotionalMemoryBank {
     ///
     /// If the current mood matches the stored memory's mood, intensity is amplified.
     /// If moods are incongruent, intensity is dampened.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn recall_biased(&self, tag: &str, current_mood: &MoodVector) -> Option<MoodVector> {
         self.memories.iter().find(|m| m.tag == tag).map(|m| {

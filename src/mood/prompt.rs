@@ -37,6 +37,7 @@ pub fn mood_tone_guide(state: MoodState) -> &'static str {
 /// Compose a mood prompt fragment for injection into a system prompt.
 ///
 /// Combines the current mood label with its tone guide.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn compose_mood_prompt(state: &EmotionalState) -> String {
     let mood_state = state.classify();
@@ -68,6 +69,7 @@ pub enum ActionTendency {
 }
 
 /// Derive the dominant action tendency from a mood vector.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn action_tendency(mood: &MoodVector) -> ActionTendency {
     let joy = mood.joy;

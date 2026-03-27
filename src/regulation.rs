@@ -50,6 +50,7 @@ impl RegulatedMood {
     ///
     /// Modifies the expressed mood (and felt mood for reappraisal).
     /// The `effectiveness` parameter (0.0–1.0) can be reduced by stress.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn regulate(&mut self, strategy: RegulationStrategy, effectiveness: f32) {
         let eff = effectiveness.clamp(0.0, 1.0);
         match &strategy {
@@ -108,6 +109,7 @@ impl RegulatedMood {
 /// - High patience → accept (tolerate the feeling)
 /// - Low patience + high arousal → distraction (redirect attention)
 #[cfg(feature = "traits")]
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn default_strategy(
     profile: &crate::traits::PersonalityProfile,

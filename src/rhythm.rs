@@ -62,6 +62,7 @@ impl UltradianRhythm {
     /// Returns a `MoodVector` of additive deltas. Interest and arousal
     /// oscillate in phase (high focus = high interest + moderate arousal).
     /// Returns neutral if `period_secs` is zero or negative.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     #[inline]
     pub fn modulate(&self, now: DateTime<Utc>) -> MoodVector {
@@ -128,6 +129,7 @@ impl SeasonalRhythm {
     ///
     /// Returns additive deltas for joy and interest, peaking at `peak_day`.
     /// Returns neutral if `year_length_days` is zero or negative.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     #[inline]
     pub fn modulate(&self, now: DateTime<Utc>) -> MoodVector {
@@ -193,6 +195,7 @@ impl BiorhythmSet {
     /// Each cycle contributes an additive delta to its target emotion.
     /// Multiple cycles targeting the same emotion sum together.
     /// Cycles with zero or negative periods are skipped.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     #[inline]
     pub fn modulate(&self, now: DateTime<Utc>) -> MoodVector {
@@ -256,6 +259,7 @@ pub fn default_biorhythm(epoch: DateTime<Utc>) -> BiorhythmSet {
 /// Convenience function that sums deltas from ultradian, seasonal, and
 /// biorhythm cycles into the given mood. Values are clamped to -1.0..=1.0
 /// by `MoodVector::nudge`.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 pub fn apply_rhythms(
     mood: &mut MoodVector,
     now: DateTime<Utc>,

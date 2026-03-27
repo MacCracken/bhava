@@ -58,6 +58,8 @@ pub enum SignalSource {
     EmotionalComplexity,
     /// EQ perception branch caught something others missed.
     PerceptualSensitivity,
+    /// Aesthetic sensitivity — beauty/meaning/harmony detection.
+    AestheticSensitivity,
 }
 
 impl SignalSource {
@@ -68,6 +70,7 @@ impl SignalSource {
         Self::MicroExpressionLeak,
         Self::EmotionalComplexity,
         Self::PerceptualSensitivity,
+        Self::AestheticSensitivity,
     ];
 }
 
@@ -79,6 +82,7 @@ impl fmt::Display for SignalSource {
             Self::MicroExpressionLeak => f.write_str("micro_expression_leak"),
             Self::EmotionalComplexity => f.write_str("emotional_complexity"),
             Self::PerceptualSensitivity => f.write_str("perceptual_sensitivity"),
+            Self::AestheticSensitivity => f.write_str("aesthetic_sensitivity"),
         }
     }
 }
@@ -230,6 +234,7 @@ impl IntuitionProfile {
     /// - High empathy + curiosity + low skepticism = high sensitivity
     /// - High empathy + warmth = high integration depth
     /// - Low skepticism + high confidence = high trust in intuition
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn from_personality(profile: &PersonalityProfile) -> Self {
         let empathy = (profile.get_trait(TraitKind::Empathy).normalized() + 1.0) / 2.0;
@@ -304,6 +309,7 @@ fn sigmoid(x: f64) -> f32 {
 /// - 3+ sources = intuition (geometric mean of top 3, boosted)
 ///
 /// Returns intuitive signals sorted by strength descending.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn synthesize_intuition(
     activations: &ActivationSignals,
@@ -472,6 +478,7 @@ pub fn synthesize_intuition(
 /// - Strong intuitions → Intuition layer (pattern recognition)
 /// - High cosmic understanding → Insight (rare but dominant when present)
 /// - Default → Conditioning (habitual response)
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn active_layer(
     arousal: f32,
@@ -527,6 +534,7 @@ pub fn active_layer(
 /// Returns `(tag, valence, signal_strength)` tuples where
 /// strength = `suppression_depth * 0.7`. Valence is preserved so the
 /// intuition pipeline knows the emotional direction of the shadow belief.
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 pub fn shadow_belief_signals(beliefs: &[(String, f32, f32)]) -> Vec<(String, f32, f32)> {
     beliefs
@@ -544,6 +552,7 @@ pub fn shadow_belief_signals(beliefs: &[(String, f32, f32)]) -> Vec<(String, f32
 ///
 /// Returns true when the intuitive signal is strong AND conscious reasoning
 /// would be slow (high arousal = time pressure) or weak (low confidence).
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
 #[must_use]
 #[inline]
 pub fn should_override_reasoning(
