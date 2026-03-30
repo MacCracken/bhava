@@ -1,5 +1,42 @@
 # Changelog
 
+## [1.3.0] - 2026-03-30
+
+Bodh psychology math + Sangha sociology math bridge modules — backing existing bhava systems with validated computational models from sibling AGNOS crates.
+
+### Added
+
+- **`psychology` feature** — optional bodh psychology math integration via `psychology` module
+  - 14 bridge functions connecting bodh's validated psychology formulas to bhava's emotion/personality systems
+  - Affect ↔ MoodVector conversion, circumplex emotion classification (Ekman's 6 basic emotions)
+  - Scherer stimulus evaluation check (SEC) appraisal enrichment — OCC → Scherer → Affect pipeline
+  - Gross regulation meta-analytic effectiveness coefficients (Suppress: 0.30, Reappraise: 0.85, Distract: 0.45)
+  - Big Five → OceanScores mapping, Cronbach's alpha trait reliability measurement
+  - ACT-R base-level activation and softmax retrieval probability (Anderson's equations)
+  - Yerkes-Dodson arousal-performance inverted-U curve
+  - Mood-congruent memory retrieval bias, Kelley covariation attribution model
+- **`sociology` feature** — optional sangha sociology math integration via `sociology` module
+  - 12 bridge functions connecting sangha's computational sociology to bhava's social/group systems
+  - Hatfield emotional contagion model — network-based emotional mimicry propagation
+  - Linear mood diffusion with neutral-decay, epidemic threshold computation (largest eigenvalue)
+  - Network clustering coefficient, Dunbar intimacy layers (5/15/50/150)
+  - Asch conformity pressure model, social proof adoption weight
+  - Ringelmann social loafing (effort loss in groups), Janis groupthink risk assessment
+  - Wisdom of crowds aggregation (mean/median/trimmed), Shapley value fair allocation
+- **benchmarks** — 4 new benchmark groups: psychology (affect conversion, ACT-R, Yerkes-Dodson), sociology (Hatfield contagion, Shapley, clustering, groupthink)
+
+### Changed
+
+- `full` feature flag now includes `psychology` and `sociology`
+
+### Stats
+
+- 1051 tests (974 unit + 35 integration + 42 doc) — up from 972
+- 134 criterion benchmarks across 34 groups (up from 126 across 32)
+- 35 modules (up from 33)
+- Zero `unwrap()`/`panic!()`/`unsafe` in library code
+- Zero clippy warnings
+
 ## [1.2.0] - 2026-03-27
 
 Aesthetic attribution, crate-wide tracing, and performance hardening.

@@ -1157,6 +1157,23 @@ criterion_group!(
     bench_intuition,
     bench_aesthetic,
 );
+
+#[cfg(feature = "psychology")]
+criterion_group!(psychology_benches, bench_psychology,);
+
+#[cfg(feature = "sociology")]
+criterion_group!(sociology_benches, bench_sociology,);
+
+#[cfg(all(feature = "psychology", feature = "sociology"))]
+criterion_main!(benches, psychology_benches, sociology_benches);
+
+#[cfg(all(feature = "psychology", not(feature = "sociology")))]
+criterion_main!(benches, psychology_benches);
+
+#[cfg(all(not(feature = "psychology"), feature = "sociology"))]
+criterion_main!(benches, sociology_benches);
+
+#[cfg(not(any(feature = "psychology", feature = "sociology")))]
 criterion_main!(benches);
 
 fn bench_belief_emotion(c: &mut Criterion) {
@@ -1418,6 +1435,91 @@ fn bench_aesthetic(c: &mut Criterion) {
             intensity: 0.9,
         };
         b.iter(|| aesthetic_mood_shift(black_box(&exposure), black_box(0.7)))
+    });
+
+    group.finish();
+}
+
+// ── Psychology bridge benchmarks ───────────────────────────────────────
+
+#[cfg(feature = "psychology")]
+fn bench_psychology(c: &mut Criterion) {
+    use bhava::mood::MoodVector;
+    use bhava::psychology;
+
+    let mut group = c.benchmark_group("psychology");
+
+    let mood = MoodVector {
+        joy: 0.7,
+        arousal: 0.5,
+        dominance: 0.3,
+        trust: 0.4,
+        interest: 0.3,
+        frustration: 0.1,
+    };
+
+    group.bench_function("affect_from_mood", |b| {
+        b.iter(|| psychology::affect_from_mood(black_box(&mood)))
+    });
+
+    group.bench_function("classify_mood", |b| {
+        b.iter(|| psychology::classify_mood(black_box(&mood)))
+    });
+
+    group.bench_function("base_level_activation", |b| {
+        let ages = vec![1.0, 5.0, 20.0, 100.0, 500.0];
+        b.iter(|| psychology::base_level_activation(black_box(&ages), black_box(0.5)))
+    });
+
+    group.bench_function("yerkes_dodson_performance", |b| {
+        b.iter(|| {
+            psychology::yerkes_dodson_performance(black_box(0.5), black_box(0.5), black_box(0.3))
+        })
+    });
+
+    group.finish();
+}
+
+// ── Sociology bridge benchmarks ────────────────────────────────────────
+
+#[cfg(feature = "sociology")]
+fn bench_sociology(c: &mut Criterion) {
+    use bhava::sociology;
+
+    let mut group = c.benchmark_group("sociology");
+
+    group.bench_function("hatfield_contagion_10", |b| {
+        let states: Vec<f32> = (0..10).map(|i| i as f32 / 10.0).collect();
+        let adjacency: Vec<Vec<(usize, f64)>> = (0..10)
+            .map(|i| (0..10).filter(|&j| j != i).map(|j| (j, 0.3)).collect())
+            .collect();
+        b.iter(|| {
+            sociology::hatfield_mood_delta(
+                black_box(&states),
+                black_box(&adjacency),
+                (1.0, 0.5),
+                0.1,
+            )
+        })
+    });
+
+    group.bench_function("shapley_4_players", |b| {
+        let values = vec![0.0; 16];
+        b.iter(|| sociology::shapley_values(black_box(4), black_box(&values)))
+    });
+
+    group.bench_function("clustering_coefficient", |b| {
+        let edges = vec![
+            vec![(1, 1.0), (2, 1.0), (3, 1.0)],
+            vec![(0, 1.0), (2, 1.0)],
+            vec![(0, 1.0), (1, 1.0), (3, 1.0)],
+            vec![(0, 1.0), (2, 1.0)],
+        ];
+        b.iter(|| sociology::clustering_coefficient(black_box(&edges), black_box(0)))
+    });
+
+    group.bench_function("groupthink_risk", |b| {
+        b.iter(|| sociology::groupthink_risk(black_box(0.8), black_box(0.7), black_box(0.6)))
     });
 
     group.finish();

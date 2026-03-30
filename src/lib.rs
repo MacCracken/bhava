@@ -41,6 +41,8 @@
 //! - [`intuition`] — Subconscious pattern integration — gut feelings from converging subsystems
 //! - [`aesthetic`] — Aesthetic attribution — repeated exposure crystallizes into beliefs and trait pressure
 //! - [`compat`] — Jantu creature behavior integration (feature: `instinct`)
+//! - [`psychology`] — Bodh psychology math integration (feature: `psychology`)
+//! - [`sociology`] — Sangha sociology math integration (feature: `sociology`)
 //! - [`error`] — Error types
 
 pub mod error;
@@ -134,6 +136,12 @@ pub mod aesthetic;
 
 #[cfg(feature = "instinct")]
 pub mod compat;
+
+#[cfg(feature = "psychology")]
+pub mod psychology;
+
+#[cfg(feature = "sociology")]
+pub mod sociology;
 
 #[cfg(feature = "ai")]
 pub mod ai;

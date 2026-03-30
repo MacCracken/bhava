@@ -25,7 +25,8 @@ allow = [
 
 [bans]
 multiple-versions = "warn"
-wildcards = "deny"
+# TODO: restore "deny" when bodh/sangha publish to crates.io (path deps are wildcards)
+wildcards = "warn"
 highlight = "all"
 
 [sources]

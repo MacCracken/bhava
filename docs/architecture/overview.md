@@ -31,6 +31,9 @@ bhava
 ├── preference    — Adaptive preference learning via EMA with personality bias                       [feature: mood]
 ├── active_hours  — Time-of-day activation scheduling with timezone support                          [feature: mood]
 ├── ai            — System prompt composition, sentiment feedback, agent metadata                     [feature: ai]
+├── compat        — Jantu creature behavior integration (15 bridge functions)                        [feature: instinct]
+├── psychology    — Bodh psychology math integration (14 bridge functions)                           [feature: psychology]
+├── sociology     — Sangha sociology math integration (12 bridge functions)                          [feature: sociology]
 ├── store         — BhavaStore trait for pluggable persistence backends                              [all core features]
 ├── storage       — SqliteStore implementation of BhavaStore                                         [feature: sqlite]
 └── error         — BhavaError (9 variants, #[non_exhaustive])                                      [always]
@@ -45,6 +48,9 @@ bhava
 | `archetype` | yes | — | Identity hierarchy, templates, validation, spirit, crew composition |
 | `sentiment` | yes | mood | Sentiment analysis with negation, intensity, configurable lexicons |
 | `presets` | no | traits, archetype | Built-in personality templates (BlueShirtGuy, T.Ron, Friday, Oracle, Scout) |
+| `instinct` | no | mood, traits, jantu | Jantu creature behavior bridge (15 functions) |
+| `psychology` | no | mood, traits, bodh | Bodh psychology math bridge (14 functions) |
+| `sociology` | no | mood, sangha | Sangha sociology math bridge (12 functions) |
 | `ai` | no | traits, mood, archetype, sentiment, reqwest, tokio, serde_json | Prompt composition, sentiment feedback, metadata |
 | `sqlite` | no | traits, mood, archetype, sentiment, rusqlite, serde_json | SQLite persistence |
 | `full` | — | all of the above | Enable everything |
@@ -153,6 +159,9 @@ Custom backends: implement BhavaStore for Postgres, Redis, etc.
 | `serde` | Serialization for all public types |
 | `thiserror` | Error derive macros |
 | `chrono` | Timestamp tracking for mood decay |
+| `jantu` | Creature behavior substrate (instinct feature only) |
+| `bodh` | Psychology math — affect, memory, cognition, psychometrics (psychology feature only) |
+| `sangha` | Sociology math — contagion, networks, influence, coalitions (sociology feature only) |
 | `reqwest` | HTTP client (ai feature only) |
 | `tokio` | Async runtime (ai feature only) |
 | `serde_json` | JSON handling (ai + sqlite features) |

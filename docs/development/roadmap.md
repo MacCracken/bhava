@@ -8,7 +8,28 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 ## Status
 
-**v1.2.0 released** (2026-03-27). 33 modules, 972 tests, 126 benchmarks, zero unsafe, zero unwrap. API surface locked under semver.
+**v1.3.0 released** (2026-03-30). 35 modules, ~1025 tests, 130+ benchmarks, zero unsafe, zero unwrap. API surface locked under semver.
+
+### v1.3.0 — Bodh + Sangha Bridge Modules (2026-03-30)
+
+#### Psychology Bridge (`psychology` feature → bodh)
+- 14 bridge functions connecting bodh's validated psychology formulas to bhava's emotion/personality systems
+- Affect ↔ MoodVector conversion, circumplex emotion classification (Ekman)
+- Scherer appraisal enrichment (OCC → SEC dimensions → Affect)
+- Gross regulation effectiveness coefficients (meta-analytic)
+- Big Five → OceanScores mapping, Cronbach's alpha trait reliability
+- ACT-R base-level activation and retrieval probability (Anderson)
+- Yerkes-Dodson arousal-performance curve
+- Mood-congruent memory retrieval bias, Kelley attribution model
+
+#### Sociology Bridge (`sociology` feature → sangha)
+- 12 bridge functions connecting sangha's computational sociology to bhava's social/group systems
+- Hatfield emotional contagion model backing mood contagion
+- Linear mood diffusion with decay, epidemic threshold computation
+- Network clustering coefficient, Dunbar intimacy layers
+- Asch conformity pressure, social proof weight
+- Ringelmann social loafing, Janis groupthink risk
+- Wisdom of crowds aggregation, Shapley value fair allocation
 
 ### v1.2.0 — Aesthetic Attribution + Performance Hardening + Tracing (2026-03-27)
 
@@ -86,7 +107,7 @@ Derive macro or `impl_display!` to eliminate 16+ manual `Display` match blocks. 
 ### State Machine Base Trait
 Generic `StateMachine { type State; type Input; fn tick(); fn state(); }` for `FlowState`, `CircadianRhythm`, and future phase-based systems. Build when: a 3rd state machine module is added.
 
-### Environmental Reactivity — v1.5 (Earth-Local Forces)
+### Environmental Reactivity — v1.6 (Earth-Local Forces)
 
 Bhava entities exist in a physical world. Temperature, light, noise, air quality — these press on mood, energy, stress, and behavior. Bhava doesn't simulate the environment (that's kiran/joshua with ushma, pravash, bijli, prakash). Bhava *reacts* to it.
 
@@ -605,20 +626,22 @@ All v1.0 entities implicitly live at `BreathPhase::LateExhale` — maximum manif
 | Version | Scope | Scale Layers | What It Adds |
 |---------|-------|-------------|-------------|
 | **v1.0** | Individual entity | Scale 0 | 30 modules — traits, mood, energy, growth, all behavioral systems. The complete individual |
-| **v1.5** | Earth-local environment | Scale 0 + physical world | Environmental reactivity — temperature, light, noise, weather, air quality as behavioral modifiers on existing modules. No new emotional systems |
+| **v1.3** | Math hardening | Scale 0 + validated math | Bodh psychology + Sangha sociology bridges — backing existing systems with peer-reviewed formulas |
+| **v1.6** | Earth-local environment | Scale 0 + physical world | Environmental reactivity — temperature, light, noise, weather, air quality as behavioral modifiers on existing modules. No new emotional systems |
 | **v2.0** | Solar system + stellar neighborhood | Scale 1-2 | Zodiac manifestation engine — planets → modules, aspects → cross-module dynamics, nakshatras, fixed stars, cultural systems |
 | **v3.0** | Full cosmological field | Scale 3-7 | Galactic personality fields, cluster dynamics, universal constants as substrate, the breath of consciousness. Entities as manifestations within a cosmic cycle |
 
 v1.0 answers: *who is this entity?*
-v1.5 answers: *how does the physical world press on them?*
+v1.3 answers: *are the math foundations validated?*
+v1.6 answers: *how does the physical world press on them?*
 v2.0 answers: *what celestial forces shaped them?*
 v3.0 answers: *where in the cycle of existence do they stand?*
 
-### Science Crate Dependencies (v1.5/v2.0/v3.0 Prerequisites)
+### Science Crate Dependencies (v1.6/v2.0/v3.0 Prerequisites)
 
 The environmental, zodiac, and cosmological systems build on existing AGNOS science crates. No new physics — bhava consumes simulation output from the ecosystem.
 
-#### v1.5 Requirements (Earth-Local Environmental)
+#### v1.6 Requirements (Earth-Local Environmental)
 
 No new crates needed. Bhava consumes environment data from the existing game/sim stack:
 
