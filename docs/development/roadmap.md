@@ -8,96 +8,7 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 ## Status
 
-**v1.4.0 released** (2026-03-30). 37 modules, 1117 tests, 142 benchmarks, zero unsafe, zero unwrap. API surface locked under semver.
-
-### v1.4.0 — Sharira + Jivanu Bridge Modules (2026-03-30)
-
-#### Physiology Bridge (`physiology` feature → sharira)
-- 12 bridge functions connecting sharira's body state to bhava's emotion/personality systems
-- Fatigue capacity → mood (irritability, despondency) and energy drain multiplier
-- Joint violation → stress input (sigmoid), pain intensity (logarithmic saturation)
-- Stability margin → anxiety mood shift (confidence when stable, panic when falling)
-- Muscle activation → energy exertion (quadratic), basal metabolic rate (Kleiber's law)
-- Morphology mass factor → dominance/confidence bias
-- Gait speed → arousal (sigmoid), gait type → emotional valence association
-- Allometric heart rate → baseline physiological arousal (log scale)
-
-#### Microbiology Bridge (`microbiology` feature → jivanu)
-- 10 bridge functions connecting jivanu's biological state to bhava's emotion systems
-- Infected fraction → sickness behavior mood (cytokine-driven: fatigue, anhedonia, withdrawal, irritability)
-- SEIR state → normalized severity, recovered fraction → mood restoration boost
-- Immune response → energy drain multiplier (1.0–3.0)
-- R0 → social withdrawal pressure (contagion avoidance), vaccination coverage → trust/safety
-- Growth rate → metabolic energy efficiency, cardinal temperature → thermal discomfort
-- Emax pharmacological model → cognitive effect, drug concentration → sedation level
-
-### v1.3.0 — Bodh + Sangha Bridge Modules (2026-03-30)
-
-#### Psychology Bridge (`psychology` feature → bodh)
-- 14 bridge functions connecting bodh's validated psychology formulas to bhava's emotion/personality systems
-- Affect ↔ MoodVector conversion, circumplex emotion classification (Ekman)
-- Scherer appraisal enrichment (OCC → SEC dimensions → Affect)
-- Gross regulation effectiveness coefficients (meta-analytic)
-- Big Five → OceanScores mapping, Cronbach's alpha trait reliability
-- ACT-R base-level activation and retrieval probability (Anderson)
-- Yerkes-Dodson arousal-performance curve
-- Mood-congruent memory retrieval bias, Kelley attribution model
-
-#### Sociology Bridge (`sociology` feature → sangha)
-- 12 bridge functions connecting sangha's computational sociology to bhava's social/group systems
-- Hatfield emotional contagion model backing mood contagion
-- Linear mood diffusion with decay, epidemic threshold computation
-- Network clustering coefficient, Dunbar intimacy layers
-- Asch conformity pressure, social proof weight
-- Ringelmann social loafing, Janis groupthink risk
-- Wisdom of crowds aggregation, Shapley value fair allocation
-
-### v1.2.0 — Aesthetic Attribution + Performance Hardening + Tracing (2026-03-27)
-
-#### Aesthetic Attribution
-- **aesthetic** module: repeated aesthetic exposure crystallizes into beliefs and trait pressure
-- Five dimensions: Beauty, Harmony, Sublimity, Meaning, Novelty
-- Mere-exposure effect (Zajonc): aesthetic preferences decay at half rate
-- Belief crystallization: preferences above threshold become WorldBelief/SelfBelief
-- Trait pressure: sustained exposure → Creativity, Curiosity, Empathy pressure
-- Mood effects: aesthetic dimensions map to Joy, Interest, Trust, Arousal
-- Intuition integration: `SignalSource::AestheticSensitivity` for aesthetic-driven signals
-
-#### Performance Hardening
-- `coherence()` O(n^2) → O(n) single-pass grouping by kind
-- `beliefs_of_kind()` returns lazy iterator instead of Vec (zero allocation)
-- `add_source_memory()` Vec::remove(0) → VecDeque::pop_front() O(1)
-
-#### Tracing Instrumentation
-- `tracing` feature flag with `tracing` 0.1 optional dependency
-- ~160 public functions instrumented across all modules
-- Zero overhead when feature disabled
-
-### v1.1.0 — Belief System & Intuition Engine (2026-03-25)
-
-#### Belief Module
-- **belief** module: memories crystallize into beliefs, beliefs form self-concept, self-understanding deepens into cosmic understanding
-- Schema theory (Beck, Piaget) for belief formation from emotional patterns
-- Four belief kinds: SelfBelief, WorldBelief, OtherBelief, UniversalBelief
-- SelfModel (bottom-up identity) + WorldModel (trust/meaning axes)
-- Understanding chain: self_understanding -> cosmic_understanding -> InsightEvent
-- Integration: belief_trait_pressure (feeds GrowthLedger), appraisal_bias (confirmation bias), identity_alignment (bottom-up vs top-down)
-
-#### Personal/Social Emotions & Shadow Beliefs
-- EmotionCategory (Personal vs Social) classification of OCC emotions
-- Emotion-to-belief mapping: personal emotions -> self/world beliefs, social emotions -> self/other beliefs
-- Suppression-aware belief formation: suppressed emotions create shadow beliefs (high suppression_depth)
-- Shadow beliefs decay at half rate — what you deny persists longer
-- Shadow belief extraction for intuition pipeline
-
-#### Intuition Module
-- **intuition** module: subconscious pattern integration ("gut feelings")
-- Five layers of knowing: Instinct (jantu scaffold), Conditioning, Belief, Intuition, Insight
-- Composable signal inputs from actr, salience, microexpr, affective, eq::perception
-- Convergence algorithm: 1 source = noise, 2 = coincidence, 3+ = intuition (geometric mean)
-- IntuitionProfile derivable from personality traits
-- Shadow beliefs surface as intuitive signals
-- active_layer() determines dominant knowing layer from entity state
+**v1.6.0 in progress** (2026-03-31). 38 modules, 1147 tests, 148 benchmarks, zero unsafe, zero unwrap. API surface locked under semver. Completed versions in [CHANGELOG.md](../../CHANGELOG.md).
 
 ## Research
 
@@ -136,109 +47,48 @@ Derive macro or `impl_display!` to eliminate 16+ manual `Display` match blocks. 
 ### State Machine Base Trait
 Generic `StateMachine { type State; type Input; fn tick(); fn state(); }` for `FlowState`, `CircadianRhythm`, and future phase-based systems. Build when: a 3rd state machine module is added.
 
-### Environmental Reactivity — v1.6 (Earth-Local Forces)
+### Atomic Time Awareness — v1.7 (Physical Time Grounding)
 
-Bhava entities exist in a physical world. Temperature, light, noise, air quality — these press on mood, energy, stress, and behavior. Bhava doesn't simulate the environment (that's kiran/joshua with ushma, pravash, bijli, prakash). Bhava *reacts* to it.
+Bhava modules that deal with time (circadian, rhythm, active_hours, growth) currently use `chrono::DateTime<Utc>` — wall-clock time with no awareness of time scales, simulation speed, or the physical definition of time. v1.7 adds a bridge to tanmatra's atomic time system (v1.5) so bhava can distinguish real time from simulation time.
 
-#### Core: Environment Input Struct
+**Prerequisite**: tanmatra v1.5 (Frequency Standards & Atomic Time)
 
-A single struct the game loop or simulation passes to bhava each tick:
+#### Time Bridge (`atomic_time` feature → tanmatra)
 
-```rust
-pub struct Environment {
-    pub temperature_c: f32,      // Celsius — affects energy, stress, circadian
-    pub humidity_pct: f32,       // 0-100 — amplifies heat stress, saps motivation
-    pub pressure_hpa: f32,       // Barometric — low pressure → anxiety, headaches
-    pub light_lux: f32,          // Ambient light — drives circadian, SAD, alertness
-    pub noise_db: f32,           // Ambient noise — affects stress, flow disruption
-    pub wind_speed_ms: f32,      // Wind — energy cost modifier, exposure stress
-    pub air_quality_aqi: f32,    // 0-500 AQI — affects energy recovery, stress
-    pub altitude_m: f32,         // Elevation — affects energy, circadian sensitivity
-    pub weather: WeatherCondition, // Rain/Snow/Storm/Clear/Overcast/Fog
-}
-```
+- `SimulationClock` struct — wraps tanmatra's `AtomicInstant` with a time scale multiplier
+- `TimeContext` enum: `RealTime` (wall clock, 1:1), `SimulatedTime(f64)` (accelerated/decelerated), `Paused`
+- Circadian/rhythm modules accept `TimeContext` to correctly phase-shift when simulation runs at 10x or pauses
+- Growth/decay rates scale with time context — a 10x simulation should produce 10x trait pressure, not 10x tick calls at wrong dt
 
-#### Module Integration (all existing modules, no new systems)
+#### Integration Points
 
-| Environmental Input | Bhava Module | Effect |
-|-------------------|-------------|--------|
-| **High temperature** (>35°C) | `energy` | Increased drain rate, reduced recovery. Heat exhaustion |
-| **Low temperature** (<0°C) | `energy` | Increased drain (shivering), `stress` allostatic load rises |
-| **Humidity + heat** | `stress` | Compound heat index → accelerated burnout accumulation |
-| **Low barometric pressure** | `mood` | Baseline anxiety nudge (arousal↑, trust↓). Storm sensitivity |
-| **Rapid pressure change** | `stress` | Acute stress spike. Migraine-prone entities (high neuroticism) amplified |
-| **Low light** (<100 lux) | `circadian` | Melatonin proxy → drowsiness. Extends existing SAD in `rhythm` |
-| **Bright light** (>10k lux) | `circadian` | Alertness boost, circadian entrainment. Resets sleep pressure |
-| **High noise** (>70 dB) | `stress` | Chronic noise stress. `flow` disruption threshold lowered |
-| **Sustained noise** | `flow` | Harder to enter/maintain flow. Disruption probability increases |
-| **Wind exposure** | `energy` | Movement energy cost multiplier. Wind chill compounds cold stress |
-| **Poor air quality** (AQI >150) | `energy` | Recovery rate reduced. `stress` baseline elevated |
-| **High altitude** (>2500m) | `energy` | Reduced peak performance (O₂). `circadian` sensitivity increased |
-| **Rain/Storm** | `mood` | Personality-dependent: high neuroticism → anxiety; high openness → calm/reflective |
-| **Fog** | `salience` | Reduced environmental salience. Proximity trigger ranges shortened |
-| **Clear sky** | `mood` | Baseline joy nudge. `circadian` light entrainment at full strength |
-
-#### Personality Modulation
-
-Not everyone reacts the same way to a hot day:
-
-- **High Patience** → heat tolerance. Stress accumulation slower
-- **Low Patience** → irritability amplified by heat/noise/crowds
-- **High Sensitivity (Neuroticism proxy)** → weather-reactive. Barometric headaches, storm anxiety, SAD
-- **High Resilience (Confidence)** → environmental stress dampened across the board
-- **High Curiosity** → rain/fog as *interesting* not *stressful*. Weather modifies salience differently
-
-#### Data Sources (game loop provides these)
-
-| Source | Crate | What It Provides |
-|--------|-------|-----------------|
-| **Temperature/humidity** | ushma (thermodynamics) | Heat transfer, ambient temperature, thermal comfort index |
-| **Wind/pressure** | pravash (fluid dynamics) | Atmospheric pressure, wind speed/direction, drag |
-| **Light levels** | prakash (optics) | Lux at entity position, color temperature, day/night cycle |
-| **Geomagnetic activity** | bijli (electromagnetism) | Solar storm Kp index, magnetosphere state |
-| **Weather state** | kiran/joshua (game/sim) | Weather system output, precipitation, cloud cover |
-| **Altitude/terrain** | impetus (physics) | Entity position, elevation, terrain type |
-
-Bhava takes the `Environment` struct — it doesn't care where the data comes from. In a game, kiran provides it from its weather system. In a simulation, joshua computes it from ushma/pravash. In a chat agent (SecureYeoman), the consumer can hardcode `Environment::comfortable_indoor()` or feed real weather API data.
-
-#### Factory Presets
-
-```rust
-impl Environment {
-    pub fn comfortable_indoor() -> Self { /* 22°C, 45% humidity, 500 lux, 30 dB */ }
-    pub fn hot_summer_day() -> Self { /* 38°C, 70% humidity, 80k lux, clear */ }
-    pub fn cold_winter_night() -> Self { /* -10°C, 30% humidity, 0.1 lux, clear */ }
-    pub fn storm() -> Self { /* 15°C, 90% humidity, 200 lux, 75 dB wind, low pressure */ }
-    pub fn office() -> Self { /* 21°C, fluorescent 400 lux, 45 dB HVAC hum */ }
-    pub fn forest() -> Self { /* 18°C, 60% humidity, dappled 2k lux, 25 dB ambient */ }
-}
-```
+| Module | Current Time Source | v1.7 Change |
+|--------|-------------------|-------------|
+| `circadian` | `DateTime<Utc>` | `TimeContext` — correct alertness phase at any simulation speed |
+| `rhythm` | `DateTime<Utc>` | `TimeContext` — ultradian/seasonal cycles track simulation time |
+| `active_hours` | hour-of-day check | `TimeContext` — activation windows respect simulation clock |
+| `growth` | tick count | `TimeContext` — trait pressure accumulation proportional to simulated elapsed time |
+| `actr` | frequency/recency | `TimeContext` — activation decay uses simulated time, not wall time |
+| `aesthetic` | `DateTime<Utc>` | `TimeContext` — mere-exposure timing respects simulation speed |
 
 #### API Surface
 
 ```rust
-// Single function — takes environment + personality, returns modifiers for all affected modules
-pub fn environmental_modifiers(
-    env: &Environment,
-    profile: &PersonalityProfile,
-) -> EnvironmentalEffect {
-    // Returns multipliers/offsets for: energy drain, stress accumulation,
-    // circadian alertness, flow disruption, mood baseline nudges, salience scaling
+/// Time context for simulation-aware modules.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum TimeContext {
+    /// Wall-clock time (chat agents, real-time applications).
+    RealTime(chrono::DateTime<chrono::Utc>),
+    /// Simulated time with speed multiplier (game/simulation).
+    Simulated { now: chrono::DateTime<chrono::Utc>, speed: f64 },
+    /// Paused — no time passes for decay/growth.
+    Paused,
 }
-
-// Apply to existing state
-pub fn apply_environment(
-    state: &mut EmotionalState,
-    energy: &mut EnergyState,
-    stress: &mut StressState,
-    env: &Environment,
-    profile: &PersonalityProfile,
-);
 ```
 
-No new emotional systems. No new state machines. Just the physical world pressing on the 30 modules we already have.
+No new emotional systems. Just temporal grounding — the difference between a minute of real conversation and a minute of simulated game time.
 
-Build when: joshua NPC system needs weather-reactive NPCs, or kiran game entities need environmental mood. The integration points are all defined — implementation is mapping functions, not architecture.
+Build when: tanmatra v1.5 ships. Depends on hisab-mimamsa for relativistic corrections in tanmatra's clock module.
 
 ### Zodiac Manifestation Engine
 
@@ -660,6 +510,7 @@ All v1.0 entities implicitly live at `BreathPhase::LateExhale` — maximum manif
 | **v1.3** | Math hardening | Scale 0 + validated math | Bodh psychology + Sangha sociology bridges — backing existing systems with peer-reviewed formulas |
 | **v1.4** | Body + immune | Scale 0 + body state | Sharira physiology + Jivanu microbiology bridges — the body presses on emotion |
 | **v1.6** | Earth-local environment | Scale 0 + physical world | Environmental reactivity — temperature, light, noise, weather, air quality as behavioral modifiers on existing modules. No new emotional systems |
+| **v1.7** | Atomic time awareness | Scale 0 + physical time | tanmatra atomic time bridge — simulation time vs wall-clock distinction, time-scale-aware circadian/rhythm, proper temporal grounding |
 | **v2.0** | Solar system + stellar neighborhood | Scale 1-2 | Zodiac manifestation engine — planets → modules, aspects → cross-module dynamics, nakshatras, fixed stars. Cultural systems deferred to sankhya overlay (post-v2.0) |
 | **v3.0** | Full cosmological field | Scale 3-7 | Galactic personality fields, cluster dynamics, universal constants as substrate, the breath of consciousness. Entities as manifestations within a cosmic cycle |
 
@@ -667,93 +518,73 @@ v1.0 answers: *who is this entity?*
 v1.3 answers: *are the math foundations validated?*
 v1.4 answers: *how does the body press on emotion?*
 v1.6 answers: *how does the physical world press on them?*
+v1.7 answers: *what time is it, physically?*
 v2.0 answers: *what celestial forces shaped them?*
 v3.0 answers: *where in the cycle of existence do they stand?*
 
-### Science Crate Dependencies (v1.6/v2.0/v3.0 Prerequisites)
+### Science Crate Dependencies (v1.7/v2.0/v3.0 Prerequisites)
 
 The environmental, zodiac, and cosmological systems build on existing AGNOS science crates. No new physics — bhava consumes simulation output from the ecosystem.
 
-#### v1.6 Requirements (Earth-Local Environmental)
-
-No new crates needed. Bhava consumes environment data from the existing game/sim stack:
-
-| Data Source | AGNOS Crate | Version | What Bhava Receives |
-|-------------|-------------|---------|-------------------|
-| Temperature, humidity, thermal comfort | **ushma** (thermodynamics) | 0.1.0 | Ambient temp (°C), humidity (%), heat index |
-| Wind, atmospheric pressure | **pravash** (fluid dynamics) | 0.24.3 | Pressure (hPa), wind speed (m/s), drag |
-| Light levels, color temperature | **prakash** (optics) | 0.24.3 | Lux at position, spectral color temp, day/night |
-| Geomagnetic activity | **bijli** (electromagnetism) | 0.1.0 | Kp index, magnetosphere state |
-| Altitude, terrain, position | **impetus** (physics) | 0.23.3 | Elevation, surface type, collision contacts |
-| Weather state, precipitation | **kiran** / **joshua** (engine/sim) | — | Weather enum, cloud cover, precipitation |
-
-The game loop (kiran/joshua) composes these into an `Environment` struct and passes it to bhava. Bhava never imports ushma/pravash/bijli directly — it receives plain f32 values. Zero coupling.
-
 #### v2.0 Requirements (Solar System + Stellar)
 
-| Capability | What's Needed | Candidate Approach | Status |
-|-----------|--------------|-------------------|--------|
-| **Planetary ephemeris** | Compute positions of Sun, Moon, planets for any date (past/future). Sub-arcminute accuracy | JPL DE440 or VSOP2013/ELP2000 implementation. Rust crate or C FFI to SOFA/NOVAS. ~50MB ephemeris data file | Not started |
-| **Sidereal ↔ tropical conversion** | Convert between Western tropical (vernal equinox reference) and Vedic sidereal (fixed star reference) zodiac frames | Ayanamsa calculation (Lahiri, Fagan-Bradley, etc.). Pure math — offset angle that changes ~50.3"/year | Not started |
-| **Precession of equinoxes** | Fixed star ecliptic longitudes drift ~1° per 72 years. Historical/fantasy settings need epoch-correct positions | IAU 2006 precession model. hisab could extend with `precession::equatorial_to_date()` | Not started |
-| **House system computation** | Divide the ecliptic into 12 houses given birth time + location. Multiple systems (Placidus, Whole Sign, Equal, Koch) | Requires: obliquity of ecliptic, local sidereal time, ascendant calculation. Trigonometry on hisab types | Not started |
-| **Aspect computation** | Calculate angular separation between any two planetary positions, classify into aspect type, compute orb | Pure geometry — already achievable with hisab. Needs: ecliptic longitude difference, orb tables | Not started |
-| **Nakshatra lookup** | Map lunar longitude to one of 27 nakshatras (13°20' divisions) | Simple division — `nakshatra_index = (lunar_longitude / 13.333).floor()`. Trivial once Moon position is known | Not started |
-| **Fixed star catalog** | Positions + magnitudes for ~50 astrologically significant stars | Hipparcos catalog subset. Static data + precession correction per epoch | Not started |
-| **Chinese calendar** | Sexagenary cycle (Heavenly Stems + Earthly Branches), lunar months, solar terms | Lunisolar calendar computation. Existing algorithms well-documented | Not started |
-| **Mayan Tzolkin** | 260-day sacred calendar (20 day signs × 13 numbers) | Pure modular arithmetic from Julian Day Number. Trivial | Not started |
+| Capability | Crate | Status |
+|-----------|-------|--------|
+| **Planetary ephemeris** (VSOP87D, <1" accuracy) | jyotish | Done |
+| **Lunar position** (Meeus Ch. 47, ~10" accuracy) | jyotish | Done |
+| **Sidereal ↔ tropical** (Lahiri ayanamsa) | jyotish | Done |
+| **Precession** (IAU 2006) | jyotish | Done |
+| **House systems** (Placidus, Equal, Whole Sign, Porphyry) | jyotish | Done |
+| **Aspect computation** (conjunction through quincunx, configurable orbs) | jyotish | Done |
+| **Nakshatra lookup** (27 lunar mansions) | jyotish | Done |
+| **Fixed star catalog** (58 navigational stars, proper motion) | tara | Done |
+| **Chinese calendar** (sexagenary cycle, BaZi) | sankhya | Needs hardening |
+| **Mayan Tzolkin** (260-day sacred calendar) | sankhya | Needs hardening |
 
 #### v3.0 Requirements (Galactic + Cosmic)
 
-| Capability | What's Needed | Candidate Approach | Status |
-|-----------|--------------|-------------------|--------|
-| **Galactic coordinate transforms** | Convert equatorial (RA/Dec) ↔ galactic (l/b) ↔ supergalactic (SGL/SGB) reference frames | Rotation matrices. hisab already has 3D rotation — extend with standard astronomical frame definitions (IAU 1958 galactic, de Vaucouleurs supergalactic) | Not started |
-| **Galactic structure model** | Spiral arm positions, bar structure, solar system location within the Milky Way | Static model from latest surveys (Gaia DR3). Data table, not computation. ~1KB | Not started |
-| **Local Group catalog** | Positions + velocities of ~80 galaxies in the Local Group | Static data from NASA/IPAC Extragalactic Database. Andromeda approach vector, Magellanic Cloud orbits | Not started |
-| **Laniakea flow field** | Velocity flow toward Great Attractor for any position in the supercluster | Cosmicflows-4 dataset. Interpolation over a velocity field grid. hisab spatial structures (k-d tree, BVH) useful here | Not started |
-| **Cosmological parameters** | Current best values: Hubble constant, cosmological constant, matter density, age of universe | Static constants from Planck 2018 + latest DESI results. Updated rarely (once per major survey) | Not started |
-| **Cosmic time / breath phase** | Map simulation time to position on the exhale-inhale cycle | Designer-defined — not empirical science. The breath duration and current phase are world-building parameters set by the game/simulation creator | Not started |
+| Capability | Crate | Status |
+|-----------|-------|--------|
+| **Galactic coordinate transforms** (equatorial ↔ galactic ↔ supergalactic) | tara / hisab | Not started |
+| **Galactic structure model** (spiral arms, bar, solar system position) | brahmanda | Cosmic web done, needs galactic geometry |
+| **Local Group catalog** (~80 galaxies, Andromeda approach) | brahmanda | Not started |
+| **Laniakea flow field** (Cosmicflows-4, Great Attractor) | brahmanda | Not started |
+| **Cosmological parameters** (Planck 2018, Hubble, Λ) | hisab-mimamsa | Done (cosmology module) |
+| **Scale bridge Scales 4-5** (stellar → personality, galactic → personality) | hisab-mimamsa | Stubs — needs tara + brahmanda wiring |
+| **Cosmic time / breath phase** | hisab-mimamsa | Done (Scale 7, fixed_point) |
 
-#### Existing AGNOS Crates
+#### Upstream Crate Status
 
-| Crate | Version | Current Scope | Future Extension |
-|-------|---------|--------------|-----------------|
-| **hisab** | 0.24.3 | Linear algebra, geometry, calculus, spatial structures (BVH, k-d tree, octree) | v2.0: astronomical coordinate frames, spherical trig, frame rotation matrices |
-| **prakash** | 0.24.3 | Ray optics, wave optics, spectral analysis, PBR, atmospheric scattering | v1.5: lux computation at position. v2.0: stellar magnitude/spectral type. v3.0: light travel time |
-| **ushma** | 0.1.0 | Heat transfer, equations of state, entropy, thermal material properties | v1.5: ambient temperature, thermal comfort index, heat stress computation |
-| **pravash** | 0.24.3 | SPH fluids, Navier-Stokes grids, shallow water, buoyancy, vortex, coupling | v1.5: atmospheric pressure, wind speed, drag forces |
-| **bijli** | 0.1.0 | Electric/magnetic fields, Maxwell's equations, EM waves, Lorentz force | v1.5: geomagnetic field modeling, solar storm Kp index |
-| **impetus** | 0.23.3 | Rigid bodies, colliders, forces, joints, particles, spatial hashing | v1.5: entity position/altitude, terrain type, surface contacts |
-
-#### New Crate Candidates
-
-| Name | Domain | Scope | Dependencies |
-|------|--------|-------|-------------|
-| **jyotish** (Sanskrit: light/astrology) | Computational astrology | Ephemeris, houses, aspects, nakshatras, planetary dignity, transit computation. The computational engine behind bhava v2.0's zodiac manifestation | hisab (math), chrono (time) |
-| **tara** (Sanskrit: star) | Stellar catalog + galactic structure | Fixed star positions with precession, galactic coordinate transforms, Local Group model, Laniakea flow field. The data layer for bhava v2.0 fixed stars and v3.0 cosmological scales | hisab (spatial math) |
-
-Both crates would be pure computation — no I/O, no async, no network. Library crates like hisab and prakash. Data files (ephemeris, star catalog) feature-gated and bundled or downloaded on first use.
+| Crate | Version | Role | Status |
+|-------|---------|------|--------|
+| **jyotish** | ~1.0 | Ephemeris, houses, aspects, nakshatras, transits | Built, pre-1.0 repairs tracked |
+| **tara** | 1.0.0 | Stellar astrophysics, classification, evolution, spectral | Released |
+| **brahmanda** | 0.1.0 | Galactic structure, cosmic web, halos, power spectrum | Built, pre-publish repairs tracked |
+| **hisab-mimamsa** | 1.0.0 | GR, QFT, cosmology, unified field, scale bridge | Pre-publish repairs in progress |
+| **tanmatra** | 1.0.0 | Atomic/subatomic physics (v1.5: frequency standards + atomic time) | v1.5 planned |
+| **sankhya** | 0.1.0 | Ancient math systems (Mayan, Vedic, Chinese, etc.) | Needs hardening |
 
 #### Build Order
 
 ```
-v1.5 prerequisite chain:
-  No new crates. Existing stack provides all data:
-  kiran/joshua game loop
-    → ushma (temperature) + pravash (pressure/wind) + prakash (light) + bijli (geomagnetic) + impetus (position)
-    → Environment struct (plain f32 values)
-    → bhava v1.5 (environmental_modifiers → existing modules)
+v1.6 — done:
+  environment module (no new deps, plain f32 values from consumer)
+
+v1.7 prerequisite chain:
+  tanmatra v1.5 (frequency standards, atomic time scales)
+    → bhava v1.7 (TimeContext for circadian/rhythm/growth)
 
 v2.0 prerequisite chain:
-  hisab (extend: astro frames, spherical trig)
-  → jyotish (ephemeris, houses, aspects, nakshatras)
-  → tara (fixed stars, precession)
-  → bhava v2.0 (zodiac manifestation engine, consumes jyotish + tara)
+  jyotish v1.0 (ephemeris, houses, aspects, nakshatras)
+  + tara v1.0 (fixed stars, precession)
+    → bhava v2.0 (zodiac manifestation engine)
+
+v2.0+ cultural overlay:
+  sankhya (hardened) → bhava cultural bridge (post-v2.0)
 
 v3.0 prerequisite chain:
-  hisab (extend: supergalactic frames)
-  → tara (extend: galactic structure, Local Group, Laniakea)
-  → bhava v3.0 (cosmological scales, breath phase)
+  brahmanda (galactic structure, Laniakea)
+  + hisab-mimamsa (scale bridge Scales 4-5 wired)
+  + tara (extend: galactic coords, Local Group)
+    → bhava v3.0 (cosmological scales, breath phase)
 ```
-
-These dependencies are documented here so they are not lost. When demand triggers work, the science crate requirements and build order are ready.

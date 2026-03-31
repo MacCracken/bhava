@@ -1,5 +1,40 @@
 # Changelog
 
+## [Unreleased] — v1.6.0
+
+Environmental reactivity — the physical world pressing on emotion.
+
+### Added
+
+- **`environment` module** — environmental reactivity system (feature: `mood`)
+  - `Environment` struct — 8 physical parameters (temperature, humidity, pressure, light, noise, wind, air quality, altitude) + `WeatherCondition` enum
+  - `WeatherCondition` enum — Clear, Overcast, Fog, Rain, Snow, Storm (`#[non_exhaustive]`, serde, Display)
+  - `EnvironmentalEffect` struct — 9 multipliers/offsets for energy drain/recovery, stress accumulation, alertness, flow disruption, mood baselines (joy, arousal, trust), salience range
+  - `environmental_modifiers()` — pure function mapping Environment + optional PersonalityProfile → EnvironmentalEffect
+    - Temperature: heat stress (>35°C apparent) increases energy drain/stress, cold (<0°C) increases drain
+    - Humidity × heat compound: accelerated stress above 30°C/60% RH
+    - Barometric pressure: low pressure → anxiety nudge (arousal↑, trust↓), sensitivity-amplified
+    - Light: <100 lux → drowsiness (alertness↓), >10k lux → alertness boost
+    - Noise: >70 dB → stress + flow disruption, >55 dB sustained → flow impairment
+    - Wind: >10 m/s → energy drain from exposure
+    - Air quality: AQI >150 → reduced recovery, elevated stress
+    - Altitude: >2500m → energy drain, reduced recovery (O₂)
+    - Weather conditions: Clear → joy nudge, Fog → salience reduction, Rain → personality-dependent calm/anxiety, Storm → stress + arousal + flow disruption
+  - `apply_environment()` — convenience function mutating EnergyState, StressState, MoodVector directly
+  - Personality modulation via 4 trait axes:
+    - High Patience → heat/noise tolerance (dampens stress accumulation)
+    - High Sensitivity (inverse Patience + Empathy) → weather-reactive, barometric anxiety
+    - High Resilience (Confidence) → all environmental stress dampened (0.7–1.3× factor)
+    - High Curiosity → rain/fog as interesting not stressful
+  - `Environment::heat_index()` — Rothfusz/NWS regression for apparent temperature above 27°C
+  - `Environment::wind_chill()` — Environment Canada/NWS formula below 10°C
+  - `Environment::apparent_temperature()` — unified heat index / wind chill
+  - 6 factory presets: `comfortable_indoor`, `hot_summer_day`, `cold_winter_night`, `storm`, `office`, `forest`
+  - All multipliers clamped to sane ranges (energy drain 0.5–3.0×, recovery 0.3–1.5×, etc.)
+  - 26 unit tests + 4 doc tests covering all environmental factors, edge cases, serde roundtrips
+  - 6 criterion benchmarks: modifiers_indoor (~14 ns), modifiers_storm (~28 ns), apply_environment (~22 ns), heat_index (~3 ns), wind_chill (~6 ns)
+  - Zero new dependencies — uses existing mood, energy, stress, traits modules
+
 ## [1.4.0] - 2026-03-30
 
 Sharira physiology + Jivanu microbiology bridge modules — the body presses on emotion.
