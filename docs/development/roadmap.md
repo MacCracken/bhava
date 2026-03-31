@@ -490,20 +490,22 @@ let manifest = NatalChart::new()
 // This is the full cosmic personality — deterministic, serializable, sub-millisecond
 ```
 
-#### Cross-Cultural Systems
+#### Cross-Cultural Systems (sankhya crate — separate)
 
-All systems map to the same bhava trait/mood/behavioral infrastructure with different cultural weightings:
+Cultural zodiac/calendar systems live in the **sankhya** crate (ancient mathematical systems), not in bhava. Sankhya provides the mathematical computations (Mayan Long Count/Tzolkin, Chinese BaZi, Vedic nakshatras/dashas, Egyptian decans, Celtic tree calendar); bhava consumes the outputs as personality overlay layers. Sankhya needs hardening and depends on the science stack (jyotish, tara, hisab) maturing first.
 
-| System | Origin | Key Structure | Bhava Integration |
-|--------|--------|--------------|-------------------|
-| **Western Tropical** | Greco-Roman | 12 signs, 10 planets, 12 houses, aspects | Primary system (above) |
-| **Vedic Sidereal (Jyotish)** | Sanskrit | 12 rashis, 27 nakshatras, 9 grahas, dashas | Nakshatra motivation + dasha time periods → `growth` scheduling |
-| **Chinese (BaZi)** | Chinese | 12 animals, 5 elements, 60-year cycle, 4 pillars | Element-trait mapping with Yin/Yang polarity |
-| **Mayan (Tzolkin)** | Mesoamerican | 20 day signs, 13 numbers, 260-day cycle | Day sign → personality archetype, number → intensity scaling |
-| **Celtic Tree** | Celtic | 13 lunar months, each a tree | Tree → personality preset with seasonal `rhythm` modulation |
-| **Egyptian Decan** | Egyptian | 36 decans (10° each), associated deities | Decan → fine-grained personality subdivision within zodiac signs |
+| System | Origin | Sankhya Module | Bhava Integration |
+|--------|--------|---------------|-------------------|
+| **Western Tropical** | Greco-Roman | (jyotish — not sankhya) | Primary system (above) |
+| **Vedic Sidereal (Jyotish)** | Sanskrit | `vedic` (Katapayadi, Meru Prastara) | Nakshatra motivation + dasha time periods → `growth` scheduling |
+| **Chinese (BaZi)** | Chinese | `chinese` (CRT, rod numerals) | Element-trait mapping with Yin/Yang polarity |
+| **Mayan (Tzolkin)** | Mesoamerican | `mayan` (Long Count, Tzolkin, Haab) | Day sign → personality archetype, number → intensity scaling |
+| **Celtic Tree** | Celtic | (future) | Tree → personality preset with seasonal `rhythm` modulation |
+| **Egyptian Decan** | Egyptian | `egyptian` (stellar decans) | Decan → fine-grained personality subdivision within zodiac signs |
 
 Systems are composable. A character can have Western Sun in Scorpio, Vedic Moon in Pushya nakshatra, Chinese Year of the Dragon (Wood), and Mayan day sign Cimi — each contributing a layer to the same unified bhava profile. Cultural context determines which system has primary weight.
+
+Build order: sankhya hardening → bhava cultural overlay bridge (post-v2.0).
 
 #### Consumers
 
@@ -658,7 +660,7 @@ All v1.0 entities implicitly live at `BreathPhase::LateExhale` — maximum manif
 | **v1.3** | Math hardening | Scale 0 + validated math | Bodh psychology + Sangha sociology bridges — backing existing systems with peer-reviewed formulas |
 | **v1.4** | Body + immune | Scale 0 + body state | Sharira physiology + Jivanu microbiology bridges — the body presses on emotion |
 | **v1.6** | Earth-local environment | Scale 0 + physical world | Environmental reactivity — temperature, light, noise, weather, air quality as behavioral modifiers on existing modules. No new emotional systems |
-| **v2.0** | Solar system + stellar neighborhood | Scale 1-2 | Zodiac manifestation engine — planets → modules, aspects → cross-module dynamics, nakshatras, fixed stars, cultural systems |
+| **v2.0** | Solar system + stellar neighborhood | Scale 1-2 | Zodiac manifestation engine — planets → modules, aspects → cross-module dynamics, nakshatras, fixed stars. Cultural systems deferred to sankhya overlay (post-v2.0) |
 | **v3.0** | Full cosmological field | Scale 3-7 | Galactic personality fields, cluster dynamics, universal constants as substrate, the breath of consciousness. Entities as manifestations within a cosmic cycle |
 
 v1.0 answers: *who is this entity?*

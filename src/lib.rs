@@ -40,6 +40,7 @@
 //! - [`belief`] — Belief system — memories crystallize into beliefs, beliefs form self-concept, self-understanding deepens into cosmic understanding
 //! - [`intuition`] — Subconscious pattern integration — gut feelings from converging subsystems
 //! - [`aesthetic`] — Aesthetic attribution — repeated exposure crystallizes into beliefs and trait pressure
+//! - [`environment`] — Environmental reactivity: temperature, light, noise, weather pressing on mood/energy/stress (feature: `mood`)
 //! - [`compat`] — Jantu creature behavior integration (feature: `instinct`)
 //! - [`psychology`] — Bodh psychology math integration (feature: `psychology`)
 //! - [`sociology`] — Sangha sociology math integration (feature: `sociology`)
@@ -135,6 +136,9 @@ pub mod intuition;
 
 #[cfg(all(feature = "mood", feature = "traits"))]
 pub mod aesthetic;
+
+#[cfg(feature = "mood")]
+pub mod environment;
 
 #[cfg(feature = "instinct")]
 pub mod compat;

@@ -1157,6 +1157,7 @@ criterion_group!(
     bench_belief_emotion,
     bench_intuition,
     bench_aesthetic,
+    bench_environment,
 );
 
 #[cfg(feature = "psychology")]
@@ -1513,6 +1514,68 @@ fn bench_aesthetic(c: &mut Criterion) {
             intensity: 0.9,
         };
         b.iter(|| aesthetic_mood_shift(black_box(&exposure), black_box(0.7)))
+    });
+
+    group.finish();
+}
+
+// ── Environment benchmarks ────────────────────────────────────────────
+
+fn bench_environment(c: &mut Criterion) {
+    use bhava::environment::{Environment, apply_environment, environmental_modifiers};
+
+    let mut group = c.benchmark_group("environment");
+
+    group.bench_function("modifiers_indoor", |b| {
+        let env = Environment::comfortable_indoor();
+        b.iter(|| environmental_modifiers(black_box(&env), None))
+    });
+
+    group.bench_function("modifiers_storm", |b| {
+        let env = Environment::storm();
+        b.iter(|| environmental_modifiers(black_box(&env), None))
+    });
+
+    group.bench_function("modifiers_extreme", |b| {
+        let env = Environment {
+            temperature_c: 50.0,
+            humidity_pct: 95.0,
+            pressure_hpa: 960.0,
+            light_lux: 0.5,
+            noise_db: 100.0,
+            wind_speed_ms: 30.0,
+            air_quality_aqi: 400.0,
+            altitude_m: 5000.0,
+            weather: bhava::environment::WeatherCondition::Storm,
+        };
+        b.iter(|| environmental_modifiers(black_box(&env), None))
+    });
+
+    group.bench_function("apply_environment", |b| {
+        let env = Environment::hot_summer_day();
+        b.iter_batched(
+            || {
+                (
+                    bhava::energy::EnergyState::new(),
+                    bhava::stress::StressState::new(),
+                    bhava::mood::MoodVector::neutral(),
+                )
+            },
+            |(mut energy, mut stress, mut mood)| {
+                apply_environment(black_box(&env), &mut energy, &mut stress, &mut mood, None)
+            },
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    group.bench_function("heat_index", |b| {
+        let env = Environment::hot_summer_day();
+        b.iter(|| black_box(&env).heat_index())
+    });
+
+    group.bench_function("wind_chill", |b| {
+        let env = Environment::cold_winter_night();
+        b.iter(|| black_box(&env).wind_chill())
     });
 
     group.finish();
