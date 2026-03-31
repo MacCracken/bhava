@@ -36,7 +36,7 @@ thiserror = "2"
 chrono = { version = "0.4", features = ["serde"] }
 
 # Optional (ai feature)
-reqwest = { version = "0.12", features = ["json"], optional = true }
+reqwest = { version = "0.13", features = ["json"], optional = true }
 tokio = { version = "1", features = ["full"], optional = true }
 serde_json = { version = "1", optional = true }
 
@@ -47,23 +47,23 @@ tracing = { version = "0.1", optional = true }
 jantu = { version = "1", optional = true, default-features = false }
 
 # Optional (psychology feature — bodh psychology math)
-bodh = { path = "../bodh", optional = true, default-features = false }
+bodh = { version = "1", optional = true, default-features = false }
 
 # Optional (sociology feature — sangha sociology math)
-sangha = { path = "../sangha", optional = true, default-features = false }
+sangha = { version = "1", optional = true, default-features = false }
 
 # Optional (physiology feature — sharira body/biomechanics)
-sharira = { path = "../sharira", optional = true, default-features = false }
+sharira = { version = "1", optional = true, default-features = false }
 
 # Optional (microbiology feature — jivanu microbial/immune systems)
-jivanu = { path = "../jivanu", optional = true, default-features = false }
+jivanu = { version = "1", optional = true, default-features = false }
 
 # Optional (sqlite feature)
 rusqlite = { version = "0.39", features = ["bundled"], optional = true }
 
 [dev-dependencies]
 serde_json = "1"
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8", features = ["html_reports"] }
 
 [[bench]]
 name = "benchmarks"
