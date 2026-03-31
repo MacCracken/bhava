@@ -39,9 +39,16 @@
 | active_hours | 16 | Window ranges, midnight wrap, timezone, schedules, zero-width |
 | ai | 16 | System prompt composition, sentiment feedback, metadata, outcomes |
 | storage | 12 | SQLite CRUD for all types, snapshots, full-agent persistence |
+| belief | 50 | Schema theory, 4 belief kinds, conviction, decay, coherence, SelfModel, WorldModel, InsightEvent, shadow beliefs |
+| belief_emotion | 20 | Personal/social classification, emotion-to-belief mapping, suppression-aware creation |
+| intuition | 25 | Signal synthesis, 5 knowing layers, convergence algorithm, shadow signals, active_layer |
+| aesthetic | 20 | 5 dimensions, mere-exposure, crystallization, trait pressure, mood shift |
+| compat | 46 | Jantu bridge: threat response, stress, instincts, contagion, habituation, genome, signals |
+| psychology | 28 | Bodh bridge: affect conversion, classify, appraisal, regulation, psychometrics, ACT-R, Yerkes-Dodson, attribution |
+| sociology | 25 | Sangha bridge: Hatfield contagion, propagation, clustering, Dunbar, conformity, loafing, groupthink, Shapley |
 | integration | 35 | Cross-module: preset-to-prompt, sentiment-to-mood, triggers-to-history, templates-to-validation, crew, relationships, monitor, store |
-| doc | 1 | SentimentMonitor doc test |
-| **Total** | **785** | 749 unit + 35 integration + 1 doc |
+| doc | 42 | Doc-tests across compat (16), psychology (14), sociology (12) |
+| **Total** | **1051** | 974 unit + 35 integration + 42 doc |
 
 ## Running Tests
 
@@ -69,7 +76,7 @@ make coverage    # generates HTML report in coverage/
 
 ## Benchmarks
 
-Criterion benchmarks across 27 groups:
+Criterion benchmarks across 34 groups:
 
 | Group | Count | What it measures |
 |-------|-------|------------------|
@@ -100,6 +107,12 @@ Criterion benchmarks across 27 groups:
 | salience | 1 | classify |
 | actr | 2 | rehearse_100, retrieve_above |
 | preference | 2 | record_100, top_preferences |
+| belief | 4 | coherence, beliefs_of_kind, add_source_memory, decay |
+| belief_emotion | 4 | classify_emotion, apply_emotion_100, shadow_beliefs_query, decay_with_shadow |
+| intuition | 4 | synthesize_5_tags, synthesize_20_tags, profile_from_personality, active_layer |
+| aesthetic | 5 | record_exposure, record_exposure_50, crystallize_beliefs, aesthetic_trait_pressure, aesthetic_mood_shift |
+| psychology | 4 | affect_from_mood, classify_mood, base_level_activation, yerkes_dodson_performance |
+| sociology | 4 | hatfield_contagion_10, shapley_4_players, clustering_coefficient, groupthink_risk |
 
 ```bash
 # Run benchmarks with history tracking

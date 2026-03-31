@@ -9,7 +9,7 @@
 
 Shared personality and emotional state system for AI agents, game NPCs, and any entity that needs expressive behavior. Extracted from SecureYeoman's soul/brain architecture.
 
-**15-trait personalities, PAD mood vectors, cosine similarity, sentiment analysis, identity archetypes, relationship graphs, energy/circadian/flow systems, EQ, cultural display rules, ACT-R activation, preference learning, belief system, intuition engine, aesthetic attribution** — zero `unsafe`, 4 core deps, 972 tests.
+**15-trait personalities, PAD mood vectors, cosine similarity, sentiment analysis, identity archetypes, relationship graphs, energy/circadian/flow systems, EQ, cultural display rules, ACT-R activation, preference learning, belief system, intuition engine, aesthetic attribution, psychology math bridge (bodh), sociology math bridge (sangha), physiology bridge (sharira), microbiology bridge (jivanu)** — zero `unsafe`, 4 core deps, 1117 tests.
 
 ## Installation
 
@@ -20,7 +20,7 @@ bhava = "1.0"
 
 Default features: `traits`, `mood`, `archetype`, `sentiment`.
 
-Optional: `presets`, `ai`, `sqlite`.
+Optional: `presets`, `ai`, `sqlite`, `instinct`, `psychology`, `sociology`, `tracing`.
 
 MSRV: **1.89** (Rust edition 2024).
 
@@ -35,8 +35,13 @@ MSRV: **1.89** (Rust edition 2024).
 | `presets` | no | Built-in personalities (BlueShirtGuy, T.Ron, Friday, Oracle, Scout) |
 | `ai` | no | Prompt composition, sentiment feedback, agent metadata |
 | `sqlite` | no | SQLite persistence via `SqliteStore` |
-| `instinct` | no | Jantu creature behavior integration |
+| `instinct` | no | Jantu creature behavior bridge (15 functions) |
+| `psychology` | no | Bodh psychology math bridge (14 functions) |
+| `sociology` | no | Sangha sociology math bridge (12 functions) |
+| `physiology` | no | Sharira body/biomechanics bridge (12 functions) |
+| `microbiology` | no | Jivanu microbial/immune bridge (10 functions) |
 | `tracing` | no | Structured observability via `tracing::instrument` |
+| `full` | no | All features enabled |
 
 ## Quick Start
 
@@ -100,6 +105,38 @@ let full_prompt = compose_identity_prompt(&identity);
 | `salience` | Somatic marker urgency/importance scoring (Damasio) |
 | `actr` | ACT-R frequency x recency memory activation with Hebbian boost |
 | `preference` | Adaptive preference learning from interaction outcomes |
+| `belief` | Belief system — memories crystallize into beliefs, beliefs form self-concept |
+| `intuition` | Subconscious pattern integration — gut feelings from converging subsystems |
+| `aesthetic` | Aesthetic attribution — repeated exposure crystallizes into beliefs and trait pressure |
+| `compat` | Jantu creature behavior bridge (15 functions, feature: `instinct`) |
+| `psychology` | Bodh psychology math bridge — affect, memory, cognition, psychometrics (14 functions, feature: `psychology`) |
+| `sociology` | Sangha sociology math bridge — contagion, networks, influence, coalitions (12 functions, feature: `sociology`) |
+| `physiology` | Sharira body bridge — fatigue, pain, balance, exertion, gait, morphology, heart rate (12 functions, feature: `physiology`) |
+| `microbiology` | Jivanu immune bridge — sickness behavior, immune drain, contagion avoidance, pharmacology (10 functions, feature: `microbiology`) |
+
+## Dependency Stack
+
+```
+┌─────────────────────────────────────────────────┐
+│               CONSUMERS                          │
+│  SecureYeoman / joshua / agnosai / hoosh         │
+└──────────────────────┬──────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────┐
+│                      BHAVA                            │
+│  37 modules: traits, mood, belief, intuition...      │
+├──────────────────────────────────────────────────────┤
+│                   BRIDGE LAYER                        │
+│  compat     psychology  sociology  physiology  micro  │
+│  (jantu)    (bodh)      (sangha)   (sharira)  (jivanu)│
+│  15 fn      14 fn       12 fn      12 fn      10 fn   │
+└──┬──────────┬──────────┬──────────┬──────────┬───────┘
+   │          │          │          │          │
+┌──▼───┐ ┌───▼────┐ ┌───▼────┐ ┌───▼────┐ ┌──▼─────┐
+│JANTU │ │ BODH   │ │SANGHA  │ │SHARIRA │ │JIVANU  │
+│animal│ │ psych  │ │ socio  │ │ body   │ │ micro  │
+└──────┘ └────────┘ └────────┘ └────────┘ └────────┘
+```
 
 ## Consumers
 
@@ -113,7 +150,7 @@ let full_prompt = compose_identity_prompt(&identity);
 - [Architecture Overview](docs/architecture/overview.md) — module map, data flows, design principles
 - [Mathematical Reference](docs/architecture/math.md) — all algorithms and formulas
 - [Usage Guide](docs/guides/usage.md) — patterns, philosophy, code examples
-- [Testing Guide](docs/guides/testing.md) — 972 tests, testing patterns
+- [Testing Guide](docs/guides/testing.md) — 1117 tests, testing patterns
 - [Roadmap](docs/development/roadmap.md) — v1.0 status, future features
 - [Threat Model](docs/development/threat-model.md) — attack surface, mitigations, privilege model
 - [Dependency Watch](docs/development/dependency-watch.md) — dependency tracking and upgrade notes

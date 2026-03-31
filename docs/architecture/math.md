@@ -383,3 +383,158 @@ valence = valence × (1 - α) + biased_outcome × α
 ```
 
 Learning rate decreases with exposure: first experience α=1.0, tenth α≈0.09.
+
+## Bridge Math (via bodh/sangha)
+
+The following formulas are computed by sibling crates and exposed through bhava's bridge modules.
+
+### Circumplex Affect Model (bodh::emotion)
+
+```
+Affect = (valence, arousal) ∈ [-1, 1]²
+valence = (joy - frustration + trust) / 3    (from MoodVector)
+arousal = arousal dimension directly
+```
+
+Classification: nearest-distance to canonical positions (Happiness, Sadness, Anger, Fear, Disgust, Surprise).
+
+### Scherer Stimulus Evaluation Checks (bodh::emotion)
+
+```
+AppraisalDimensions:
+  novelty         = 1 - likelihood
+  pleasantness    = desirability
+  goal_conduciveness = desirability
+  coping_potential = 0.5 (self) or -0.2 (other)
+  norm_compatibility = praiseworthiness
+```
+
+### Gross Regulation Effectiveness (bodh::emotion)
+
+Meta-analytic coefficients from emotion regulation research:
+
+| Strategy | bodh Mapping | Effectiveness |
+|----------|-------------|---------------|
+| Suppress | ResponseModulation | 0.30 |
+| Distract | AttentionalDeployment | 0.45 |
+| Reappraise | CognitiveChange | 0.85 |
+| Accept | (no regulation) | 1.00 |
+
+### ACT-R Base-Level Activation (bodh::memory)
+
+```
+B_i = ln(Σ t_j^(-d))
+```
+
+Where t_j = time since j-th presentation, d = decay parameter (typically 0.5).
+
+### ACT-R Retrieval Probability (bodh::memory)
+
+```
+P = 1 / (1 + e^((τ - A) / s))
+```
+
+Where τ = threshold, A = activation, s = noise (default 0.4).
+
+### Yerkes-Dodson Performance (bodh::emotion)
+
+```
+performance = e^(-(arousal - optimal)² / (2 × spread²))
+```
+
+Inverted-U: performance peaks at optimal arousal, drops at extremes.
+
+### Mood-Congruent Retrieval Bias (bodh::emotion)
+
+```
+biased_prob = base_prob + weight × similarity(current_affect, memory_affect)
+```
+
+Positive mood boosts positive memory retrieval; negative boosts negative.
+
+### Kelley Attribution (bodh::social)
+
+| Consensus | Distinctiveness | Consistency | → Attribution |
+|-----------|----------------|-------------|---------------|
+| High | High | High | External |
+| Low | Low | High | Internal |
+| Low | High | Low | Circumstantial |
+
+### Cronbach's Alpha (bodh::psychometrics)
+
+```
+α = (k / (k-1)) × (1 - Σ σ²_i / σ²_total)
+```
+
+Where k = items, σ²_i = item variance, σ²_total = total variance. α ≥ 0.7 = acceptable.
+
+### Hatfield Emotional Contagion (sangha::contagion)
+
+```
+valence_i' = valence_i + dt × susceptibility_i × mimicry_rate × Σ_j w_ij × (valence_j - valence_i)
+```
+
+Network-based emotional mimicry. Agents drift toward weighted average of neighbors.
+
+### Mood Propagation with Decay (sangha::contagion)
+
+```
+mood_i' = mood_i + dt × Σ w_ij × (mood_j - mood_i) - dt × decay × (mood_i - 0.5)
+```
+
+Linear diffusion + regression to neutral (0.5).
+
+### Epidemic Threshold (sangha::contagion)
+
+```
+β_c = 1 / λ_max(A)
+```
+
+Where λ_max = largest eigenvalue of adjacency matrix. Contagion dies out below this rate.
+
+### Asch Conformity (sangha::influence)
+
+```
+P(conform) = f(group_size, unanimity) × (1 - conviction)
+```
+
+Peaks at 3–4 group members; drops if unanimity is broken.
+
+### Ringelmann Social Loafing (sangha::group)
+
+```
+effort = individual_effort × (1 - loss_factor × ln(group_size))
+floor: 10% of individual effort
+```
+
+### Janis Groupthink Risk (sangha::group)
+
+```
+risk = 0.4 × cohesion + 0.3 × insulation + 0.3 × leader_bias
+```
+
+### Shapley Value (sangha::coalition)
+
+```
+φ_i = Σ_S [|S|! × (n-|S|-1)! / n!] × [v(S ∪ {i}) - v(S)]
+```
+
+Expected marginal contribution of player i across all coalition orderings.
+
+### Clustering Coefficient (sangha::network)
+
+```
+C_i = 2 × |edges among neighbors| / (k_i × (k_i - 1))
+```
+
+Where k_i = degree of node i. Measures cliquishness.
+
+### Dunbar Layers (sangha::network)
+
+| Layer | Max Connections | Relationship Type |
+|-------|----------------|-------------------|
+| 0 | 5 | Intimate support |
+| 1 | 15 | Sympathy group |
+| 2 | 50 | Close friends |
+| 3 | 150 | Casual friends (Dunbar's number) |
+| 4 | >150 | Acquaintances |

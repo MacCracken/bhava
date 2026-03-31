@@ -1,5 +1,46 @@
 # Changelog
 
+## [1.4.0] - 2026-03-30
+
+Sharira physiology + Jivanu microbiology bridge modules — the body presses on emotion.
+
+### Added
+
+- **`physiology` feature** — optional sharira body/biomechanics integration via `physiology` module
+  - 12 bridge functions connecting sharira's body state to bhava's emotion/personality systems
+  - Fatigue capacity → mood (irritability, reduced joy, despondency)
+  - Fatigue capacity → energy drain multiplier
+  - Joint constraint violation → stress input (sigmoid), pain intensity (logarithmic saturation)
+  - Stability margin → anxiety mood shift (balance confidence / falling panic)
+  - Muscle activation level → energy exertion rate (quadratic)
+  - Body mass → basal metabolic rate via Kleiber's law (sharira::bridge)
+  - Morphology mass factor → dominance/confidence bias
+  - Gait speed → physiological arousal (sigmoid), gait type → emotional valence
+  - Allometric heart rate → baseline arousal (log scale)
+- **`microbiology` feature** — optional jivanu microbial/immune system integration via `microbiology` module
+  - 10 bridge functions connecting jivanu's biological state to bhava's emotion systems
+  - Infected fraction → sickness behavior mood (cytokine-driven: fatigue, anhedonia, withdrawal)
+  - SEIR exposed + infected → normalized severity
+  - Recovered fraction → mood restoration boost
+  - Infected fraction → immune energy drain multiplier (1.0–3.0)
+  - R0 (beta, gamma) → social withdrawal pressure via jivanu::epidemiology
+  - Vaccination coverage + R0 → trust/safety feeling via herd immunity threshold
+  - Growth rate fraction → metabolic energy efficiency
+  - Cardinal temperature model → thermal discomfort/stress via jivanu::growth
+  - Emax pharmacological model → cognitive effect via jivanu::metabolism
+  - Drug concentration / EC50 → sedation level
+
+### Changed
+
+- `full` feature flag now includes `physiology` and `microbiology`
+
+### Stats
+
+- 1117 tests (1019 unit + 35 integration + 63 doc) — up from 1051
+- 37 modules (up from 35)
+- Zero `unwrap()`/`panic!()`/`unsafe` in library code
+- Zero clippy warnings
+
 ## [1.3.0] - 2026-03-30
 
 Bodh psychology math + Sangha sociology math bridge modules — backing existing bhava systems with validated computational models from sibling AGNOS crates.

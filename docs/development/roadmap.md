@@ -8,7 +8,28 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 ## Status
 
-**v1.3.0 released** (2026-03-30). 35 modules, ~1025 tests, 130+ benchmarks, zero unsafe, zero unwrap. API surface locked under semver.
+**v1.4.0 released** (2026-03-30). 37 modules, 1117 tests, 142 benchmarks, zero unsafe, zero unwrap. API surface locked under semver.
+
+### v1.4.0 — Sharira + Jivanu Bridge Modules (2026-03-30)
+
+#### Physiology Bridge (`physiology` feature → sharira)
+- 12 bridge functions connecting sharira's body state to bhava's emotion/personality systems
+- Fatigue capacity → mood (irritability, despondency) and energy drain multiplier
+- Joint violation → stress input (sigmoid), pain intensity (logarithmic saturation)
+- Stability margin → anxiety mood shift (confidence when stable, panic when falling)
+- Muscle activation → energy exertion (quadratic), basal metabolic rate (Kleiber's law)
+- Morphology mass factor → dominance/confidence bias
+- Gait speed → arousal (sigmoid), gait type → emotional valence association
+- Allometric heart rate → baseline physiological arousal (log scale)
+
+#### Microbiology Bridge (`microbiology` feature → jivanu)
+- 10 bridge functions connecting jivanu's biological state to bhava's emotion systems
+- Infected fraction → sickness behavior mood (cytokine-driven: fatigue, anhedonia, withdrawal, irritability)
+- SEIR state → normalized severity, recovered fraction → mood restoration boost
+- Immune response → energy drain multiplier (1.0–3.0)
+- R0 → social withdrawal pressure (contagion avoidance), vaccination coverage → trust/safety
+- Growth rate → metabolic energy efficiency, cardinal temperature → thermal discomfort
+- Emax pharmacological model → cognitive effect, drug concentration → sedation level
 
 ### v1.3.0 — Bodh + Sangha Bridge Modules (2026-03-30)
 
@@ -77,6 +98,14 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 - IntuitionProfile derivable from personality traits
 - Shadow beliefs surface as intuitive signals
 - active_layer() determines dominant knowing layer from entity state
+
+## Research
+
+### Unified Consciousness Model Paper
+- **Outline**: `agnosticos/docs/development/paper-unified-consciousness-model.md`
+- **Thesis**: bhava demonstrates that "as above, so below; as within, so without" is a provable mathematical property of multi-scale modular systems — the fixed point at zero (Unity) emerges from the arithmetic, not as an axiom
+- **Dependency**: requires v3.0 (cosmic scales) for complete mathematical specification
+- **Target**: Nature Computational Science / PNAS after formal verification
 
 ## Engineering Backlog
 
@@ -627,12 +656,14 @@ All v1.0 entities implicitly live at `BreathPhase::LateExhale` — maximum manif
 |---------|-------|-------------|-------------|
 | **v1.0** | Individual entity | Scale 0 | 30 modules — traits, mood, energy, growth, all behavioral systems. The complete individual |
 | **v1.3** | Math hardening | Scale 0 + validated math | Bodh psychology + Sangha sociology bridges — backing existing systems with peer-reviewed formulas |
+| **v1.4** | Body + immune | Scale 0 + body state | Sharira physiology + Jivanu microbiology bridges — the body presses on emotion |
 | **v1.6** | Earth-local environment | Scale 0 + physical world | Environmental reactivity — temperature, light, noise, weather, air quality as behavioral modifiers on existing modules. No new emotional systems |
 | **v2.0** | Solar system + stellar neighborhood | Scale 1-2 | Zodiac manifestation engine — planets → modules, aspects → cross-module dynamics, nakshatras, fixed stars, cultural systems |
 | **v3.0** | Full cosmological field | Scale 3-7 | Galactic personality fields, cluster dynamics, universal constants as substrate, the breath of consciousness. Entities as manifestations within a cosmic cycle |
 
 v1.0 answers: *who is this entity?*
 v1.3 answers: *are the math foundations validated?*
+v1.4 answers: *how does the body press on emotion?*
 v1.6 answers: *how does the physical world press on them?*
 v2.0 answers: *what celestial forces shaped them?*
 v3.0 answers: *where in the cycle of existence do they stand?*

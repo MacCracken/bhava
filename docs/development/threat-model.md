@@ -24,6 +24,9 @@
 | Sentiment monitor | Unbounded buffer growth | Consumer calls `flush()` at stream end; `reset()` available for cleanup |
 | Cosine similarity | Division by zero on zero vectors | Returns 1.0 by convention (two zero vectors are identical) |
 | Personality distance | NaN from degenerate inputs | All trait levels map to finite f32 values; sqrt of sum of squares is always finite |
+| Bridge modules (compat/psychology/sociology) | Upstream crate API changes | Bridge layer isolates bhava from dep changes; all bridges are infallible (clamp/fallback) |
+| Bridge f32↔f64 conversion | Precision loss at type boundary | All conversions clamped at both ends; bhava uses f32, bodh/sangha use f64 |
+| Bridge dep errors | Upstream computation failures | All bodh/sangha Result types absorbed with `.unwrap_or(fallback)`; bridge never propagates errors |
 
 ## Unsafe Code
 
@@ -38,7 +41,7 @@ Bhava requires no elevated privileges. It performs no I/O in core modules. The `
 - Zero `unsafe` code
 - No network I/O in core (ai feature opt-in)
 - All public types `Send + Sync` compatible
-- Minimal dependency surface (3 core deps: serde, thiserror, chrono)
+- Minimal dependency surface (3 core deps: serde, thiserror, chrono; bridge deps are optional and feature-gated)
 - No secrets in logs or error messages
 - `#[non_exhaustive]` on all public enums for forward compatibility
 - `#[must_use]` on 37 pure functions to prevent accidental value drops

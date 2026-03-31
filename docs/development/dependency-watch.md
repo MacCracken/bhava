@@ -14,8 +14,14 @@ Status tracking for all direct dependencies.
 
 | Crate | Version | Feature | Purpose |
 |-------|---------|---------|---------|
-| `reqwest` | 0.12 | `ai` | HTTP client (unused in core; available for future network integration) |
-| `tokio` | 1 | `ai` | Async runtime (unused in core) |
+| `jantu` | 1 | `instinct` | Creature behavior substrate — drives, survival, stress |
+| `bodh` | 0.1 (path) | `psychology` | Psychology math — affect, memory, cognition, psychometrics |
+| `sangha` | 0.1 (path) | `sociology` | Sociology math — contagion, networks, influence, coalitions |
+| `sharira` | 1.0 (path) | `physiology` | Body/biomechanics — fatigue, muscle, gait, balance, allometry |
+| `jivanu` | 0.1 (path) | `microbiology` | Microbiology — SIR/SEIR, metabolism, pharmacokinetics, immune |
+| `tracing` | 0.1 | `tracing` | Structured observability via `tracing::instrument` |
+| `reqwest` | 0.12 | `ai` | HTTP client for AI integration |
+| `tokio` | 1 | `ai` | Async runtime |
 | `serde_json` | 1 | `ai`, `sqlite` | JSON serialization for storage and metadata |
 | `rusqlite` | 0.39 | `sqlite` | SQLite database with bundled feature |
 
@@ -24,7 +30,7 @@ Status tracking for all direct dependencies.
 | Crate | Version | Purpose |
 |-------|---------|---------|
 | `serde_json` | 1 | Serde roundtrip tests |
-| `criterion` | 0.5 | 77 benchmarks across 15 groups |
+| `criterion` | 0.5 | 134 benchmarks across 34 groups |
 
 ## MSRV
 
@@ -37,5 +43,6 @@ Status tracking for all direct dependencies.
 
 - `rusqlite` 0.39 uses `bundled` feature — compiles SQLite from source, no system dependency
 - `reqwest` 0.12 requires `tokio` 1.x runtime
+- `bodh`, `sangha`, `sharira`, and `jivanu` are path deps — will switch to version deps when published to crates.io
 - Core library (default features) has only 3 dependencies: serde, thiserror, chrono
 - `serde_json` appears in both optional and dev-dependencies — dev version used for tests, optional for features

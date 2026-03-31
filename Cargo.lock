@@ -58,17 +58,19 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "bhava"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "bodh",
  "chrono",
  "criterion",
  "jantu",
+ "jivanu",
  "reqwest",
  "rusqlite",
  "sangha",
  "serde",
  "serde_json",
+ "sharira",
  "thiserror",
  "tokio",
  "tracing",
@@ -454,6 +456,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.29.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8babf46d4c1c9d92deac9f7be466f76dfc4482b6452fc5024b5e8daf6ffeb3ee"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "h2"
 version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -521,6 +532,18 @@ name = "hermit-abi"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc0fef456e4baa96da950455cd02c081ca953b141298e41db3fc7e36b1da849c"
+
+[[package]]
+name = "hisab"
+version = "1.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6548cb83e812c5113aba95e8f3990b30e8d2680b76832807473d04adeac95831"
+dependencies = [
+ "glam",
+ "serde",
+ "thiserror",
+ "tracing",
+]
 
 [[package]]
 name = "http"
@@ -831,6 +854,15 @@ name = "jantu"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "963f893c54e2bd6cdab9eed93cb474eefcd5e293da93579b93e76330fa4ea6be"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "jivanu"
+version = "0.1.0"
 dependencies = [
  "serde",
  "thiserror",
@@ -1326,7 +1358,7 @@ dependencies = [
 
 [[package]]
 name = "sangha"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "serde",
  "thiserror",
@@ -1430,6 +1462,16 @@ dependencies = [
  "itoa",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "sharira"
+version = "1.0.0"
+dependencies = [
+ "hisab",
+ "serde",
+ "thiserror",
+ "tracing",
 ]
 
 [[package]]

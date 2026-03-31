@@ -43,6 +43,8 @@
 //! - [`compat`] — Jantu creature behavior integration (feature: `instinct`)
 //! - [`psychology`] — Bodh psychology math integration (feature: `psychology`)
 //! - [`sociology`] — Sangha sociology math integration (feature: `sociology`)
+//! - [`physiology`] — Sharira body/biomechanics integration (feature: `physiology`)
+//! - [`microbiology`] — Jivanu microbial/immune system integration (feature: `microbiology`)
 //! - [`error`] — Error types
 
 pub mod error;
@@ -142,6 +144,12 @@ pub mod psychology;
 
 #[cfg(feature = "sociology")]
 pub mod sociology;
+
+#[cfg(feature = "physiology")]
+pub mod physiology;
+
+#[cfg(feature = "microbiology")]
+pub mod microbiology;
 
 #[cfg(feature = "ai")]
 pub mod ai;

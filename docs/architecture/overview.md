@@ -34,6 +34,8 @@ bhava
 ├── compat        — Jantu creature behavior integration (15 bridge functions)                        [feature: instinct]
 ├── psychology    — Bodh psychology math integration (14 bridge functions)                           [feature: psychology]
 ├── sociology     — Sangha sociology math integration (12 bridge functions)                          [feature: sociology]
+├── physiology   — Sharira body/biomechanics integration (12 bridge functions)                      [feature: physiology]
+├── microbiology — Jivanu microbial/immune system integration (10 bridge functions)                 [feature: microbiology]
 ├── store         — BhavaStore trait for pluggable persistence backends                              [all core features]
 ├── storage       — SqliteStore implementation of BhavaStore                                         [feature: sqlite]
 └── error         — BhavaError (9 variants, #[non_exhaustive])                                      [always]
@@ -51,6 +53,8 @@ bhava
 | `instinct` | no | mood, traits, jantu | Jantu creature behavior bridge (15 functions) |
 | `psychology` | no | mood, traits, bodh | Bodh psychology math bridge (14 functions) |
 | `sociology` | no | mood, sangha | Sangha sociology math bridge (12 functions) |
+| `physiology` | no | mood, sharira | Sharira body/biomechanics bridge (12 functions) |
+| `microbiology` | no | mood, jivanu | Jivanu microbial/immune bridge (10 functions) |
 | `ai` | no | traits, mood, archetype, sentiment, reqwest, tokio, serde_json | Prompt composition, sentiment feedback, metadata |
 | `sqlite` | no | traits, mood, archetype, sentiment, rusqlite, serde_json | SQLite persistence |
 | `full` | — | all of the above | Enable everything |
@@ -152,6 +156,58 @@ SqliteStore implements BhavaStore (feature: sqlite)
 Custom backends: implement BhavaStore for Postgres, Redis, etc.
 ```
 
+### Bridge Modules (psychology / sociology)
+
+```
+Psychology (bodh):
+  MoodVector → affect_from_mood() → bodh::Affect (2D circumplex)
+  bodh::Affect → classify_emotion() → BasicEmotion (Ekman)
+  bhava::Appraisal → appraisal_to_scherer() → SchererDims → bodh::appraise() → Affect
+  bhava::RegulationStrategy → regulation_effectiveness() → f64 (Gross coefficient)
+  presentation ages → base_level_activation() → f64 (ACT-R B_i)
+  arousal + optimal → yerkes_dodson_performance() → f64 (inverted-U)
+  mood + memory valence → mood_congruent_bias() → biased retrieval probability
+  consensus/distinctiveness/consistency → attribution_type() → External/Internal/Circumstantial
+
+Sociology (sangha):
+  agent valences + network → hatfield_mood_delta() → updated valences (Hatfield mimicry)
+  agent moods + network → mood_propagation() → diffused moods (linear + decay)
+  network adjacency → contagion_threshold() → critical β (eigenvalue)
+  network edges + node → clustering_coefficient() → cliquishness (0–1)
+  connection count → dunbar_layer() → intimacy circle (0–4)
+  conviction + pressure + size → conformity_pressure() → bool (Asch)
+  group_size + effort → social_loafing() → reduced effort (Ringelmann)
+  cohesion + insulation + bias → groupthink_risk() → risk score (Janis)
+  estimates + method → wisdom_of_crowds() → aggregate (Surowiecki)
+  coalition values → shapley_values() → fair allocation per player
+```
+
+Physiology (sharira):
+  fatigue capacity → mood_from_fatigue() → MoodVector (irritability, despondency)
+  fatigue capacity → energy_drain_from_fatigue() → drain multiplier (1–5×)
+  joint violation → stress_from_violation() → stress input (sigmoid)
+  joint violation → pain_intensity() → pain level (logarithmic saturation)
+  stability margin → anxiety_from_balance() → MoodVector (confidence / panic)
+  muscle activation → exertion_from_activation() → energy exertion (quadratic)
+  body mass → metabolic_load() → BMR watts (Kleiber's law)
+  mass factor → confidence_from_morphology() → dominance bias
+  gait speed → arousal_from_gait() → arousal (sigmoid)
+  gait type → gait_emotional_valence() → valence association
+  resting HR → arousal_from_heart_rate() → baseline arousal (log scale)
+
+Microbiology (jivanu):
+  infected fraction → sickness_mood() → MoodVector (cytokine sickness behavior)
+  exposed + infected → sickness_severity() → severity (0–1)
+  recovered fraction → recovery_mood_boost() → MoodVector (relief/vitality)
+  infected fraction → immune_energy_drain() → drain multiplier (1–3×)
+  beta + gamma → contagion_avoidance() → social withdrawal (sigmoid on R0)
+  coverage + R0 → herd_safety() → trust modifier (herd immunity ratio)
+  growth rate → metabolic_efficiency() → energy availability (0.5–1.0)
+  temperature → temperature_stress() → thermal discomfort (cardinal model)
+  concentration + EC50 → drug_cognitive_effect() → cognitive modifier (Emax)
+  concentration / EC50 → drug_sedation() → drowsiness (sigmoid)
+```
+
 ## Dependencies
 
 | Crate | Purpose |
@@ -162,6 +218,8 @@ Custom backends: implement BhavaStore for Postgres, Redis, etc.
 | `jantu` | Creature behavior substrate (instinct feature only) |
 | `bodh` | Psychology math — affect, memory, cognition, psychometrics (psychology feature only) |
 | `sangha` | Sociology math — contagion, networks, influence, coalitions (sociology feature only) |
+| `sharira` | Body/biomechanics — fatigue, muscles, gait, balance, allometry (physiology feature only) |
+| `jivanu` | Microbiology — SIR/SEIR, metabolism, pharmacokinetics, immune (microbiology feature only) |
 | `reqwest` | HTTP client (ai feature only) |
 | `tokio` | Async runtime (ai feature only) |
 | `serde_json` | JSON handling (ai + sqlite features) |

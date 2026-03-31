@@ -22,7 +22,7 @@ Bhava is a personality and emotional state library for AI agents and game NPCs. 
 
 | Version | Supported |
 |---------|-----------|
-| 1.0.x | Yes |
+| 1.x | Yes |
 | 0.23.x–0.24.x | Security fixes only |
 | < 0.23 | No |
 

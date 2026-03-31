@@ -1164,16 +1164,93 @@ criterion_group!(psychology_benches, bench_psychology,);
 #[cfg(feature = "sociology")]
 criterion_group!(sociology_benches, bench_sociology,);
 
-#[cfg(all(feature = "psychology", feature = "sociology"))]
-criterion_main!(benches, psychology_benches, sociology_benches);
+#[cfg(feature = "physiology")]
+criterion_group!(physiology_benches, bench_physiology,);
 
-#[cfg(all(feature = "psychology", not(feature = "sociology")))]
+#[cfg(feature = "microbiology")]
+criterion_group!(microbiology_benches, bench_microbiology,);
+
+// All bridge features (--all-features / bench-history.sh)
+#[cfg(all(
+    feature = "psychology",
+    feature = "sociology",
+    feature = "physiology",
+    feature = "microbiology"
+))]
+criterion_main!(
+    benches,
+    psychology_benches,
+    sociology_benches,
+    physiology_benches,
+    microbiology_benches
+);
+
+// No bridge features (default feature set)
+#[cfg(not(any(
+    feature = "psychology",
+    feature = "sociology",
+    feature = "physiology",
+    feature = "microbiology"
+)))]
+criterion_main!(benches);
+
+// Partial: only psychology
+#[cfg(all(
+    feature = "psychology",
+    not(feature = "sociology"),
+    not(feature = "physiology"),
+    not(feature = "microbiology")
+))]
 criterion_main!(benches, psychology_benches);
 
-#[cfg(all(not(feature = "psychology"), feature = "sociology"))]
+// Partial: only sociology
+#[cfg(all(
+    not(feature = "psychology"),
+    feature = "sociology",
+    not(feature = "physiology"),
+    not(feature = "microbiology")
+))]
 criterion_main!(benches, sociology_benches);
 
-#[cfg(not(any(feature = "psychology", feature = "sociology")))]
+// Partial: only physiology
+#[cfg(all(
+    not(feature = "psychology"),
+    not(feature = "sociology"),
+    feature = "physiology",
+    not(feature = "microbiology")
+))]
+criterion_main!(benches, physiology_benches);
+
+// Partial: only microbiology
+#[cfg(all(
+    not(feature = "psychology"),
+    not(feature = "sociology"),
+    not(feature = "physiology"),
+    feature = "microbiology"
+))]
+criterion_main!(benches, microbiology_benches);
+
+// Any other partial combination — include what's enabled
+#[cfg(all(
+    any(
+        feature = "psychology",
+        feature = "sociology",
+        feature = "physiology",
+        feature = "microbiology"
+    ),
+    not(all(
+        feature = "psychology",
+        feature = "sociology",
+        feature = "physiology",
+        feature = "microbiology"
+    )),
+    // Exclude single-feature cases handled above
+    any(
+        all(feature = "psychology", any(feature = "sociology", feature = "physiology", feature = "microbiology")),
+        all(feature = "sociology", any(feature = "physiology", feature = "microbiology")),
+        all(feature = "physiology", feature = "microbiology"),
+    ),
+))]
 criterion_main!(benches);
 
 fn bench_belief_emotion(c: &mut Criterion) {
@@ -1520,6 +1597,74 @@ fn bench_sociology(c: &mut Criterion) {
 
     group.bench_function("groupthink_risk", |b| {
         b.iter(|| sociology::groupthink_risk(black_box(0.8), black_box(0.7), black_box(0.6)))
+    });
+
+    group.finish();
+}
+
+// ── Physiology bridge benchmarks ───────────────────────────────────────
+
+#[cfg(feature = "physiology")]
+fn bench_physiology(c: &mut Criterion) {
+    use bhava::physiology;
+
+    let mut group = c.benchmark_group("physiology");
+
+    group.bench_function("mood_from_fatigue", |b| {
+        b.iter(|| physiology::mood_from_fatigue(black_box(0.4)))
+    });
+
+    group.bench_function("anxiety_from_balance", |b| {
+        b.iter(|| physiology::anxiety_from_balance(black_box(-0.3)))
+    });
+
+    group.bench_function("arousal_from_gait", |b| {
+        b.iter(|| physiology::arousal_from_gait(black_box(3.0)))
+    });
+
+    group.bench_function("metabolic_load", |b| {
+        b.iter(|| physiology::metabolic_load(black_box(70.0)))
+    });
+
+    group.finish();
+}
+
+// ── Microbiology bridge benchmarks ─────────────────────────────────────
+
+#[cfg(feature = "microbiology")]
+fn bench_microbiology(c: &mut Criterion) {
+    use bhava::microbiology;
+
+    let mut group = c.benchmark_group("microbiology");
+
+    group.bench_function("sickness_mood", |b| {
+        b.iter(|| microbiology::sickness_mood(black_box(0.5)))
+    });
+
+    group.bench_function("contagion_avoidance", |b| {
+        b.iter(|| microbiology::contagion_avoidance(black_box(3.0), black_box(0.2)))
+    });
+
+    group.bench_function("drug_cognitive_effect", |b| {
+        b.iter(|| {
+            microbiology::drug_cognitive_effect(
+                black_box(5.0),
+                black_box(1.0),
+                black_box(5.0),
+                black_box(1.0),
+            )
+        })
+    });
+
+    group.bench_function("temperature_stress", |b| {
+        b.iter(|| {
+            microbiology::temperature_stress(
+                black_box(25.0),
+                black_box(15.0),
+                black_box(37.0),
+                black_box(45.0),
+            )
+        })
     });
 
     group.finish();
