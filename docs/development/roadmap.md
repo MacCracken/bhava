@@ -109,7 +109,7 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 ## Engineering Backlog
 
-No open items.
+- **Release benchmark artifacts** — release workflow should run full `bench-history.sh` (100 samples) and attach `bench-history.csv` + `BENCHMARKS.md` as release assets. Every tagged version gets a permanent, reproducible performance snapshot. CI smoke test stays at `--sample-size 10`.
 
 ## Future Features (demand-gated)
 

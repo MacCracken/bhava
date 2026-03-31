@@ -96,8 +96,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: Run benchmarks
-        run: cargo bench --bench benchmarks --all-features --no-fail-fast
+      - name: Run benchmarks (smoke test — reduced sample size for CI)
+        run: cargo bench --bench benchmarks --all-features -- --sample-size 10
       - name: Upload benchmark artifacts
         uses: actions/upload-artifact@v4
         with:
