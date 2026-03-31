@@ -1172,12 +1172,33 @@ criterion_group!(physiology_benches, bench_physiology,);
 #[cfg(feature = "microbiology")]
 criterion_group!(microbiology_benches, bench_microbiology,);
 
+#[cfg(feature = "atomic_time")]
+criterion_group!(atomic_time_benches, bench_atomic_time,);
+
 // All bridge features (--all-features / bench-history.sh)
 #[cfg(all(
     feature = "psychology",
     feature = "sociology",
     feature = "physiology",
-    feature = "microbiology"
+    feature = "microbiology",
+    feature = "atomic_time"
+))]
+criterion_main!(
+    benches,
+    psychology_benches,
+    sociology_benches,
+    physiology_benches,
+    microbiology_benches,
+    atomic_time_benches
+);
+
+// All non-atomic_time bridge features
+#[cfg(all(
+    feature = "psychology",
+    feature = "sociology",
+    feature = "physiology",
+    feature = "microbiology",
+    not(feature = "atomic_time")
 ))]
 criterion_main!(
     benches,
@@ -1576,6 +1597,40 @@ fn bench_environment(c: &mut Criterion) {
     group.bench_function("wind_chill", |b| {
         let env = Environment::cold_winter_night();
         b.iter(|| black_box(&env).wind_chill())
+    });
+
+    group.finish();
+}
+
+// ── Atomic time bridge benchmarks ─────────────────────────────────────
+
+#[cfg(feature = "atomic_time")]
+fn bench_atomic_time(c: &mut Criterion) {
+    use bhava::atomic_time;
+    use tanmatra::bridge::{SimulationClock, TimeContext};
+
+    let mut group = c.benchmark_group("atomic_time");
+
+    group.bench_function("simulation_seconds", |b| {
+        let ctx = TimeContext::real_time(86400.0);
+        b.iter(|| atomic_time::simulation_seconds(black_box(&ctx)))
+    });
+
+    group.bench_function("circadian_hour_of_day", |b| {
+        let ctx = TimeContext::real_time(50000.0);
+        b.iter(|| atomic_time::circadian_hour_of_day(black_box(&ctx)))
+    });
+
+    group.bench_function("growth_rate_scale_sim", |b| {
+        let clock = SimulationClock::new(0.0).set_multiplier(0.0, 10.0);
+        let ctx = TimeContext::from_simulation_clock(&clock, 1000.0);
+        b.iter(|| atomic_time::growth_rate_scale(black_box(&ctx)))
+    });
+
+    group.bench_function("delta_seconds", |b| {
+        let prev = TimeContext::real_time(1000.0);
+        let now = TimeContext::real_time(1001.0);
+        b.iter(|| atomic_time::delta_seconds(black_box(&prev), black_box(&now)))
     });
 
     group.finish();

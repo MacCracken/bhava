@@ -8,7 +8,7 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 ## Status
 
-**v1.6.0 in progress** (2026-03-31). 38 modules, 1147 tests, 148 benchmarks, zero unsafe, zero unwrap. API surface locked under semver. Completed versions in [CHANGELOG.md](../../CHANGELOG.md).
+**v1.7.0 released** (2026-03-31). 39 modules, 1166 tests, 152 benchmarks, zero unsafe, zero unwrap. API surface locked under semver. Completed versions in [CHANGELOG.md](../../CHANGELOG.md).
 
 ## Research
 
@@ -560,7 +560,7 @@ The environmental, zodiac, and cosmological systems build on existing AGNOS scie
 | **jyotish** | ~1.0 | Ephemeris, houses, aspects, nakshatras, transits | Built, pre-1.0 repairs tracked |
 | **tara** | 1.0.0 | Stellar astrophysics, classification, evolution, spectral | Released |
 | **brahmanda** | 0.1.0 | Galactic structure, cosmic web, halos, power spectrum | Built, pre-publish repairs tracked |
-| **hisab-mimamsa** | 1.0.0 | GR, QFT, cosmology, unified field, scale bridge | Pre-publish repairs in progress |
+| **hisab-mimamsa** | 1.0.0 | GR, QFT, cosmology, unified field, scale bridge | Released on crates.io |
 | **tanmatra** | 1.0.0 | Atomic/subatomic physics (v1.5: frequency standards + atomic time) | v1.5 planned |
 | **sankhya** | 0.1.0 | Ancient math systems (Mayan, Vedic, Chinese, etc.) | Needs hardening |
 

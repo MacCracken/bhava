@@ -41,6 +41,7 @@
 //! - [`intuition`] — Subconscious pattern integration — gut feelings from converging subsystems
 //! - [`aesthetic`] — Aesthetic attribution — repeated exposure crystallizes into beliefs and trait pressure
 //! - [`environment`] — Environmental reactivity: temperature, light, noise, weather pressing on mood/energy/stress (feature: `mood`)
+//! - [`atomic_time`] — Tanmatra atomic time bridge: simulation clock, time context for circadian/rhythm/growth (feature: `atomic_time`)
 //! - [`compat`] — Jantu creature behavior integration (feature: `instinct`)
 //! - [`psychology`] — Bodh psychology math integration (feature: `psychology`)
 //! - [`sociology`] — Sangha sociology math integration (feature: `sociology`)
@@ -139,6 +140,9 @@ pub mod aesthetic;
 
 #[cfg(feature = "mood")]
 pub mod environment;
+
+#[cfg(feature = "atomic_time")]
+pub mod atomic_time;
 
 #[cfg(feature = "instinct")]
 pub mod compat;

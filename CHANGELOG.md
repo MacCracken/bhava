@@ -1,6 +1,25 @@
 # Changelog
 
-## [Unreleased] — v1.6.0
+## [1.7.0] — 2026-03-31
+
+Atomic time awareness — physical time grounding for simulation-aware modules.
+
+### Added
+
+- **`atomic_time` feature** — optional tanmatra atomic time integration via `atomic_time` module
+  - `simulation_seconds()` / `simulation_hours()` / `simulation_days()` — elapsed simulation time extraction from `TimeContext`
+  - `time_multiplier()` — current simulation speed (1.0 = real-time, 0.0 = paused, >1.0 = fast-forward)
+  - `is_paused()` — pause detection for freezing all time-dependent state
+  - `growth_rate_scale()` / `decay_rate_scale()` — multipliers for trait pressure, belief erosion, memory decay that scale with simulation speed
+  - `circadian_hour_of_day()` — simulation-time hour wrapped to 0.0–24.0 for circadian phase
+  - `circadian_day_fraction()` — normalized day phase (0.0 = midnight, 0.5 = noon)
+  - `delta_seconds()` / `delta_hours()` — elapsed simulation time between two `TimeContext` snapshots, returns 0.0 if either is paused
+  - Re-exports tanmatra's `TimeContext` and `SimulationClock` for consumer convenience
+  - 15 unit tests + 4 doc tests + 2 serde roundtrip tests
+  - 4 criterion benchmarks: simulation_seconds (~1.3 ns), circadian_hour (~1.9 ns), growth_rate_scale (~0.5 ns), delta_seconds (~0.9 ns)
+  - New dependency: `tanmatra = "1.2"` (feature-gated, optional)
+
+## [1.6.0] — 2026-03-31
 
 Environmental reactivity — the physical world pressing on emotion.
 

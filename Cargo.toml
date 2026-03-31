@@ -1,6 +1,6 @@
 [package]
 name = "bhava"
-version = "1.6.0"
+version = "1.7.0"
 edition = "2024"
 rust-version = "1.89"
 license = "GPL-3.0-only"
@@ -27,8 +27,9 @@ psychology = ["mood", "traits", "dep:bodh"]
 sociology = ["mood", "dep:sangha"]
 physiology = ["mood", "dep:sharira"]
 microbiology = ["mood", "dep:jivanu"]
+atomic_time = ["mood", "dep:tanmatra"]
 tracing = ["dep:tracing"]
-full = ["traits", "mood", "archetype", "sentiment", "presets", "ai", "sqlite", "instinct", "psychology", "sociology", "physiology", "microbiology", "tracing"]
+full = ["traits", "mood", "archetype", "sentiment", "presets", "ai", "sqlite", "instinct", "psychology", "sociology", "physiology", "microbiology", "atomic_time", "tracing"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
@@ -57,6 +58,9 @@ sharira = { version = "1", optional = true, default-features = false }
 
 # Optional (microbiology feature — jivanu microbial/immune systems)
 jivanu = { version = "1", optional = true, default-features = false }
+
+# Optional (atomic_time feature — tanmatra atomic time / simulation clock)
+tanmatra = { version = "1.2", optional = true, default-features = false }
 
 # Optional (sqlite feature)
 rusqlite = { version = "0.39", features = ["bundled"], optional = true }
