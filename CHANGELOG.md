@@ -39,6 +39,12 @@ Type safety, abstractions, and infrastructure hardening for v2.0.
 - 22 enum `Display` impls replaced with `impl_display!` macro calls (identical output)
 - 12 unused `use std::fmt` imports removed (macro uses `::core::fmt` internally)
 
+### Fixed
+
+- **types** — `Normalized01::new()` and `Balanced11::new()` now handle NaN and infinite inputs (mapped to 0.0 instead of propagating)
+- **types** — `Normalized01` and `Balanced11` deserialization now clamps out-of-range values (previously raw f32 could bypass invariant via `#[serde(transparent)]`)
+- **curves** — `ExponentialDecay` deserialization now recomputes `lambda` from `half_life` (previously could deserialize inconsistent state)
+
 ### Infrastructure
 
 - **release workflow** — benchmark job runs `bench-history.sh` and attaches `bench-history.csv` + `BENCHMARKS.md` as release assets

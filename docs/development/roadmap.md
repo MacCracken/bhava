@@ -8,7 +8,7 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 ## Status
 
-**v2.0.0 in development**. 43 modules, 1234 tests, 157 benchmarks, zero unsafe, zero unwrap. Completed versions in [CHANGELOG.md](../../CHANGELOG.md).
+**v2.0.0 in development**. 43 modules, 1237 tests, 157 benchmarks, zero unsafe, zero unwrap. Completed versions in [CHANGELOG.md](../../CHANGELOG.md).
 
 ## Research
 

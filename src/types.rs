@@ -5,7 +5,7 @@
 //! - [`ThresholdClassifier`] — classify a value into discrete levels by static thresholds
 //! - [`evict_min`] — remove the element with the lowest score from a `Vec`
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 // ── Normalized01 ──────────────────────────────────────────────────────────
 
@@ -26,9 +26,16 @@ use serde::{Deserialize, Serialize};
 /// assert_eq!(Normalized01::new(1.5).get(), 1.0);
 /// assert_eq!(Normalized01::new(-0.3).get(), 0.0);
 /// ```
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize)]
 #[serde(transparent)]
 pub struct Normalized01(f32);
+
+impl<'de> Deserialize<'de> for Normalized01 {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let v = f32::deserialize(deserializer)?;
+        Ok(Self::new(v))
+    }
+}
 
 impl Normalized01 {
     /// Zero.
@@ -41,10 +48,16 @@ impl Normalized01 {
     pub const ONE: Self = Self(1.0);
 
     /// Create a new `Normalized01`, clamping the input to \[0.0, 1.0\].
+    ///
+    /// NaN and infinite values are mapped to 0.0.
     #[inline]
     #[must_use]
     pub fn new(value: f32) -> Self {
-        Self(value.clamp(0.0, 1.0))
+        if value.is_finite() {
+            Self(value.clamp(0.0, 1.0))
+        } else {
+            Self(0.0)
+        }
     }
 
     /// Extract the inner `f32`.
@@ -94,9 +107,16 @@ impl core::fmt::Display for Normalized01 {
 /// assert_eq!(Balanced11::new(2.0).get(), 1.0);
 /// assert_eq!(Balanced11::new(-3.0).get(), -1.0);
 /// ```
-#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd, Serialize)]
 #[serde(transparent)]
 pub struct Balanced11(f32);
+
+impl<'de> Deserialize<'de> for Balanced11 {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let v = f32::deserialize(deserializer)?;
+        Ok(Self::new(v))
+    }
+}
 
 impl Balanced11 {
     /// Minimum (-1.0).
@@ -109,10 +129,16 @@ impl Balanced11 {
     pub const MAX: Self = Self(1.0);
 
     /// Create a new `Balanced11`, clamping the input to \[-1.0, 1.0\].
+    ///
+    /// NaN and infinite values are mapped to 0.0.
     #[inline]
     #[must_use]
     pub fn new(value: f32) -> Self {
-        Self(value.clamp(-1.0, 1.0))
+        if value.is_finite() {
+            Self(value.clamp(-1.0, 1.0))
+        } else {
+            Self(0.0)
+        }
     }
 
     /// Extract the inner `f32`.
@@ -290,10 +316,18 @@ mod tests {
 
     #[test]
     fn normalized01_deserialize_clamps() {
-        // Deserializing out-of-range should produce the raw value (transparent)
-        // but new() would clamp it. This tests the transparent path.
-        let n: Normalized01 = serde_json::from_str("0.5").unwrap();
-        assert_eq!(n.get(), 0.5);
+        // Out-of-range values are clamped on deserialization
+        let n: Normalized01 = serde_json::from_str("5.0").unwrap();
+        assert_eq!(n.get(), 1.0);
+        let n: Normalized01 = serde_json::from_str("-1.0").unwrap();
+        assert_eq!(n.get(), 0.0);
+    }
+
+    #[test]
+    fn normalized01_nan_becomes_zero() {
+        assert_eq!(Normalized01::new(f32::NAN).get(), 0.0);
+        assert_eq!(Normalized01::new(f32::INFINITY).get(), 0.0);
+        assert_eq!(Normalized01::new(f32::NEG_INFINITY).get(), 0.0);
     }
 
     #[test]
@@ -345,12 +379,27 @@ mod tests {
     }
 
     #[test]
+    fn balanced11_nan_becomes_zero() {
+        assert_eq!(Balanced11::new(f32::NAN).get(), 0.0);
+        assert_eq!(Balanced11::new(f32::INFINITY).get(), 0.0);
+        assert_eq!(Balanced11::new(f32::NEG_INFINITY).get(), 0.0);
+    }
+
+    #[test]
     fn balanced11_serde_roundtrip() {
         let b = Balanced11::new(-0.25);
         let json = serde_json::to_string(&b).unwrap();
         assert_eq!(json, "-0.25");
         let back: Balanced11 = serde_json::from_str(&json).unwrap();
         assert_eq!(back, b);
+    }
+
+    #[test]
+    fn balanced11_deserialize_clamps() {
+        let b: Balanced11 = serde_json::from_str("5.0").unwrap();
+        assert_eq!(b.get(), 1.0);
+        let b: Balanced11 = serde_json::from_str("-5.0").unwrap();
+        assert_eq!(b.get(), -1.0);
     }
 
     #[test]

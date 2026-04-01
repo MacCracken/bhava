@@ -39,12 +39,24 @@ pub trait DecayCurve {
 /// // At t=2*half_life, quarter remains
 /// assert!((decay.decay_factor(20.0) - 0.25).abs() < 1e-10);
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 pub struct ExponentialDecay {
     /// Time for the value to halve. Must be positive.
     half_life: f64,
     /// Precomputed `ln(2) / half_life`.
+    #[serde(skip)]
     lambda: f64,
+}
+
+impl<'de> serde::Deserialize<'de> for ExponentialDecay {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(serde::Deserialize)]
+        struct Raw {
+            half_life: f64,
+        }
+        let raw = Raw::deserialize(deserializer)?;
+        Ok(Self::new(raw.half_life))
+    }
 }
 
 impl ExponentialDecay {
