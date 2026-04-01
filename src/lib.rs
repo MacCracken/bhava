@@ -48,6 +48,7 @@
 //! - [`sociology`] — Sangha sociology math integration (feature: `sociology`)
 //! - [`physiology`] — Sharira body/biomechanics integration (feature: `physiology`)
 //! - [`microbiology`] — Jivanu microbial/immune system integration (feature: `microbiology`)
+//! - [`zodiac`] — Zodiac manifestation engine: signs, elements, modalities, sign→personality presets (feature: `traits`)
 //! - [`types`] — Type-safety primitives: `Normalized01`, `Balanced11`, `ThresholdClassifier`, `evict_min`
 //! - [`curves`] — Decay/recovery curve abstractions: `ExponentialDecay`, `LogisticCurve`
 //! - [`error`] — Error types
@@ -61,6 +62,9 @@ pub mod types;
 
 #[cfg(feature = "traits")]
 pub mod traits;
+
+#[cfg(feature = "traits")]
+pub mod zodiac;
 
 #[cfg(feature = "mood")]
 pub mod mood;
