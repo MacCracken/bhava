@@ -12,7 +12,7 @@
 //! - [`mood`] — Emotional state vectors with time-based decay, triggers, history, and mood-aware prompts
 //! - [`archetype`] — Identity hierarchy (Soul/Spirit/Brain/Body/Heart) with templates and validation
 //! - [`sentiment`] — Keyword-based sentiment analysis with negation, intensity modifiers, and sentence-level analysis
-//! - [`presets`] — Built-in personality templates (BlueShirtGuy, T.Ron, Friday, Oracle, Scout)
+//! - [`presets`] — AGNOS ecosystem personality templates (AGNOS, T.Ron)
 //! - [`spirit`] — Passions, inspirations, and pains — the animating force
 //! - [`relationship`] — Inter-entity affinity, trust, and interaction tracking
 //! - [`appraisal`] — OCC appraisal model — goal-aware emotion generation
@@ -42,6 +42,7 @@
 //! - [`aesthetic`] — Aesthetic attribution — repeated exposure crystallizes into beliefs and trait pressure
 //! - [`environment`] — Environmental reactivity: temperature, light, noise, weather pressing on mood/energy/stress (feature: `mood`)
 //! - [`atomic_time`] — Tanmatra atomic time bridge: simulation clock, time context for circadian/rhythm/growth (feature: `atomic_time`)
+//! - [`neuroscience`] — Mastishk neuroscience bridge: brain chemistry pressing on mood/stress/energy/flow/growth (feature: `neuroscience`)
 //! - [`compat`] — Jantu creature behavior integration (feature: `instinct`)
 //! - [`psychology`] — Bodh psychology math integration (feature: `psychology`)
 //! - [`sociology`] — Sangha sociology math integration (feature: `sociology`)
@@ -143,6 +144,9 @@ pub mod environment;
 
 #[cfg(feature = "atomic_time")]
 pub mod atomic_time;
+
+#[cfg(feature = "neuroscience")]
+pub mod neuroscience;
 
 #[cfg(feature = "instinct")]
 pub mod compat;

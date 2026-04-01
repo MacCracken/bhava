@@ -32,7 +32,7 @@ MSRV: **1.89** (Rust edition 2024).
 | `mood` | yes | PAD emotional state vectors with decay, triggers, history, baselines |
 | `archetype` | yes | Identity hierarchy (Soul/Spirit/Brain/Body/Heart) with templates and validation |
 | `sentiment` | yes | Keyword analysis with negation, intensity modifiers, sentence-level |
-| `presets` | no | Built-in personalities (BlueShirtGuy, T.Ron, Friday, Oracle, Scout) |
+| `presets` | no | AGNOS ecosystem personality templates (AGNOS, T.Ron) |
 | `ai` | no | Prompt composition, sentiment feedback, agent metadata |
 | `sqlite` | no | SQLite persistence via `SqliteStore` |
 | `instinct` | no | Jantu creature behavior bridge (15 functions) |

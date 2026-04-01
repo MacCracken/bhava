@@ -47,48 +47,50 @@ Derive macro or `impl_display!` to eliminate 16+ manual `Display` match blocks. 
 ### State Machine Base Trait
 Generic `StateMachine { type State; type Input; fn tick(); fn state(); }` for `FlowState`, `CircadianRhythm`, and future phase-based systems. Build when: a 3rd state machine module is added.
 
-### Atomic Time Awareness — v1.7 (Physical Time Grounding)
+### Neuroscience Bridge — v1.8 (Brain Chemistry Pressing on Emotion)
 
-Bhava modules that deal with time (circadian, rhythm, active_hours, growth) currently use `chrono::DateTime<Utc>` — wall-clock time with no awareness of time scales, simulation speed, or the physical definition of time. v1.7 adds a bridge to tanmatra's atomic time system (v1.5) so bhava can distinguish real time from simulation time.
+The brain's neurochemistry presses on emotion constantly: serotonin sets mood baseline, dopamine drives reward and preference, cortisol amplifies stress, norepinephrine modulates arousal, GABA/glutamate balance affects anxiety, and sleep neuroscience feeds circadian. Same bridge pattern as physiology (sharira) and microbiology (jivanu).
 
-**Prerequisite**: tanmatra v1.5 (Frequency Standards & Atomic Time)
+**Prerequisites**: mastishk (neuroscience), rasayan (biochemistry) — to be scaffolded after brahmanda publishes
 
-#### Time Bridge (`atomic_time` feature → tanmatra)
+#### Bridge Functions (`neuroscience` feature → mastishk + rasayan)
 
-- `SimulationClock` struct — wraps tanmatra's `AtomicInstant` with a time scale multiplier
-- `TimeContext` enum: `RealTime` (wall clock, 1:1), `SimulatedTime(f64)` (accelerated/decelerated), `Paused`
-- Circadian/rhythm modules accept `TimeContext` to correctly phase-shift when simulation runs at 10x or pauses
-- Growth/decay rates scale with time context — a 10x simulation should produce 10x trait pressure, not 10x tick calls at wrong dt
+| Neurochemical | Bhava Module | Effect |
+|--------------|-------------|--------|
+| **Serotonin level** | `mood` | Baseline mood floor — low serotonin → reduced joy, elevated irritability |
+| **Dopamine level** | `preference`, `reward` | Reward sensitivity, preference reinforcement strength, motivation drive |
+| **Cortisol level** | `stress` | Allostatic load amplifier — high cortisol → accelerated stress accumulation |
+| **Norepinephrine** | `mood` (arousal), `salience` | Arousal modulation, salience sensitivity — fight-or-flight readiness |
+| **GABA/Glutamate ratio** | `mood` (anxiety), `regulation` | Anxiolytic balance — low GABA → elevated anxiety, impaired regulation |
+| **Oxytocin** | `relationship`, `trust` | Social bonding strength, trust baseline, contagion sensitivity |
+| **Endorphins** | `energy`, `stress` | Pain dampening, stress recovery boost, energy recovery modifier |
+| **Melatonin** | `circadian` | Sleep pressure, circadian phase marker — feeds existing Borbély two-process model |
+| **Acetylcholine** | `actr`, `flow` | Memory consolidation (activation strength), attention/flow entry threshold |
+| **BDNF** | `growth` | Neuroplasticity → trait pressure rate multiplier — high BDNF = faster personality adaptation |
 
-#### Integration Points
+#### Sleep Neuroscience → Circadian
 
-| Module | Current Time Source | v1.7 Change |
-|--------|-------------------|-------------|
-| `circadian` | `DateTime<Utc>` | `TimeContext` — correct alertness phase at any simulation speed |
-| `rhythm` | `DateTime<Utc>` | `TimeContext` — ultradian/seasonal cycles track simulation time |
-| `active_hours` | hour-of-day check | `TimeContext` — activation windows respect simulation clock |
-| `growth` | tick count | `TimeContext` — trait pressure accumulation proportional to simulated elapsed time |
-| `actr` | frequency/recency | `TimeContext` — activation decay uses simulated time, not wall time |
-| `aesthetic` | `DateTime<Utc>` | `TimeContext` — mere-exposure timing respects simulation speed |
+- Sleep stage cycling (NREM1-3, REM) → energy recovery rate modulation
+- Sleep debt accumulation → stress baseline elevation, cognitive performance (flow threshold)
+- Adenosine buildup → sleep pressure (extends existing circadian Process S)
 
 #### API Surface
 
 ```rust
-/// Time context for simulation-aware modules.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum TimeContext {
-    /// Wall-clock time (chat agents, real-time applications).
-    RealTime(chrono::DateTime<chrono::Utc>),
-    /// Simulated time with speed multiplier (game/simulation).
-    Simulated { now: chrono::DateTime<chrono::Utc>, speed: f64 },
-    /// Paused — no time passes for decay/growth.
-    Paused,
-}
+// Same bridge pattern as physiology/microbiology — pure functions, f32 primitives in
+pub fn mood_from_serotonin(level: f32) -> MoodVector;
+pub fn stress_from_cortisol(level: f32) -> f32;
+pub fn reward_sensitivity(dopamine: f32) -> f32;
+pub fn arousal_from_norepinephrine(level: f32) -> f32;
+pub fn anxiety_from_gaba_ratio(gaba: f32, glutamate: f32) -> f32;
+pub fn trust_from_oxytocin(level: f32) -> f32;
+pub fn sleep_pressure(adenosine: f32, melatonin: f32) -> f32;
+pub fn plasticity_rate(bdnf: f32) -> f32;
 ```
 
-No new emotional systems. Just temporal grounding — the difference between a minute of real conversation and a minute of simulated game time.
+No new emotional systems. The brain pressing on the modules we already have — same as the body (sharira), the immune system (jivanu), and the physical world (environment).
 
-Build when: tanmatra v1.5 ships. Depends on hisab-mimamsa for relativistic corrections in tanmatra's clock module.
+Build when: mastishk (neuroscience) and rasayan (biochemistry) scaffolded and hardened. Bridge consumes both — mastishk for neural circuits/sleep/neurotransmitter dynamics, rasayan for the biochemical pathways that produce/regulate those neurotransmitters. Bridge is pure mapping functions, not architecture.
 
 ### Zodiac Manifestation Engine
 
@@ -355,7 +357,70 @@ Cultural zodiac/calendar systems live in the **sankhya** crate (ancient mathemat
 
 Systems are composable. A character can have Western Sun in Scorpio, Vedic Moon in Pushya nakshatra, Chinese Year of the Dragon (Wood), and Mayan day sign Cimi — each contributing a layer to the same unified bhava profile. Cultural context determines which system has primary weight.
 
-Build order: sankhya hardening → bhava cultural overlay bridge (post-v2.0).
+Build order: sankhya hardening (blocked on lipi) → bhava cultural overlay bridge (post-v2.0).
+
+### Multilingual Emotion & Sentiment — post-v2.0 (lipi bridge)
+
+Bhava's sentiment, mood, and archetype modules are currently English-centric. A lipi bridge would internalize multilingual emotion vocabulary and cultural expression patterns — feelings that don't translate directly but map to specific MoodVector regions.
+
+**Prerequisite**: lipi (multilingual language engine)
+
+#### Capabilities
+
+- **Untranslatable emotion mapping**: culture-specific emotion concepts → MoodVector coordinates
+  - Portuguese *saudade* → bittersweet longing (joy↓, trust↑, arousal↓)
+  - Japanese *mono no aware* → transient beauty awareness (joy↑, arousal↓, interest↑)
+  - German *Schadenfreude* → pleasure at misfortune (joy↑, trust↓, dominance↑)
+  - Danish *hygge* → cozy contentment (joy↑, trust↑, arousal↓)
+  - Filipino *gigil* → overwhelming cuteness urge (arousal↑, joy↑)
+- **Multilingual sentiment analysis**: sentiment module operates across languages, not just English keywords
+- **Cultural display rules**: lipi script/language detection → display_rules cultural context selection
+- **Archetype localization**: personality archetypes expressed in culturally appropriate terms
+
+Sits alongside sankhya cultural overlay — both are "culture pressing on personality" at the same layer. lipi provides the linguistic dimension, sankhya provides the calendrical/mathematical dimension.
+
+Build when: lipi is stable and bhava has at least one non-English consumer.
+
+### Divine Archetype Overlay — post-v2.0 (avatara crate)
+
+Theological and mythological archetype system — mapping divine/celestial beings across traditions to bhava personality configurations. Not religion simulation — psychometric archetype mapping backed by trait math, same as the zodiac engine but from the theological dimension.
+
+**Prerequisite**: avatara crate (Sanskrit: descent of the divine — the manifestation of archetypes into personality)
+
+#### Tradition → Bhava Mappings
+
+| Tradition | Entities | Bhava Integration |
+|-----------|----------|-------------------|
+| **Kabbalistic Tree of Life** | 10 Sephiroth (Kether→Malkuth) | Each Sephira → distinct PersonalityProfile. Paths between → growth trajectories. Kether = Unity (`BreathPhase::Unity`), Malkuth = full manifestation (`BreathPhase::LateExhale`) |
+| **Angelic Orders** | 9 orders (Seraphim→Angels) | Map to manifestation intensity levels. Seraphim = closest to source (early exhale), Angels = most individuated (late exhale) |
+| **Archangels** | Michael (Sun/courage), Gabriel (Moon/communication), Raphael (Mercury/healing), Uriel (Earth/wisdom) | Planetary associations → same module mappings as zodiac engine |
+| **Hindu Trimurti** | Brahma (creation), Vishnu (preservation), Shiva (transformation) | → `BreathPhase` directly: Brahma = exhale, Vishnu = form, Shiva = inhale |
+| **Hindu Devas** | Indra (energy), Saraswati (knowledge), Lakshmi (abundance), Hanuman (devotion) | → trait profiles with specific `spirit` passions |
+| **Greek Olympians** | Athena (reasoning), Aphrodite (spirit/relationship), Ares (energy), Hermes (curiosity) | → module-specific amplification, same pattern as planetary aspects |
+| **Norse Aesir** | Odin (wisdom/sacrifice), Thor (strength), Loki (chaos/creativity), Freya (love/war) | → trait profiles with `growth` pressure direction |
+| **Egyptian Ennead** | Ra (sun/energy), Thoth (knowledge/actr), Ma'at (balance/regulation), Anubis (transition) | → module associations with afterlife/transformation themes |
+| **Buddhist** | Avalokiteshvara (compassion/empathy), Manjushri (wisdom/reasoning), Tara (protection) | → `eq` emphasis, `regulation` toward equanimity |
+
+#### Compositional System
+
+Like zodiac signs, archetypes are composable. An entity can carry multiple archetypal influences:
+
+```rust
+// Conceptual API
+let archetype = DivineBirth::new()
+    .sephira(Sephiroth::Tiphareth)          // Beauty/harmony — Sun center
+    .archangel(Archangel::Michael)           // Courage, protection
+    .hindu_aspect(Trimurti::Vishnu)          // Preservation, stability
+    .greek_patron(Olympian::Athena)          // Strategic wisdom
+    .manifest();
+// → PersonalityProfile + BreathPhase + Spirit + growth direction
+```
+
+Cross-cultural composability: a character with Kabbalistic Tiphareth + Hindu Vishnu + Greek Athena gets reinforcing archetypes (all Sun/preservation/wisdom aligned). Conflicting archetypes (Shiva + Vishnu) create productive internal tension — same mechanics as planetary squares.
+
+avatara consumes jyotish (planetary correspondences), sankhya (sacred number systems), and feeds into bhava alongside the zodiac engine and cultural overlay. Same post-v2.0 layer: the divine pressing on personality.
+
+Build when: zodiac engine (v2.0) is stable and a consumer requests theological archetype depth. The mapping infrastructure from v2.0 (aspects, cross-module dynamics) is reusable — avatara adds the archetype data, not new mechanics.
 
 #### Consumers
 
@@ -511,6 +576,7 @@ All v1.0 entities implicitly live at `BreathPhase::LateExhale` — maximum manif
 | **v1.4** | Body + immune | Scale 0 + body state | Sharira physiology + Jivanu microbiology bridges — the body presses on emotion |
 | **v1.6** | Earth-local environment | Scale 0 + physical world | Environmental reactivity — temperature, light, noise, weather, air quality as behavioral modifiers on existing modules. No new emotional systems |
 | **v1.7** | Atomic time awareness | Scale 0 + physical time | tanmatra atomic time bridge — simulation time vs wall-clock distinction, time-scale-aware circadian/rhythm, proper temporal grounding |
+| **v1.8** | Neuroscience + biochemistry | Scale 0 + brain chemistry | mastishk + rasayan bridge — serotonin→mood, dopamine→preference, cortisol→stress, melatonin→circadian, BDNF→growth plasticity |
 | **v2.0** | Solar system + stellar neighborhood | Scale 1-2 | Zodiac manifestation engine — planets → modules, aspects → cross-module dynamics, nakshatras, fixed stars. Cultural systems deferred to sankhya overlay (post-v2.0) |
 | **v3.0** | Full cosmological field | Scale 3-7 | Galactic personality fields, cluster dynamics, universal constants as substrate, the breath of consciousness. Entities as manifestations within a cosmic cycle |
 
@@ -519,6 +585,7 @@ v1.3 answers: *are the math foundations validated?*
 v1.4 answers: *how does the body press on emotion?*
 v1.6 answers: *how does the physical world press on them?*
 v1.7 answers: *what time is it, physically?*
+v1.8 answers: *what is their brain chemistry doing to them?*
 v2.0 answers: *what celestial forces shaped them?*
 v3.0 answers: *where in the cycle of existence do they stand?*
 
@@ -579,8 +646,9 @@ v2.0 prerequisite chain:
   + tara v1.0 (fixed stars, precession)
     → bhava v2.0 (zodiac manifestation engine)
 
-v2.0+ cultural overlay:
-  sankhya (hardened) → bhava cultural bridge (post-v2.0)
+v2.0+ cultural + linguistic overlay:
+  lipi (stable) → sankhya (hardened) → bhava cultural bridge (post-v2.0)
+  lipi (stable) → bhava multilingual emotion/sentiment (post-v2.0)
 
 v3.0 prerequisite chain:
   brahmanda (galactic structure, Laniakea)

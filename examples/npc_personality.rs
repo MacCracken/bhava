@@ -1,8 +1,8 @@
-//! Example: Create an NPC with a personality preset and simulate emotional state.
+//! Example: Create an entity with a personality preset and simulate emotional state.
 
 fn main() {
-    // Load BlueShirtGuy preset
-    let preset = bhava::presets::get_preset("blue-shirt-guy").unwrap();
+    // Load AGNOS preset
+    let preset = bhava::presets::get_preset("agnos").unwrap();
     println!("Loaded preset: {} — {}", preset.name, preset.summary);
 
     // Generate behavioral instructions

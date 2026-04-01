@@ -15,7 +15,7 @@ use bhava::traits::{PersonalityProfile, TraitGroup, TraitKind, TraitLevel};
 
 #[test]
 fn test_preset_generates_valid_prompt() {
-    let preset = get_preset("blue-shirt-guy").unwrap();
+    let preset = get_preset("agnos").unwrap();
     let prompt = preset.profile.compose_prompt();
     let identity = compose_identity_prompt(&preset.identity);
 
@@ -104,23 +104,24 @@ fn test_frustration_sentiment_drives_mood() {
 
 #[test]
 fn test_personality_distance_presets() {
-    let guy = get_preset("blue-shirt-guy").unwrap();
+    let agnos = get_preset("agnos").unwrap();
     let tron = get_preset("t-ron").unwrap();
-    let friday = get_preset("friday").unwrap();
 
-    let guy_tron_distance = guy.profile.distance(&tron.profile);
-    let friday_tron_distance = friday.profile.distance(&tron.profile);
-
-    assert!(guy_tron_distance > friday_tron_distance);
+    let distance = agnos.profile.distance(&tron.profile);
+    // AGNOS and T.Ron have very different personalities
+    assert!(
+        distance > 0.3,
+        "expected significant distance, got {distance}"
+    );
 }
 
 #[test]
 fn test_personality_distance_symmetry() {
-    let guy = get_preset("blue-shirt-guy").unwrap();
+    let agnos = get_preset("agnos").unwrap();
     let tron = get_preset("t-ron").unwrap();
 
-    let d1 = guy.profile.distance(&tron.profile);
-    let d2 = tron.profile.distance(&guy.profile);
+    let d1 = agnos.profile.distance(&tron.profile);
+    let d2 = tron.profile.distance(&agnos.profile);
     assert!((d1 - d2).abs() < f32::EPSILON);
 }
 
@@ -235,38 +236,37 @@ fn test_sentiment_result_serde_preserves_emotions() {
 
 #[test]
 fn test_preset_group_averages() {
-    let guy = get_preset("blue-shirt-guy").unwrap();
+    let agnos = get_preset("agnos").unwrap();
     let tron = get_preset("t-ron").unwrap();
-    // Guy should have higher social average than T.Ron
+    // AGNOS should have higher social average than T.Ron
     assert!(
-        guy.profile.group_average(TraitGroup::Social)
+        agnos.profile.group_average(TraitGroup::Social)
             > tron.profile.group_average(TraitGroup::Social)
     );
 }
 
 #[test]
 fn test_blend_presets() {
-    let guy = get_preset("blue-shirt-guy").unwrap();
+    let agnos = get_preset("agnos").unwrap();
     let tron = get_preset("t-ron").unwrap();
-    let blended = guy.profile.blend(&tron.profile, 0.5);
-    // Blended warmth should be between Guy's Highest and T.Ron's Low
+    let blended = agnos.profile.blend(&tron.profile, 0.5);
+    // Blended warmth should be between AGNOS's High and T.Ron's Low
     let warmth = blended.get_trait(TraitKind::Warmth);
     assert!(warmth > TraitLevel::Low);
     assert!(warmth < TraitLevel::Highest);
 }
 
 #[test]
-fn test_compatibility_same_group_presets() {
-    let guy = get_preset("blue-shirt-guy").unwrap();
-    let oracle = get_preset("oracle").unwrap();
+fn test_compatibility_presets() {
+    let agnos = get_preset("agnos").unwrap();
     let tron = get_preset("t-ron").unwrap();
-    // Guy and Oracle are both warm/patient — higher social compatibility than Guy+T.Ron
+    // AGNOS and T.Ron should have low social compatibility (warm vs cold)
+    let social_compat = agnos
+        .profile
+        .group_compatibility(&tron.profile, TraitGroup::Social);
     assert!(
-        guy.profile
-            .group_compatibility(&oracle.profile, TraitGroup::Social)
-            > guy
-                .profile
-                .group_compatibility(&tron.profile, TraitGroup::Social)
+        social_compat < 0.8,
+        "expected low social compatibility, got {social_compat}"
     );
 }
 
@@ -369,8 +369,8 @@ fn test_crew_from_presets() {
         })
         .collect();
     let prompt = compose_crew_prompt(&members);
-    assert!(prompt.contains("Crew (5 members)"));
-    assert!(prompt.contains("### BlueShirtGuy"));
+    assert!(prompt.contains("Crew (2 members)"));
+    assert!(prompt.contains("### AGNOS"));
     assert!(prompt.contains("### T.Ron"));
 }
 
@@ -378,11 +378,11 @@ fn test_crew_from_presets() {
 
 #[test]
 fn test_merge_preset_identities() {
-    let guy = get_preset("blue-shirt-guy").unwrap();
+    let agnos = get_preset("agnos").unwrap();
     let tron = get_preset("t-ron").unwrap();
-    let merged = guy.identity.merge(&tron.identity, "\n\n");
+    let merged = agnos.identity.merge(&tron.identity, "\n\n");
     let soul = merged.get(IdentityLayer::Soul).unwrap();
-    assert!(soul.contains("Guy"));
+    assert!(soul.contains("AGNOS"));
     assert!(soul.contains("T.Ron"));
 }
 
@@ -472,15 +472,15 @@ fn test_spirit_into_identity() {
 #[test]
 fn test_preset_mood_baseline() {
     use bhava::mood::derive_mood_baseline;
-    let guy = get_preset("blue-shirt-guy").unwrap();
+    let agnos = get_preset("agnos").unwrap();
     let tron = get_preset("t-ron").unwrap();
 
-    let guy_baseline = derive_mood_baseline(&guy.profile);
+    let agnos_baseline = derive_mood_baseline(&agnos.profile);
     let tron_baseline = derive_mood_baseline(&tron.profile);
 
     assert!(
-        guy_baseline.joy > tron_baseline.joy,
-        "Guy should be happier at rest than T.Ron"
+        agnos_baseline.joy > tron_baseline.joy,
+        "AGNOS should be more joyful at rest than T.Ron"
     );
 }
 

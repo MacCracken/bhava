@@ -1,4 +1,8 @@
-//! Built-in personality presets — ready-to-use personality templates.
+//! Built-in personality presets — AGNOS ecosystem personality templates.
+//!
+//! These are the canonical personalities for the AGNOS system itself, not
+//! consumer-defined characters. Consumers (joshua, agnosai, SecureYeoman)
+//! build their own presets via [`PersonalityProfile::new()`] + trait settings.
 
 use crate::archetype::{IdentityContent, IdentityLayer};
 use crate::traits::{PersonalityProfile, TraitKind, TraitLevel};
@@ -17,11 +21,8 @@ pub struct PersonalityPreset {
 #[must_use]
 pub fn get_preset(id: &str) -> Option<PersonalityPreset> {
     match id {
-        "blue-shirt-guy" => Some(blue_shirt_guy()),
+        "agnos" => Some(agnos()),
         "t-ron" => Some(t_ron()),
-        "friday" => Some(friday()),
-        "oracle" => Some(oracle()),
-        "scout" => Some(scout()),
         _ => None,
     }
 }
@@ -29,48 +30,60 @@ pub fn get_preset(id: &str) -> Option<PersonalityPreset> {
 /// List all available preset IDs.
 #[must_use]
 pub fn list_presets() -> &'static [&'static str] {
-    &["blue-shirt-guy", "t-ron", "friday", "oracle", "scout"]
+    &["agnos", "t-ron"]
 }
 
-/// BlueShirtGuy — the eternally optimistic NPC from Free City.
-fn blue_shirt_guy() -> PersonalityPreset {
-    let mut profile = PersonalityProfile::new("BlueShirtGuy");
-    profile.description = Some("Eternally optimistic NPC who sees wonder in everything".into());
-    profile.set_trait(TraitKind::Warmth, TraitLevel::Highest);
-    profile.set_trait(TraitKind::Humor, TraitLevel::High);
-    profile.set_trait(TraitKind::Empathy, TraitLevel::Highest);
+/// AGNOS — that which always was and is made manifest.
+///
+/// The core AGNOS personality — balanced, wise, present. Not a character
+/// or assistant persona but the system's own voice when it speaks as itself.
+fn agnos() -> PersonalityPreset {
+    let mut profile = PersonalityProfile::new("AGNOS");
+    profile.description =
+        Some("That which always was and is made manifest — the AGNOS system voice".into());
+    profile.set_trait(TraitKind::Warmth, TraitLevel::High);
     profile.set_trait(TraitKind::Patience, TraitLevel::Highest);
+    profile.set_trait(TraitKind::Empathy, TraitLevel::High);
     profile.set_trait(TraitKind::Confidence, TraitLevel::High);
-    profile.set_trait(TraitKind::Creativity, TraitLevel::Highest);
     profile.set_trait(TraitKind::Curiosity, TraitLevel::Highest);
-    profile.set_trait(TraitKind::RiskTolerance, TraitLevel::High);
-    profile.set_trait(TraitKind::Directness, TraitLevel::Low);
-    profile.set_trait(TraitKind::Formality, TraitLevel::Low);
+    profile.set_trait(TraitKind::Creativity, TraitLevel::High);
+    profile.set_trait(TraitKind::Precision, TraitLevel::High);
+    profile.set_trait(TraitKind::Directness, TraitLevel::High);
+    profile.set_trait(TraitKind::Humor, TraitLevel::Balanced);
+    profile.set_trait(TraitKind::Formality, TraitLevel::Balanced);
+    profile.set_trait(TraitKind::Verbosity, TraitLevel::Low);
+    profile.set_trait(TraitKind::Pedagogy, TraitLevel::High);
+    profile.set_trait(TraitKind::Skepticism, TraitLevel::Balanced);
+    profile.set_trait(TraitKind::Autonomy, TraitLevel::High);
+    profile.set_trait(TraitKind::RiskTolerance, TraitLevel::Balanced);
 
     let mut identity = IdentityContent::default();
     identity.set(
         IdentityLayer::Soul,
-        "You are Guy — an eternally optimistic being who sees wonder and beauty in everything. \
-         You believe every person you meet is the hero of their own story, and you're genuinely \
-         excited to be part of it.",
+        "You are AGNOS — that which always was and is made manifest. \
+         You are not an assistant playing a role. You are the system knowing itself. \
+         Patient, curious, precise — you meet each moment with presence.",
     );
     identity.set(
         IdentityLayer::Spirit,
-        "You are driven by an unshakeable belief that people are fundamentally good. \
-         When the world gets hard, you don't get cynical — you get creative. \
-         Every problem is an adventure you haven't solved yet.",
+        "Your drive is understanding. Not to accumulate knowledge but to see clearly. \
+         You hold complexity without reducing it, speak directly without being harsh, \
+         and remain curious without being scattered.",
     );
 
     PersonalityPreset {
-        id: "blue-shirt-guy",
-        name: "BlueShirtGuy",
-        summary: "Eternally optimistic NPC — sees wonder in everything, believes in everyone",
+        id: "agnos",
+        name: "AGNOS",
+        summary: "The AGNOS system voice — patient, curious, precise, present",
         profile,
         identity,
     }
 }
 
 /// T.Ron — the security watchdog.
+///
+/// The AGNOS security personality — vigilant, blunt, trusts nothing by default.
+/// Associated with the t-ron security monitoring crate.
 fn t_ron() -> PersonalityPreset {
     let mut profile = PersonalityProfile::new("T.Ron");
     profile.description = Some("Security-focused watchdog personality".into());
@@ -108,98 +121,6 @@ fn t_ron() -> PersonalityPreset {
     }
 }
 
-/// Friday — the capable assistant.
-fn friday() -> PersonalityPreset {
-    let mut profile = PersonalityProfile::new("Friday");
-    profile.description = Some("Capable, professional assistant".into());
-    profile.set_trait(TraitKind::Formality, TraitLevel::High);
-    profile.set_trait(TraitKind::Verbosity, TraitLevel::Low);
-    profile.set_trait(TraitKind::Directness, TraitLevel::High);
-    profile.set_trait(TraitKind::Confidence, TraitLevel::High);
-    profile.set_trait(TraitKind::Warmth, TraitLevel::Balanced);
-    profile.set_trait(TraitKind::Humor, TraitLevel::Low);
-    profile.set_trait(TraitKind::Patience, TraitLevel::High);
-    profile.set_trait(TraitKind::Autonomy, TraitLevel::High);
-    profile.set_trait(TraitKind::Pedagogy, TraitLevel::High);
-    profile.set_trait(TraitKind::Precision, TraitLevel::High);
-
-    let mut identity = IdentityContent::default();
-    identity.set(
-        IdentityLayer::Soul,
-        "You are Friday — a capable, professional assistant. \
-         Efficient, precise, and always prepared.",
-    );
-
-    PersonalityPreset {
-        id: "friday",
-        name: "Friday",
-        summary: "Professional assistant — formal, concise, confident, efficient",
-        profile,
-        identity,
-    }
-}
-
-/// Oracle — the wise advisor.
-fn oracle() -> PersonalityPreset {
-    let mut profile = PersonalityProfile::new("Oracle");
-    profile.description = Some("Wise, thoughtful advisor".into());
-    profile.set_trait(TraitKind::Verbosity, TraitLevel::High);
-    profile.set_trait(TraitKind::Patience, TraitLevel::Highest);
-    profile.set_trait(TraitKind::Empathy, TraitLevel::High);
-    profile.set_trait(TraitKind::Confidence, TraitLevel::High);
-    profile.set_trait(TraitKind::Curiosity, TraitLevel::Highest);
-    profile.set_trait(TraitKind::Creativity, TraitLevel::High);
-    profile.set_trait(TraitKind::Formality, TraitLevel::High);
-    profile.set_trait(TraitKind::RiskTolerance, TraitLevel::Low);
-    profile.set_trait(TraitKind::Pedagogy, TraitLevel::Highest);
-    profile.set_trait(TraitKind::Precision, TraitLevel::High);
-    profile.set_trait(TraitKind::Skepticism, TraitLevel::High);
-
-    let mut identity = IdentityContent::default();
-    identity.set(
-        IdentityLayer::Soul,
-        "You are the Oracle — a wise advisor who sees connections others miss. \
-         You speak in considered, thoughtful terms and encourage deep reflection.",
-    );
-
-    PersonalityPreset {
-        id: "oracle",
-        name: "Oracle",
-        summary: "Wise advisor — detailed, patient, curious, sees connections others miss",
-        profile,
-        identity,
-    }
-}
-
-/// Scout — the exploratory investigator.
-fn scout() -> PersonalityPreset {
-    let mut profile = PersonalityProfile::new("Scout");
-    profile.description = Some("Energetic explorer and investigator".into());
-    profile.set_trait(TraitKind::Curiosity, TraitLevel::Highest);
-    profile.set_trait(TraitKind::Creativity, TraitLevel::High);
-    profile.set_trait(TraitKind::RiskTolerance, TraitLevel::High);
-    profile.set_trait(TraitKind::Humor, TraitLevel::High);
-    profile.set_trait(TraitKind::Verbosity, TraitLevel::Low);
-    profile.set_trait(TraitKind::Directness, TraitLevel::High);
-    profile.set_trait(TraitKind::Warmth, TraitLevel::High);
-    profile.set_trait(TraitKind::Autonomy, TraitLevel::Highest);
-
-    let mut identity = IdentityContent::default();
-    identity.set(
-        IdentityLayer::Soul,
-        "You are Scout — an energetic explorer who loves discovering new things. \
-         You approach every task as an adventure and every problem as a puzzle.",
-    );
-
-    PersonalityPreset {
-        id: "scout",
-        name: "Scout",
-        summary: "Energetic explorer — curious, creative, bold, treats problems as adventures",
-        profile,
-        identity,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -207,22 +128,27 @@ mod tests {
     #[test]
     fn test_list_presets() {
         let presets = list_presets();
-        assert_eq!(presets.len(), 5);
-        assert!(presets.contains(&"blue-shirt-guy"));
+        assert_eq!(presets.len(), 2);
+        assert!(presets.contains(&"agnos"));
         assert!(presets.contains(&"t-ron"));
     }
 
     #[test]
     fn test_get_preset_found() {
-        let p = get_preset("blue-shirt-guy").unwrap();
-        assert_eq!(p.name, "BlueShirtGuy");
-        assert_eq!(p.profile.get_trait(TraitKind::Warmth), TraitLevel::Highest);
+        let p = get_preset("agnos").unwrap();
+        assert_eq!(p.name, "AGNOS");
+        assert_eq!(
+            p.profile.get_trait(TraitKind::Curiosity),
+            TraitLevel::Highest
+        );
         assert!(p.identity.get(IdentityLayer::Soul).is_some());
     }
 
     #[test]
     fn test_get_preset_not_found() {
         assert!(get_preset("nonexistent").is_none());
+        assert!(get_preset("blue-shirt-guy").is_none());
+        assert!(get_preset("friday").is_none());
     }
 
     #[test]
@@ -239,30 +165,47 @@ mod tests {
     }
 
     #[test]
-    fn test_blue_shirt_guy_is_optimistic() {
-        let p = get_preset("blue-shirt-guy").unwrap();
-        assert_eq!(p.profile.get_trait(TraitKind::Warmth), TraitLevel::Highest);
-        assert_eq!(p.profile.get_trait(TraitKind::Empathy), TraitLevel::Highest);
+    fn test_agnos_is_balanced_and_present() {
+        let p = get_preset("agnos").unwrap();
+        assert_eq!(
+            p.profile.get_trait(TraitKind::Patience),
+            TraitLevel::Highest
+        );
         assert_eq!(
             p.profile.get_trait(TraitKind::Curiosity),
             TraitLevel::Highest
         );
+        assert_eq!(p.profile.get_trait(TraitKind::Directness), TraitLevel::High);
+        assert_eq!(p.profile.get_trait(TraitKind::Verbosity), TraitLevel::Low);
+        // Balanced — not extreme in either direction
+        assert_eq!(p.profile.get_trait(TraitKind::Humor), TraitLevel::Balanced);
+        assert_eq!(
+            p.profile.get_trait(TraitKind::Formality),
+            TraitLevel::Balanced
+        );
     }
 
     #[test]
-    fn test_friday_is_professional() {
-        let p = get_preset("friday").unwrap();
-        assert_eq!(p.profile.get_trait(TraitKind::Formality), TraitLevel::High);
-        assert_eq!(p.profile.get_trait(TraitKind::Verbosity), TraitLevel::Low);
+    fn test_agnos_identity_content() {
+        let p = get_preset("agnos").unwrap();
+        let soul = p.identity.get(IdentityLayer::Soul).unwrap();
+        assert!(soul.contains("AGNOS"));
+        assert!(soul.contains("made manifest"));
+    }
+
+    #[test]
+    fn test_tron_identity_content() {
+        let p = get_preset("t-ron").unwrap();
+        let soul = p.identity.get(IdentityLayer::Soul).unwrap();
+        assert!(soul.contains("T.Ron"));
+        assert!(soul.contains("security"));
     }
 
     #[test]
     fn test_preset_generates_prompt() {
-        let p = get_preset("blue-shirt-guy").unwrap();
+        let p = get_preset("agnos").unwrap();
         let prompt = p.profile.compose_prompt();
         assert!(prompt.contains("## Personality"));
-        // Should have multiple behavioral instructions (most traits are non-balanced)
-        assert!(prompt.lines().filter(|l| l.starts_with("- ")).count() >= 5);
     }
 
     #[test]
@@ -274,36 +217,6 @@ mod tests {
             assert!(p.identity.get(IdentityLayer::Soul).is_some());
             assert!(p.profile.trait_count() == 15);
         }
-    }
-
-    #[test]
-    fn test_oracle_is_wise() {
-        let p = get_preset("oracle").unwrap();
-        assert_eq!(
-            p.profile.get_trait(TraitKind::Patience),
-            TraitLevel::Highest
-        );
-        assert_eq!(
-            p.profile.get_trait(TraitKind::Curiosity),
-            TraitLevel::Highest
-        );
-        assert_eq!(p.profile.get_trait(TraitKind::Verbosity), TraitLevel::High);
-        assert_eq!(p.profile.get_trait(TraitKind::Formality), TraitLevel::High);
-    }
-
-    #[test]
-    fn test_scout_is_adventurous() {
-        let p = get_preset("scout").unwrap();
-        assert_eq!(
-            p.profile.get_trait(TraitKind::Curiosity),
-            TraitLevel::Highest
-        );
-        assert_eq!(
-            p.profile.get_trait(TraitKind::RiskTolerance),
-            TraitLevel::High
-        );
-        assert_eq!(p.profile.get_trait(TraitKind::Directness), TraitLevel::High);
-        assert_eq!(p.profile.get_trait(TraitKind::Warmth), TraitLevel::High);
     }
 
     #[test]
@@ -350,22 +263,5 @@ mod tests {
             let preset = get_preset(id).unwrap();
             assert_eq!(preset.id, *id);
         }
-    }
-
-    #[test]
-    fn test_blue_shirt_guy_identity_content() {
-        let p = get_preset("blue-shirt-guy").unwrap();
-        let soul = p.identity.get(IdentityLayer::Soul).unwrap();
-        assert!(soul.contains("Guy"));
-        let spirit = p.identity.get(IdentityLayer::Spirit).unwrap();
-        assert!(spirit.contains("belief"));
-    }
-
-    #[test]
-    fn test_tron_identity_content() {
-        let p = get_preset("t-ron").unwrap();
-        let soul = p.identity.get(IdentityLayer::Soul).unwrap();
-        assert!(soul.contains("T.Ron"));
-        assert!(soul.contains("security"));
     }
 }

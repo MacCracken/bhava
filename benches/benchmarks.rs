@@ -451,12 +451,12 @@ fn bench_presets(c: &mut Criterion) {
     let mut group = c.benchmark_group("presets");
 
     group.bench_function("get_preset", |b| {
-        b.iter(|| presets::get_preset(black_box("blue-shirt-guy")))
+        b.iter(|| presets::get_preset(black_box("agnos")))
     });
     group.bench_function("list_presets", |b| b.iter(presets::list_presets));
     group.bench_function("preset_full_prompt", |b| {
         b.iter(|| {
-            let p = presets::get_preset("blue-shirt-guy").unwrap();
+            let p = presets::get_preset("agnos").unwrap();
             let personality = p.profile.compose_prompt();
             let identity = compose_identity_prompt(&p.identity);
             black_box((personality, identity))
@@ -1175,13 +1175,36 @@ criterion_group!(microbiology_benches, bench_microbiology,);
 #[cfg(feature = "atomic_time")]
 criterion_group!(atomic_time_benches, bench_atomic_time,);
 
+#[cfg(feature = "neuroscience")]
+criterion_group!(neuroscience_benches, bench_neuroscience,);
+
 // All bridge features (--all-features / bench-history.sh)
 #[cfg(all(
     feature = "psychology",
     feature = "sociology",
     feature = "physiology",
     feature = "microbiology",
-    feature = "atomic_time"
+    feature = "atomic_time",
+    feature = "neuroscience"
+))]
+criterion_main!(
+    benches,
+    psychology_benches,
+    sociology_benches,
+    physiology_benches,
+    microbiology_benches,
+    atomic_time_benches,
+    neuroscience_benches
+);
+
+// All bridge features except neuroscience
+#[cfg(all(
+    feature = "psychology",
+    feature = "sociology",
+    feature = "physiology",
+    feature = "microbiology",
+    feature = "atomic_time",
+    not(feature = "neuroscience")
 ))]
 criterion_main!(
     benches,
@@ -1631,6 +1654,58 @@ fn bench_atomic_time(c: &mut Criterion) {
         let prev = TimeContext::real_time(1000.0);
         let now = TimeContext::real_time(1001.0);
         b.iter(|| atomic_time::delta_seconds(black_box(&prev), black_box(&now)))
+    });
+
+    group.finish();
+}
+
+// ── Neuroscience bridge benchmarks ────────────────────────────────────
+
+#[cfg(feature = "neuroscience")]
+fn bench_neuroscience(c: &mut Criterion) {
+    use bhava::neuroscience;
+    use mastishk::brain::BrainState;
+
+    let state = BrainState::default();
+    let effect = mastishk::bridge::brain_mood_modifiers(&state);
+
+    let mut group = c.benchmark_group("neuroscience");
+
+    group.bench_function("mood_from_brain", |b| {
+        b.iter(|| neuroscience::mood_from_brain(black_box(&effect)))
+    });
+
+    group.bench_function("stress_from_brain", |b| {
+        b.iter(|| neuroscience::stress_from_brain(black_box(&effect)))
+    });
+
+    group.bench_function("energy_from_brain", |b| {
+        b.iter(|| neuroscience::energy_from_brain(black_box(&effect)))
+    });
+
+    group.bench_function("flow_from_brain", |b| {
+        b.iter(|| neuroscience::flow_from_brain(black_box(&effect)))
+    });
+
+    group.bench_function("apply_brain_state", |b| {
+        b.iter_batched(
+            || {
+                (
+                    bhava::energy::EnergyState::new(),
+                    bhava::stress::StressState::new(),
+                    bhava::mood::MoodVector::neutral(),
+                )
+            },
+            |(mut energy, mut stress, mut mood)| {
+                neuroscience::apply_brain_state(
+                    black_box(&effect),
+                    &mut energy,
+                    &mut stress,
+                    &mut mood,
+                )
+            },
+            criterion::BatchSize::SmallInput,
+        )
     });
 
     group.finish();
