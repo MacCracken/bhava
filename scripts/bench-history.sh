@@ -21,17 +21,21 @@ if [ ! -f "$HISTORY_FILE" ]; then
     echo "timestamp,commit,branch,benchmark,estimate_ns" > "$HISTORY_FILE"
 fi
 
+# Configurable sample size (default 100, override with BENCH_SAMPLES env var)
+SAMPLE_SIZE="${BENCH_SAMPLES:-100}"
+
 echo "┌─────────────────────────────────────────────┐"
 echo "│  bhava benchmark suite                      │"
 echo "├─────────────────────────────────────────────┤"
-echo "│  commit : $COMMIT                              │"
-echo "│  branch : $BRANCH                              │"
-echo "│  date   : $TIMESTAMP   │"
+echo "│  commit  : $COMMIT                              │"
+echo "│  branch  : $BRANCH                              │"
+echo "│  date    : $TIMESTAMP   │"
+echo "│  samples : $SAMPLE_SIZE                              │"
 echo "└─────────────────────────────────────────────┘"
 echo ""
 
 # Run benchmarks and capture output, stripping ANSI escape codes
-BENCH_OUTPUT=$(cd "$REPO_ROOT" && cargo bench --bench "$BENCH_NAME" --all-features 2>&1 | sed 's/\x1b\[[0-9;]*m//g')
+BENCH_OUTPUT=$(cd "$REPO_ROOT" && cargo bench --bench "$BENCH_NAME" --all-features -- --sample-size "$SAMPLE_SIZE" 2>&1 | sed 's/\x1b\[[0-9;]*m//g')
 
 # Parse criterion output into arrays
 declare -a BENCH_NAMES=()
@@ -151,6 +155,7 @@ format_ns() {
     echo "| **Date** | $(for i in $(seq 0 $((NUM_RUNS - 1))); do printf "\`%s\` | " "${RUN_TS[$i]}"; done)"
     echo "| **Commit** | $(for i in $(seq 0 $((NUM_RUNS - 1))); do printf "\`%s\` | " "${RUN_COMMIT[$i]}"; done)"
     echo "| **Toolchain** | $(for _ in $(seq 1 "$NUM_RUNS"); do printf "\`%s\` | " "$(rustc --version 2>/dev/null || echo unknown)"; done)"
+    echo "| **Samples** | $(for _ in $(seq 1 "$NUM_RUNS"); do printf "\`%s\` | " "$SAMPLE_SIZE"; done)"
     echo ""
     echo "## Results"
     echo ""

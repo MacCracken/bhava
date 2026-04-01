@@ -38,7 +38,6 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::belief::{BeliefKind, BeliefSystem};
 use crate::eq::EqProfile;
@@ -147,17 +146,13 @@ impl AestheticDimension {
     }
 }
 
-impl fmt::Display for AestheticDimension {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Beauty => f.write_str("beauty"),
-            Self::Harmony => f.write_str("harmony"),
-            Self::Sublimity => f.write_str("sublimity"),
-            Self::Meaning => f.write_str("meaning"),
-            Self::Novelty => f.write_str("novelty"),
-        }
-    }
-}
+impl_display!(AestheticDimension {
+    Beauty => "beauty",
+    Harmony => "harmony",
+    Sublimity => "sublimity",
+    Meaning => "meaning",
+    Novelty => "novelty",
+});
 
 // ---------------------------------------------------------------------------
 // AestheticExposure
@@ -218,7 +213,7 @@ impl AestheticProfile {
     /// the emotional response to aesthetic stimuli.
     #[must_use]
     pub fn with_eq(eq: &EqProfile) -> Self {
-        let sensitivity = ((eq.perception + eq.facilitation) / 2.0).clamp(0.0, 1.0);
+        let sensitivity = ((eq.perception.get() + eq.facilitation.get()) / 2.0).clamp(0.0, 1.0);
         Self {
             sensitivity,
             ..Self::default()
@@ -531,12 +526,7 @@ mod tests {
 
     #[test]
     fn test_with_eq_sensitivity() {
-        let eq = EqProfile {
-            perception: 0.9,
-            facilitation: 0.7,
-            understanding: 0.5,
-            management: 0.5,
-        };
+        let eq = EqProfile::with_scores(0.9, 0.7, 0.5, 0.5);
         let p = AestheticProfile::with_eq(&eq);
         assert!((p.sensitivity() - 0.8).abs() < 0.01);
     }

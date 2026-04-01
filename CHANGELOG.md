@@ -1,5 +1,49 @@
 # Changelog
 
+## [Unreleased]
+
+Type safety, abstractions, and infrastructure hardening for v2.0.
+
+### Breaking
+
+- **energy** — `EnergyState.energy` field type changed from `f32` to `Normalized01`. Migration: use `.get()` to extract f32, `Normalized01::new(v)` to construct.
+- **stress** — `StressState.load` field type changed from `f32` to `Normalized01`. Same migration.
+- **salience** — `SalienceScore.urgency` and `SalienceScore.importance` field types changed from `f32` to `Normalized01`. Same migration.
+- **eq** — `EqProfile` branch fields (`perception`, `facilitation`, `understanding`, `management`) changed from `f32` to `Normalized01`. Same migration. Return types of `overall()`, `get()`, and bonus methods unchanged (still `f32`).
+- **preference** — `PreferenceEntry.valence` field type changed from `f32` to `Balanced11`. Migration: use `.get()` to extract f32, `Balanced11::new(v)` to construct.
+
+### Added
+
+- **types** — new `types` module with type-safety primitives (always available, no feature gate)
+  - `Normalized01(f32)` — value clamped to [0.0, 1.0] with `new()`, `get()`, serde-transparent, constants `ZERO`/`HALF`/`ONE`
+  - `Balanced11(f32)` — value clamped to [-1.0, 1.0] with `new()`, `get()`, serde-transparent, constants `MIN`/`ZERO`/`MAX`
+  - `ThresholdClassifier<L>` — classify f32 values into discrete levels via static thresholds
+  - `evict_min()` — remove element with minimum score from a Vec (swap_remove, O(n))
+- **curves** — new `curves` module with decay/recovery abstractions
+  - `DecayCurve` trait — `decay_factor(elapsed) -> f64`
+  - `ExponentialDecay` — half-life parameterized exponential decay
+  - `LogisticCurve` — sigmoid with configurable midpoint and steepness
+- **macros** — `impl_display!` macro for enum Display impls with explicit string mapping
+- **mood** — `MoodVector::iter()` — zero-alloc iterator over `(Emotion, f32)` pairs
+- **mood** — `MoodVector::dot()` — dot product between two mood vectors
+- **mood** — `MoodVector::magnitude()` — Euclidean norm (alias for `intensity()`)
+
+### Changed
+
+- **energy** — `EnergyState::level()` now uses `ThresholdClassifier` internally
+- **salience** — `SalienceScore::level()` now uses `ThresholdClassifier` internally
+- **eq** — `EqProfile::level()` now uses `ThresholdClassifier` internally
+- **actr** — `ActivationStore::evict_lowest()` now delegates to `evict_min()`
+- **preference** — `PreferenceStore::evict_weakest()` now delegates to `evict_min()`
+- **mood** — `MoodVector::dominant_emotion()` refactored to use `iter()`
+- 22 enum `Display` impls replaced with `impl_display!` macro calls (identical output)
+- 12 unused `use std::fmt` imports removed (macro uses `::core::fmt` internally)
+
+### Infrastructure
+
+- **release workflow** — benchmark job runs `bench-history.sh` and attaches `bench-history.csv` + `BENCHMARKS.md` as release assets
+- **bench-history.sh** — supports `BENCH_SAMPLES` env var (default 100, CI uses 10), shows sample count in output
+
 ## [1.8.0] — 2026-04-01
 
 Neuroscience bridge — brain chemistry pressing on emotion and personality.

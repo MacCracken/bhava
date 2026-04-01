@@ -256,23 +256,15 @@ impl ActivationStore {
     /// Evict the entry with the lowest activation, cleaning up orphaned links.
     #[inline]
     fn evict_lowest(&mut self, now: f64) {
-        if self.entries.is_empty() {
-            return;
+        let decay = self.decay;
+        let half_life = self.recency_half_life;
+        if let Some(evicted) =
+            crate::types::evict_min(&mut self.entries, |e| e.activation(now, decay, half_life))
+        {
+            // Clean up orphaned links referencing the evicted entry
+            self.links
+                .retain(|l| l.tag_a != evicted.tag && l.tag_b != evicted.tag);
         }
-        let mut min_idx = 0;
-        let mut min_act = f64::MAX;
-        for (i, e) in self.entries.iter().enumerate() {
-            let a = e.activation(now, self.decay, self.recency_half_life);
-            if a < min_act {
-                min_act = a;
-                min_idx = i;
-            }
-        }
-        let evicted_tag = self.entries[min_idx].tag.clone();
-        self.entries.swap_remove(min_idx);
-        // Clean up orphaned links referencing the evicted entry
-        self.links
-            .retain(|l| l.tag_a != evicted_tag && l.tag_b != evicted_tag);
     }
 }
 

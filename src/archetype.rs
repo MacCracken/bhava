@@ -20,15 +20,11 @@ pub enum CosmicArchetype {
     ThePlurality,
 }
 
-impl fmt::Display for CosmicArchetype {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::NoThingNess => f.write_str("No-Thing-Ness (The Void)"),
-            Self::TheOne => f.write_str("The One (The Monad)"),
-            Self::ThePlurality => f.write_str("The Plurality (The Many)"),
-        }
-    }
-}
+impl_display!(CosmicArchetype {
+    NoThingNess => "No-Thing-Ness (The Void)",
+    TheOne => "The One (The Monad)",
+    ThePlurality => "The Plurality (The Many)",
+});
 
 /// The 5 layers of agent identity.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -67,18 +63,13 @@ impl IdentityLayer {
     }
 }
 
-impl fmt::Display for IdentityLayer {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Soul => "Soul",
-            Self::Spirit => "Spirit",
-            Self::Brain => "Brain",
-            Self::Body => "Body",
-            Self::Heart => "Heart",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(IdentityLayer {
+    Soul => "Soul",
+    Spirit => "Spirit",
+    Brain => "Brain",
+    Body => "Body",
+    Heart => "Heart",
+});
 
 /// Content assigned to each identity layer.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

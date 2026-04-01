@@ -1,6 +1,5 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::error::{BhavaError, Result};
 
@@ -34,19 +33,14 @@ impl Emotion {
     ];
 }
 
-impl fmt::Display for Emotion {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Joy => "joy",
-            Self::Arousal => "arousal",
-            Self::Dominance => "dominance",
-            Self::Trust => "trust",
-            Self::Interest => "interest",
-            Self::Frustration => "frustration",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(Emotion {
+    Joy => "joy",
+    Arousal => "arousal",
+    Dominance => "dominance",
+    Trust => "trust",
+    Interest => "interest",
+    Frustration => "frustration",
+});
 
 /// A mood vector — emotional state across all dimensions.
 /// Values range from -1.0 (negative extreme) to 1.0 (positive extreme).
@@ -107,33 +101,64 @@ impl MoodVector {
         self.set(emotion, self.get(emotion) + delta);
     }
 
-    /// Magnitude of the mood vector (distance from neutral).
+    /// Iterate over all (emotion, value) pairs.
+    ///
+    /// Zero-allocation: returns a fixed-size array iterator.
+    #[inline]
+    pub fn iter(&self) -> impl Iterator<Item = (Emotion, f32)> {
+        [
+            (Emotion::Joy, self.joy),
+            (Emotion::Arousal, self.arousal),
+            (Emotion::Dominance, self.dominance),
+            (Emotion::Trust, self.trust),
+            (Emotion::Interest, self.interest),
+            (Emotion::Frustration, self.frustration),
+        ]
+        .into_iter()
+    }
+
+    /// Dot product with another mood vector.
+    #[inline]
+    #[must_use]
+    pub fn dot(&self, other: &MoodVector) -> f32 {
+        self.joy * other.joy
+            + self.arousal * other.arousal
+            + self.dominance * other.dominance
+            + self.trust * other.trust
+            + self.interest * other.interest
+            + self.frustration * other.frustration
+    }
+
+    /// Euclidean magnitude (distance from neutral).
     #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
+    #[inline]
+    #[must_use]
+    pub fn magnitude(&self) -> f32 {
+        self.dot(self).sqrt()
+    }
+
+    /// Magnitude of the mood vector (distance from neutral).
+    ///
+    /// Alias for [`magnitude`](Self::magnitude).
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
+    #[inline]
     #[must_use]
     pub fn intensity(&self) -> f32 {
-        let sum = self.joy * self.joy
-            + self.arousal * self.arousal
-            + self.dominance * self.dominance
-            + self.trust * self.trust
-            + self.interest * self.interest
-            + self.frustration * self.frustration;
-        sum.sqrt()
+        self.magnitude()
     }
 
     /// Dominant emotion (highest absolute value).
     #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     #[must_use]
     pub fn dominant_emotion(&self) -> Emotion {
-        let mut best = Emotion::Joy;
-        let mut best_val = 0.0f32;
-        for &e in Emotion::ALL {
-            let v = self.get(e).abs();
-            if v > best_val {
-                best_val = v;
-                best = e;
-            }
-        }
-        best
+        self.iter()
+            .max_by(|(_, a), (_, b)| {
+                a.abs()
+                    .partial_cmp(&b.abs())
+                    .unwrap_or(core::cmp::Ordering::Equal)
+            })
+            .map(|(e, _)| e)
+            .unwrap_or(Emotion::Joy)
     }
 
     /// Decay toward neutral by a factor (0.0 = no decay, 1.0 = instant reset).
@@ -390,22 +415,17 @@ pub enum MoodState {
     Frustrated,
 }
 
-impl fmt::Display for MoodState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Calm => "calm",
-            Self::Content => "content",
-            Self::Euphoric => "euphoric",
-            Self::Melancholy => "melancholy",
-            Self::Agitated => "agitated",
-            Self::Assertive => "assertive",
-            Self::Overwhelmed => "overwhelmed",
-            Self::Trusting => "trusting",
-            Self::Guarded => "guarded",
-            Self::Curious => "curious",
-            Self::Disengaged => "disengaged",
-            Self::Frustrated => "frustrated",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(MoodState {
+    Calm => "calm",
+    Content => "content",
+    Euphoric => "euphoric",
+    Melancholy => "melancholy",
+    Agitated => "agitated",
+    Assertive => "assertive",
+    Overwhelmed => "overwhelmed",
+    Trusting => "trusting",
+    Guarded => "guarded",
+    Curious => "curious",
+    Disengaged => "disengaged",
+    Frustrated => "frustrated",
+});

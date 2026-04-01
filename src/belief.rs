@@ -30,7 +30,6 @@
 //! - `other:alice:trustworthy` — entity-specific beliefs
 
 use std::collections::VecDeque;
-use std::fmt;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -88,16 +87,12 @@ impl BeliefKind {
     ];
 }
 
-impl fmt::Display for BeliefKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::SelfBelief => f.write_str("self"),
-            Self::WorldBelief => f.write_str("world"),
-            Self::OtherBelief => f.write_str("other"),
-            Self::UniversalBelief => f.write_str("universal"),
-        }
-    }
-}
+impl_display!(BeliefKind {
+    SelfBelief => "self",
+    WorldBelief => "world",
+    OtherBelief => "other",
+    UniversalBelief => "universal",
+});
 
 // ---------------------------------------------------------------------------
 // Belief
@@ -707,7 +702,9 @@ pub struct InsightEvent {
 #[must_use]
 #[inline]
 pub fn self_understanding(eq: &EqProfile, self_model: &SelfModel, coherence: f32) -> f32 {
-    (eq.understanding * 0.4 + self_model.self_clarity() * 0.3 + coherence.clamp(0.0, 1.0) * 0.3)
+    (eq.understanding.get() * 0.4
+        + self_model.self_clarity() * 0.3
+        + coherence.clamp(0.0, 1.0) * 0.3)
         .clamp(0.0, 1.0)
 }
 
@@ -863,14 +860,10 @@ pub enum EmotionCategory {
     Social,
 }
 
-impl fmt::Display for EmotionCategory {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Personal => f.write_str("personal"),
-            Self::Social => f.write_str("social"),
-        }
-    }
-}
+impl_display!(EmotionCategory {
+    Personal => "personal",
+    Social => "social",
+});
 
 /// Classify an appraised emotion as personal or social.
 #[must_use]

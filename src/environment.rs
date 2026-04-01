@@ -22,7 +22,6 @@
 //! ```
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 /// Weather condition for mood and stress modulation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
@@ -43,18 +42,14 @@ pub enum WeatherCondition {
     Storm,
 }
 
-impl fmt::Display for WeatherCondition {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Clear => write!(f, "Clear"),
-            Self::Overcast => write!(f, "Overcast"),
-            Self::Fog => write!(f, "Fog"),
-            Self::Rain => write!(f, "Rain"),
-            Self::Snow => write!(f, "Snow"),
-            Self::Storm => write!(f, "Storm"),
-        }
-    }
-}
+impl_display!(WeatherCondition {
+    Clear => "Clear",
+    Overcast => "Overcast",
+    Fog => "Fog",
+    Rain => "Rain",
+    Snow => "Snow",
+    Storm => "Storm",
+});
 
 /// Environmental state passed by the consumer each tick.
 ///

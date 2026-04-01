@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::error::{BhavaError, Result};
 
@@ -171,40 +170,30 @@ impl TraitGroup {
     }
 }
 
-impl fmt::Display for TraitGroup {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Social => "social",
-            Self::Cognitive => "cognitive",
-            Self::Behavioral => "behavioral",
-            Self::Professional => "professional",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(TraitGroup {
+    Social => "social",
+    Cognitive => "cognitive",
+    Behavioral => "behavioral",
+    Professional => "professional",
+});
 
-impl fmt::Display for TraitKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Formality => "formality",
-            Self::Humor => "humor",
-            Self::Verbosity => "verbosity",
-            Self::Directness => "directness",
-            Self::Warmth => "warmth",
-            Self::Empathy => "empathy",
-            Self::Patience => "patience",
-            Self::Confidence => "confidence",
-            Self::Creativity => "creativity",
-            Self::RiskTolerance => "risk_tolerance",
-            Self::Skepticism => "skepticism",
-            Self::Autonomy => "autonomy",
-            Self::Pedagogy => "pedagogy",
-            Self::Precision => "precision",
-            Self::Curiosity => "curiosity",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(TraitKind {
+    Formality => "formality",
+    Humor => "humor",
+    Verbosity => "verbosity",
+    Directness => "directness",
+    Warmth => "warmth",
+    Empathy => "empathy",
+    Patience => "patience",
+    Confidence => "confidence",
+    Creativity => "creativity",
+    RiskTolerance => "risk_tolerance",
+    Skepticism => "skepticism",
+    Autonomy => "autonomy",
+    Pedagogy => "pedagogy",
+    Precision => "precision",
+    Curiosity => "curiosity",
+});
 
 /// Graduated level within a trait spectrum.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, PartialOrd, Ord)]
@@ -268,15 +257,10 @@ impl TraitLevel {
     }
 }
 
-impl fmt::Display for TraitLevel {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Lowest => "lowest",
-            Self::Low => "low",
-            Self::Balanced => "balanced",
-            Self::High => "high",
-            Self::Highest => "highest",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(TraitLevel {
+    Lowest => "lowest",
+    Low => "low",
+    Balanced => "balanced",
+    High => "high",
+    Highest => "highest",
+});

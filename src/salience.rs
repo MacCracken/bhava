@@ -13,18 +13,18 @@
 //! salience), classified into Background / Notable / Significant / Critical.
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::appraisal::Appraisal;
 use crate::mood::{EmotionalMemory, MoodVector};
+use crate::types::{Normalized01, ThresholdClassifier};
 
 /// Urgency × importance score for an event or memory.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct SalienceScore {
     /// How time-critical is this? 0.0 = no urgency, 1.0 = act now.
-    pub urgency: f32,
+    pub urgency: Normalized01,
     /// How much does this matter long-term? 0.0 = trivial, 1.0 = life-defining.
-    pub importance: f32,
+    pub importance: Normalized01,
 }
 
 impl SalienceScore {
@@ -32,8 +32,8 @@ impl SalienceScore {
     #[must_use]
     pub fn new(urgency: f32, importance: f32) -> Self {
         Self {
-            urgency: urgency.clamp(0.0, 1.0),
-            importance: importance.clamp(0.0, 1.0),
+            urgency: Normalized01::new(urgency),
+            importance: Normalized01::new(importance),
         }
     }
 
@@ -41,8 +41,8 @@ impl SalienceScore {
     #[must_use]
     pub fn zero() -> Self {
         Self {
-            urgency: 0.0,
-            importance: 0.0,
+            urgency: Normalized01::ZERO,
+            importance: Normalized01::ZERO,
         }
     }
 
@@ -53,22 +53,21 @@ impl SalienceScore {
     #[must_use]
     #[inline]
     pub fn magnitude(&self) -> f32 {
-        (self.urgency * self.importance).sqrt()
+        (self.urgency.get() * self.importance.get()).sqrt()
     }
 
     /// Classify into a discrete salience level.
     #[must_use]
     pub fn level(&self) -> SalienceLevel {
-        let m = self.magnitude();
-        if m >= 0.75 {
-            SalienceLevel::Critical
-        } else if m >= 0.45 {
-            SalienceLevel::Significant
-        } else if m >= 0.2 {
-            SalienceLevel::Notable
-        } else {
-            SalienceLevel::Background
-        }
+        const CLASSIFIER: ThresholdClassifier<SalienceLevel> = ThresholdClassifier::new(
+            &[
+                (0.75, SalienceLevel::Critical),
+                (0.45, SalienceLevel::Significant),
+                (0.2, SalienceLevel::Notable),
+            ],
+            SalienceLevel::Background,
+        );
+        CLASSIFIER.classify(self.magnitude())
     }
 }
 
@@ -86,17 +85,12 @@ pub enum SalienceLevel {
     Critical,
 }
 
-impl fmt::Display for SalienceLevel {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Background => "background",
-            Self::Notable => "notable",
-            Self::Significant => "significant",
-            Self::Critical => "critical",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(SalienceLevel {
+    Background => "background",
+    Notable => "notable",
+    Significant => "significant",
+    Critical => "critical",
+});
 
 /// Score salience of an appraisal given current mood state.
 ///
@@ -125,10 +119,7 @@ pub fn classify_salience(
         * (1.0 + memory_intensity.clamp(0.0, 1.0)))
     .clamp(0.0, 1.0);
 
-    SalienceScore {
-        urgency,
-        importance,
-    }
+    SalienceScore::new(urgency, importance)
 }
 
 /// Score salience of a stored emotional memory.
@@ -142,10 +133,7 @@ pub fn memory_salience(memory: &EmotionalMemory) -> SalienceScore {
     let importance =
         (memory.mood.joy.abs().max(memory.mood.dominance.abs()) * memory.intensity).clamp(0.0, 1.0);
 
-    SalienceScore {
-        urgency,
-        importance,
-    }
+    SalienceScore::new(urgency, importance)
 }
 
 /// Filter a slice of memories by salience threshold.
@@ -256,7 +244,11 @@ mod tests {
         let a = Appraisal::event("moral", 0.1).with_praise(0.9);
         let score = classify_salience(&a, 0.0, 0.0);
         // praiseworthiness (0.9) > desirability (0.1), so importance driven by praise
-        assert!(score.importance > 0.5, "importance={}", score.importance);
+        assert!(
+            score.importance.get() > 0.5,
+            "importance={}",
+            score.importance
+        );
     }
 
     #[test]
@@ -265,7 +257,7 @@ mod tests {
         let calm = classify_salience(&a, 0.0, 0.0);
         let aroused = classify_salience(&a, 0.8, 0.0);
         assert!(
-            aroused.urgency > calm.urgency,
+            aroused.urgency.get() > calm.urgency.get(),
             "aroused={} calm={}",
             aroused.urgency,
             calm.urgency
@@ -292,8 +284,8 @@ mod tests {
     #[test]
     fn test_salience_score_clamps() {
         let s = SalienceScore::new(2.0, -1.0);
-        assert!((s.urgency - 1.0).abs() < f32::EPSILON);
-        assert!(s.importance.abs() < f32::EPSILON);
+        assert!((s.urgency.get() - 1.0).abs() < f32::EPSILON);
+        assert!(s.importance.get().abs() < f32::EPSILON);
     }
 
     #[test]
@@ -307,8 +299,12 @@ mod tests {
             intensity: 0.9,
         };
         let score = memory_salience(&mem);
-        assert!(score.urgency > 0.5, "urgency={}", score.urgency);
-        assert!(score.importance > 0.5, "importance={}", score.importance);
+        assert!(score.urgency.get() > 0.5, "urgency={}", score.urgency);
+        assert!(
+            score.importance.get() > 0.5,
+            "importance={}",
+            score.importance
+        );
     }
 
     #[test]
@@ -396,7 +392,7 @@ mod tests {
         let s = SalienceScore::new(0.7, 0.8);
         let json = serde_json::to_string(&s).unwrap();
         let s2: SalienceScore = serde_json::from_str(&json).unwrap();
-        assert!((s2.urgency - s.urgency).abs() < f32::EPSILON);
+        assert!((s2.urgency.get() - s.urgency.get()).abs() < f32::EPSILON);
     }
 
     #[test]

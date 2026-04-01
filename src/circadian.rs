@@ -14,7 +14,6 @@
 
 use chrono::{DateTime, Timelike, Utc};
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::mood::{Emotion, MoodVector};
 
@@ -60,18 +59,13 @@ impl Chronotype {
     }
 }
 
-impl fmt::Display for Chronotype {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::EarlyBird => "early bird",
-            Self::MorningLeaning => "morning-leaning",
-            Self::Neutral => "neutral",
-            Self::EveningLeaning => "evening-leaning",
-            Self::NightOwl => "night owl",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(Chronotype {
+    EarlyBird => "early bird",
+    MorningLeaning => "morning-leaning",
+    Neutral => "neutral",
+    EveningLeaning => "evening-leaning",
+    NightOwl => "night owl",
+});
 
 /// 24-hour circadian alertness and mood cycle.
 ///

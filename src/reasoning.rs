@@ -8,7 +8,6 @@
 //! research (Sternberg 1997).
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::traits::{PersonalityProfile, TraitKind};
 
@@ -44,18 +43,13 @@ impl ReasoningStrategy {
     ];
 }
 
-impl fmt::Display for ReasoningStrategy {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Analytical => "analytical",
-            Self::Intuitive => "intuitive",
-            Self::Empathetic => "empathetic",
-            Self::Systematic => "systematic",
-            Self::Creative => "creative",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(ReasoningStrategy {
+    Analytical => "analytical",
+    Intuitive => "intuitive",
+    Empathetic => "empathetic",
+    Systematic => "systematic",
+    Creative => "creative",
+});
 
 /// Compute raw strategy scores from a personality profile.
 fn compute_scores(profile: &PersonalityProfile) -> [(ReasoningStrategy, f32); 5] {

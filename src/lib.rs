@@ -48,9 +48,16 @@
 //! - [`sociology`] — Sangha sociology math integration (feature: `sociology`)
 //! - [`physiology`] — Sharira body/biomechanics integration (feature: `physiology`)
 //! - [`microbiology`] — Jivanu microbial/immune system integration (feature: `microbiology`)
+//! - [`types`] — Type-safety primitives: `Normalized01`, `Balanced11`, `ThresholdClassifier`, `evict_min`
+//! - [`curves`] — Decay/recovery curve abstractions: `ExponentialDecay`, `LogisticCurve`
 //! - [`error`] — Error types
 
+#[macro_use]
+mod macros;
+
+pub mod curves;
 pub mod error;
+pub mod types;
 
 #[cfg(feature = "traits")]
 pub mod traits;

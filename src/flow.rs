@@ -15,7 +15,6 @@
 //! reduced energy drain, reduced stress accumulation.
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::mood::MoodVector;
 
@@ -33,17 +32,12 @@ pub enum FlowPhase {
     Disrupted,
 }
 
-impl fmt::Display for FlowPhase {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Inactive => "inactive",
-            Self::Building => "building",
-            Self::Active => "in flow",
-            Self::Disrupted => "disrupted",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(FlowPhase {
+    Inactive => "inactive",
+    Building => "building",
+    Active => "in flow",
+    Disrupted => "disrupted",
+});
 
 /// Flow state detector with hysteresis.
 #[derive(Debug, Clone, Serialize, Deserialize)]

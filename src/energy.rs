@@ -13,15 +13,15 @@
 //! above baseline during recovery as fatigue clears faster than fitness.
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::mood::MoodVector;
+use crate::types::{Normalized01, ThresholdClassifier};
 
 /// Depletable energy resource with Banister fitness-fatigue performance model.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnergyState {
     /// Current energy level: 0.0 (depleted) to 1.0 (full).
-    pub energy: f32,
+    pub energy: Normalized01,
     /// Fitness impulse-response (builds slowly, decays slowly).
     pub fitness: f32,
     /// Fatigue impulse-response (builds quickly, decays quickly).
@@ -43,7 +43,7 @@ pub struct EnergyState {
 impl Default for EnergyState {
     fn default() -> Self {
         Self {
-            energy: 1.0,
+            energy: Normalized01::ONE,
             fitness: 0.0,
             fatigue: 0.0,
             recovery_rate: 0.03,
@@ -84,13 +84,13 @@ impl EnergyState {
         }
 
         // Energy resource: drain under exertion, recover at rest
+        let mut e = self.energy.get();
         if exertion > 0.1 {
-            self.energy -= exertion * self.drain_rate;
+            e -= exertion * self.drain_rate;
         } else {
-            self.energy += self.recovery_rate * (1.0 - exertion);
+            e += self.recovery_rate * (1.0 - exertion);
         }
-
-        self.energy = self.energy.clamp(0.0, 1.0);
+        self.energy = Normalized01::new(e);
         self.fitness = self.fitness.clamp(0.0, 5.0);
         self.fatigue = self.fatigue.clamp(0.0, 5.0);
     }
@@ -110,24 +110,23 @@ impl EnergyState {
     /// Energy level classification.
     #[must_use]
     pub fn level(&self) -> EnergyLevel {
-        if self.energy < 0.1 {
-            EnergyLevel::Depleted
-        } else if self.energy < 0.3 {
-            EnergyLevel::Low
-        } else if self.energy < 0.6 {
-            EnergyLevel::Moderate
-        } else if self.energy < 0.9 {
-            EnergyLevel::High
-        } else {
-            EnergyLevel::Full
-        }
+        const CLASSIFIER: ThresholdClassifier<EnergyLevel> = ThresholdClassifier::new(
+            &[
+                (0.9, EnergyLevel::Full),
+                (0.6, EnergyLevel::High),
+                (0.3, EnergyLevel::Moderate),
+                (0.1, EnergyLevel::Low),
+            ],
+            EnergyLevel::Depleted,
+        );
+        CLASSIFIER.classify(self.energy.get())
     }
 
     /// Whether the entity has enough energy for flow state entry.
     #[must_use]
     #[inline]
     pub fn can_enter_flow(&self) -> bool {
-        self.energy >= 0.3
+        self.energy.get() >= 0.3
     }
 
     /// Regulation effectiveness modifier from energy.
@@ -137,14 +136,14 @@ impl EnergyState {
     #[must_use]
     #[inline]
     pub fn regulation_effectiveness(&self) -> f32 {
-        0.5 + self.energy * 0.5
+        0.5 + self.energy.get() * 0.5
     }
 
     /// Whether the entity is depleted (energy < 0.1).
     #[must_use]
     #[inline]
     pub fn is_depleted(&self) -> bool {
-        self.energy < 0.1
+        self.energy.get() < 0.1
     }
 
     /// Apply a recovery modifier (e.g., from circadian alertness).
@@ -154,7 +153,7 @@ impl EnergyState {
     #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn apply_recovery_modifier(&mut self, modifier: f32) {
         let bonus = self.recovery_rate * (modifier - 1.0).max(0.0);
-        self.energy = (self.energy + bonus).min(1.0);
+        self.energy = Normalized01::new(self.energy.get() + bonus);
     }
 }
 
@@ -174,18 +173,13 @@ pub enum EnergyLevel {
     Full,
 }
 
-impl fmt::Display for EnergyLevel {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Depleted => "depleted",
-            Self::Low => "low",
-            Self::Moderate => "moderate",
-            Self::High => "high",
-            Self::Full => "full",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(EnergyLevel {
+    Depleted => "depleted",
+    Low => "low",
+    Moderate => "moderate",
+    High => "high",
+    Full => "full",
+});
 
 /// Compute exertion level from current mood.
 ///
@@ -231,23 +225,23 @@ mod tests {
     #[test]
     fn test_energy_new() {
         let e = EnergyState::new();
-        assert!((e.energy - 1.0).abs() < f32::EPSILON);
+        assert!((e.energy.get() - 1.0).abs() < f32::EPSILON);
         assert_eq!(e.level(), EnergyLevel::Full);
     }
 
     #[test]
     fn test_tick_rest_recovers() {
         let mut e = EnergyState::new();
-        e.energy = 0.5;
+        e.energy = Normalized01::new(0.5);
         e.tick(0.0); // rest
-        assert!(e.energy > 0.5, "rest should recover: {}", e.energy);
+        assert!(e.energy.get() > 0.5, "rest should recover: {}", e.energy);
     }
 
     #[test]
     fn test_tick_exertion_drains() {
         let mut e = EnergyState::new();
         e.tick(0.8);
-        assert!(e.energy < 1.0, "exertion should drain: {}", e.energy);
+        assert!(e.energy.get() < 1.0, "exertion should drain: {}", e.energy);
     }
 
     #[test]
@@ -257,14 +251,14 @@ mod tests {
         for _ in 0..200 {
             e.tick(1.0);
         }
-        assert!(e.energy >= 0.0);
-        assert!(e.energy <= 1.0);
+        assert!(e.energy.get() >= 0.0);
+        assert!(e.energy.get() <= 1.0);
 
         // Recover to full
         for _ in 0..200 {
             e.tick(0.0);
         }
-        assert!(e.energy <= 1.0);
+        assert!(e.energy.get() <= 1.0);
     }
 
     #[test]
@@ -355,9 +349,9 @@ mod tests {
     fn test_can_enter_flow() {
         let mut e = EnergyState::new();
         assert!(e.can_enter_flow());
-        e.energy = 0.2;
+        e.energy = Normalized01::new(0.2);
         assert!(!e.can_enter_flow());
-        e.energy = 0.3;
+        e.energy = Normalized01::new(0.3);
         assert!(e.can_enter_flow());
     }
 
@@ -365,7 +359,7 @@ mod tests {
     fn test_regulation_effectiveness() {
         let mut e = EnergyState::new();
         assert!((e.regulation_effectiveness() - 1.0).abs() < f32::EPSILON);
-        e.energy = 0.0;
+        e.energy = Normalized01::ZERO;
         assert!((e.regulation_effectiveness() - 0.5).abs() < f32::EPSILON);
     }
 
@@ -373,22 +367,22 @@ mod tests {
     fn test_is_depleted() {
         let mut e = EnergyState::new();
         assert!(!e.is_depleted());
-        e.energy = 0.05;
+        e.energy = Normalized01::new(0.05);
         assert!(e.is_depleted());
     }
 
     #[test]
     fn test_level_classification() {
         let mut e = EnergyState::new();
-        e.energy = 0.05;
+        e.energy = Normalized01::new(0.05);
         assert_eq!(e.level(), EnergyLevel::Depleted);
-        e.energy = 0.2;
+        e.energy = Normalized01::new(0.2);
         assert_eq!(e.level(), EnergyLevel::Low);
-        e.energy = 0.5;
+        e.energy = Normalized01::new(0.5);
         assert_eq!(e.level(), EnergyLevel::Moderate);
-        e.energy = 0.8;
+        e.energy = Normalized01::new(0.8);
         assert_eq!(e.level(), EnergyLevel::High);
-        e.energy = 0.95;
+        e.energy = Normalized01::new(0.95);
         assert_eq!(e.level(), EnergyLevel::Full);
     }
 
@@ -411,19 +405,23 @@ mod tests {
     #[test]
     fn test_apply_recovery_modifier() {
         let mut e = EnergyState::new();
-        e.energy = 0.5;
+        e.energy = Normalized01::new(0.5);
         e.apply_recovery_modifier(1.5);
-        assert!(e.energy > 0.5, "modifier > 1 should boost: {}", e.energy);
+        assert!(
+            e.energy.get() > 0.5,
+            "modifier > 1 should boost: {}",
+            e.energy
+        );
     }
 
     #[test]
     fn test_apply_recovery_modifier_no_drain() {
         let mut e = EnergyState::new();
-        e.energy = 0.5;
-        let before = e.energy;
+        e.energy = Normalized01::new(0.5);
+        let before = e.energy.get();
         e.apply_recovery_modifier(0.5); // below 1.0
         assert!(
-            (e.energy - before).abs() < f32::EPSILON,
+            (e.energy.get() - before).abs() < f32::EPSILON,
             "modifier < 1 should not drain"
         );
     }
@@ -462,7 +460,7 @@ mod tests {
         let e = EnergyState::new();
         let json = serde_json::to_string(&e).unwrap();
         let e2: EnergyState = serde_json::from_str(&json).unwrap();
-        assert!((e2.energy - e.energy).abs() < f32::EPSILON);
+        assert!((e2.energy.get() - e.energy.get()).abs() < f32::EPSILON);
     }
 
     #[cfg(feature = "traits")]

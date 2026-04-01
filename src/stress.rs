@@ -8,12 +8,13 @@
 use serde::{Deserialize, Serialize};
 
 use crate::mood::MoodVector;
+use crate::types::Normalized01;
 
 /// Chronic stress state with fatigue and burnout thresholds.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StressState {
     /// Current stress load: 0.0 (relaxed) to 1.0 (burnout).
-    pub load: f32,
+    pub load: Normalized01,
     /// How fast load drops during calm periods.
     pub recovery_rate: f32,
     /// How fast load increases during stressful periods.
@@ -27,7 +28,7 @@ pub struct StressState {
 impl Default for StressState {
     fn default() -> Self {
         Self {
-            load: 0.0,
+            load: Normalized01::ZERO,
             recovery_rate: 0.02,
             accumulation_rate: 0.05,
             threshold_fatigue: 0.6,
@@ -54,36 +55,38 @@ impl StressState {
             + (-mood.joy).max(0.0) * 0.2)
             .clamp(0.0, 1.0);
 
+        let mut l = self.load.get();
         if stress_input > 0.3 {
             // Stressful: accumulate
-            self.load += (stress_input - 0.3) * self.accumulation_rate;
+            l += (stress_input - 0.3) * self.accumulation_rate;
         } else {
             // Calm: recover
-            self.load -= self.recovery_rate * (1.0 - stress_input);
+            l -= self.recovery_rate * (1.0 - stress_input);
         }
-        self.load = self.load.clamp(0.0, 1.0);
+        self.load = Normalized01::new(l);
     }
 
     /// Whether the agent is fatigued (load > fatigue threshold).
     #[must_use]
     pub fn is_fatigued(&self) -> bool {
-        self.load >= self.threshold_fatigue
+        self.load.get() >= self.threshold_fatigue
     }
 
     /// Whether the agent is burned out (load > burnout threshold).
     #[must_use]
     pub fn is_burned_out(&self) -> bool {
-        self.load >= self.threshold_burnout
+        self.load.get() >= self.threshold_burnout
     }
 
     /// Stress level category.
     #[must_use]
     pub fn level(&self) -> StressLevel {
-        if self.load >= self.threshold_burnout {
+        let l = self.load.get();
+        if l >= self.threshold_burnout {
             StressLevel::Burnout
-        } else if self.load >= self.threshold_fatigue {
+        } else if l >= self.threshold_fatigue {
             StressLevel::Fatigued
-        } else if self.load >= 0.3 {
+        } else if l >= 0.3 {
             StressLevel::Elevated
         } else {
             StressLevel::Relaxed
@@ -96,7 +99,7 @@ impl StressState {
     /// Multiply incoming negative stimuli by this factor.
     #[must_use]
     pub fn negative_amplifier(&self) -> f32 {
-        1.0 + self.load
+        1.0 + self.load.get()
     }
 
     /// Regulation effectiveness reduction from stress.
@@ -104,7 +107,7 @@ impl StressState {
     /// Returns 1.0 when relaxed (full effectiveness), down to 0.3 at burnout.
     #[must_use]
     pub fn regulation_effectiveness(&self) -> f32 {
-        (1.0 - self.load * 0.7).max(0.3)
+        (1.0 - self.load.get() * 0.7).max(0.3)
     }
 }
 
@@ -118,17 +121,12 @@ pub enum StressLevel {
     Burnout,
 }
 
-impl std::fmt::Display for StressLevel {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            Self::Relaxed => "relaxed",
-            Self::Elevated => "elevated",
-            Self::Fatigued => "fatigued",
-            Self::Burnout => "burnout",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(StressLevel {
+    Relaxed => "relaxed",
+    Elevated => "elevated",
+    Fatigued => "fatigued",
+    Burnout => "burnout",
+});
 
 /// Derive stress accumulation/recovery rates from personality.
 #[cfg(feature = "traits")]
@@ -141,7 +139,7 @@ pub fn stress_from_personality(profile: &crate::traits::PersonalityProfile) -> S
     let resilience = (patience + confidence) / 2.0; // -1..1
 
     StressState {
-        load: 0.0,
+        load: Normalized01::ZERO,
         // Patient + confident agents recover faster
         recovery_rate: (0.02 + resilience * 0.02).clamp(0.005, 0.05),
         // Impatient + low confidence agents accumulate faster
@@ -158,7 +156,7 @@ mod tests {
     #[test]
     fn test_stress_new() {
         let s = StressState::new();
-        assert!(s.load < f32::EPSILON);
+        assert!(s.load.get() < f32::EPSILON);
         assert_eq!(s.level(), StressLevel::Relaxed);
         assert!(!s.is_fatigued());
         assert!(!s.is_burned_out());
@@ -167,10 +165,10 @@ mod tests {
     #[test]
     fn test_tick_calm_recovers() {
         let mut s = StressState::new();
-        s.load = 0.5;
+        s.load = Normalized01::new(0.5);
         let calm = MoodVector::default();
         s.tick(&calm);
-        assert!(s.load < 0.5);
+        assert!(s.load.get() < 0.5);
     }
 
     #[test]
@@ -183,7 +181,7 @@ mod tests {
             s.tick(&stressed);
         }
         assert!(
-            s.load > 0.1,
+            s.load.get() > 0.1,
             "load should increase under stress: {}",
             s.load
         );
@@ -192,7 +190,7 @@ mod tests {
     #[test]
     fn test_burnout() {
         let mut s = StressState::new();
-        s.load = 0.95;
+        s.load = Normalized01::new(0.95);
         assert!(s.is_burned_out());
         assert!(s.is_fatigued());
         assert_eq!(s.level(), StressLevel::Burnout);
@@ -201,7 +199,7 @@ mod tests {
     #[test]
     fn test_fatigued() {
         let mut s = StressState::new();
-        s.load = 0.7;
+        s.load = Normalized01::new(0.7);
         assert!(s.is_fatigued());
         assert!(!s.is_burned_out());
         assert_eq!(s.level(), StressLevel::Fatigued);
@@ -211,7 +209,7 @@ mod tests {
     fn test_negative_amplifier() {
         let mut s = StressState::new();
         assert!((s.negative_amplifier() - 1.0).abs() < f32::EPSILON);
-        s.load = 1.0;
+        s.load = Normalized01::ONE;
         assert!((s.negative_amplifier() - 2.0).abs() < f32::EPSILON);
     }
 
@@ -220,7 +218,7 @@ mod tests {
         let s = StressState::new();
         assert!((s.regulation_effectiveness() - 1.0).abs() < f32::EPSILON);
         let mut burned = StressState::new();
-        burned.load = 1.0;
+        burned.load = Normalized01::ONE;
         assert!(burned.regulation_effectiveness() < 0.4);
     }
 
@@ -233,7 +231,7 @@ mod tests {
         for _ in 0..1000 {
             s.tick(&extreme);
         }
-        assert!(s.load <= 1.0);
+        assert!(s.load.get() <= 1.0);
     }
 
     #[test]
@@ -247,7 +245,7 @@ mod tests {
         let s = StressState::new();
         let json = serde_json::to_string(&s).unwrap();
         let s2: StressState = serde_json::from_str(&json).unwrap();
-        assert!((s2.load - s.load).abs() < f32::EPSILON);
+        assert!((s2.load.get() - s.load.get()).abs() < f32::EPSILON);
     }
 
     #[cfg(feature = "traits")]

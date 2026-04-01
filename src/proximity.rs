@@ -8,7 +8,6 @@
 //! trust and arousal, a battlefield might spike frustration and arousal.
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::mood::MoodTrigger;
 
@@ -48,16 +47,11 @@ impl Falloff {
     }
 }
 
-impl fmt::Display for Falloff {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Step => "step",
-            Self::Linear => "linear",
-            Self::Exponential => "exponential",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(Falloff {
+    Step => "step",
+    Linear => "linear",
+    Exponential => "exponential",
+});
 
 /// A rule mapping a location to a mood trigger with distance falloff.
 #[derive(Debug, Clone, Serialize, Deserialize)]

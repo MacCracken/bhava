@@ -13,13 +13,15 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::types::Balanced11;
+
 /// A learned preference for a tagged stimulus.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PreferenceEntry {
     /// What this preference is about (entity, topic, action type).
     pub tag: String,
     /// Learned valence: -1.0 (strong aversion) to 1.0 (strong preference).
-    pub valence: f32,
+    pub valence: Balanced11,
     /// Number of outcome observations.
     pub exposure_count: u32,
     /// When this preference was last updated.
@@ -47,7 +49,7 @@ impl PreferenceEntry {
         } else {
             outcome * bias.negative_gain
         };
-        self.valence = (self.valence * (1.0 - alpha) + biased_outcome * alpha).clamp(-1.0, 1.0);
+        self.valence = Balanced11::new(self.valence.get() * (1.0 - alpha) + biased_outcome * alpha);
         self.exposure_count = self.exposure_count.saturating_add(1);
         self.last_exposure = now;
     }
@@ -151,7 +153,7 @@ impl PreferenceStore {
 
         let mut entry = PreferenceEntry {
             tag,
-            valence: 0.0,
+            valence: Balanced11::ZERO,
             exposure_count: 0,
             last_exposure: now,
         };
@@ -165,7 +167,7 @@ impl PreferenceStore {
         self.entries
             .iter()
             .find(|e| e.tag == tag)
-            .map(|e| e.valence)
+            .map(|e| e.valence.get())
     }
 
     /// Get the full entry for a tag.
@@ -182,10 +184,10 @@ impl PreferenceStore {
     pub fn decay(&mut self, rate: f32) {
         let rate = rate.clamp(0.0, 1.0);
         for entry in &mut self.entries {
-            entry.valence *= 1.0 - rate;
+            entry.valence = Balanced11::new(entry.valence.get() * (1.0 - rate));
         }
         self.entries
-            .retain(|e| e.valence.abs() >= 0.01 || e.exposure_count >= 2);
+            .retain(|e| e.valence.get().abs() >= 0.01 || e.exposure_count >= 2);
     }
 
     /// Top N strongest positive preferences, sorted by valence descending.
@@ -195,8 +197,8 @@ impl PreferenceStore {
         let mut positive: Vec<_> = self
             .entries
             .iter()
-            .filter(|e| e.valence > 0.0)
-            .map(|e| (e.tag.as_str(), e.valence))
+            .filter(|e| e.valence.get() > 0.0)
+            .map(|e| (e.tag.as_str(), e.valence.get()))
             .collect();
         positive.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
         positive.truncate(n);
@@ -210,8 +212,8 @@ impl PreferenceStore {
         let mut negative: Vec<_> = self
             .entries
             .iter()
-            .filter(|e| e.valence < 0.0)
-            .map(|e| (e.tag.as_str(), e.valence))
+            .filter(|e| e.valence.get() < 0.0)
+            .map(|e| (e.tag.as_str(), e.valence.get()))
             .collect();
         negative.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
         negative.truncate(n);
@@ -232,18 +234,7 @@ impl PreferenceStore {
 
     /// Evict the entry with the weakest absolute valence.
     fn evict_weakest(&mut self) {
-        if self.entries.is_empty() {
-            return;
-        }
-        let mut min_idx = 0;
-        let mut min_val = f32::MAX;
-        for (i, e) in self.entries.iter().enumerate() {
-            if e.valence.abs() < min_val {
-                min_val = e.valence.abs();
-                min_idx = i;
-            }
-        }
-        self.entries.swap_remove(min_idx);
+        crate::types::evict_min(&mut self.entries, |e| e.valence.get().abs() as f64);
     }
 }
 
@@ -271,7 +262,7 @@ mod tests {
     fn test_alpha_decreases_with_exposure() {
         let e0 = PreferenceEntry {
             tag: "test".into(),
-            valence: 0.0,
+            valence: Balanced11::ZERO,
             exposure_count: 0,
             last_exposure: now(),
         };

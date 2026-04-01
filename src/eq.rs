@@ -21,28 +21,29 @@
 //! observed behavior over time.
 
 use serde::{Deserialize, Serialize};
-use std::fmt;
+
+use crate::types::{Normalized01, ThresholdClassifier};
 
 /// Emotional intelligence profile — four-branch scores.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EqProfile {
     /// Accuracy in identifying emotions (0.0–1.0).
-    pub perception: f32,
+    pub perception: Normalized01,
     /// Using emotions to enhance thinking (0.0–1.0).
-    pub facilitation: f32,
+    pub facilitation: Normalized01,
     /// Comprehending emotional language and transitions (0.0–1.0).
-    pub understanding: f32,
+    pub understanding: Normalized01,
     /// Regulating emotions in self and others (0.0–1.0).
-    pub management: f32,
+    pub management: Normalized01,
 }
 
 impl Default for EqProfile {
     fn default() -> Self {
         Self {
-            perception: 0.5,
-            facilitation: 0.5,
-            understanding: 0.5,
-            management: 0.5,
+            perception: Normalized01::HALF,
+            facilitation: Normalized01::HALF,
+            understanding: Normalized01::HALF,
+            management: Normalized01::HALF,
         }
     }
 }
@@ -63,10 +64,10 @@ impl EqProfile {
         management: f32,
     ) -> Self {
         Self {
-            perception: perception.clamp(0.0, 1.0),
-            facilitation: facilitation.clamp(0.0, 1.0),
-            understanding: understanding.clamp(0.0, 1.0),
-            management: management.clamp(0.0, 1.0),
+            perception: Normalized01::new(perception),
+            facilitation: Normalized01::new(facilitation),
+            understanding: Normalized01::new(understanding),
+            management: Normalized01::new(management),
         }
     }
 
@@ -79,10 +80,10 @@ impl EqProfile {
     #[inline]
     pub fn overall(&self) -> f32 {
         // Weights: perception 0.15, facilitation 0.20, understanding 0.30, management 0.35
-        self.perception * 0.15
-            + self.facilitation * 0.20
-            + self.understanding * 0.30
-            + self.management * 0.35
+        self.perception.get() * 0.15
+            + self.facilitation.get() * 0.20
+            + self.understanding.get() * 0.30
+            + self.management.get() * 0.35
     }
 
     /// Get score for a specific branch.
@@ -90,17 +91,17 @@ impl EqProfile {
     #[inline]
     pub fn get(&self, branch: EqBranch) -> f32 {
         match branch {
-            EqBranch::Perception => self.perception,
-            EqBranch::Facilitation => self.facilitation,
-            EqBranch::Understanding => self.understanding,
-            EqBranch::Management => self.management,
+            EqBranch::Perception => self.perception.get(),
+            EqBranch::Facilitation => self.facilitation.get(),
+            EqBranch::Understanding => self.understanding.get(),
+            EqBranch::Management => self.management.get(),
         }
     }
 
     /// Set score for a specific branch (clamped to 0.0–1.0).
     #[inline]
     pub fn set(&mut self, branch: EqBranch, value: f32) {
-        let v = value.clamp(0.0, 1.0);
+        let v = Normalized01::new(value);
         match branch {
             EqBranch::Perception => self.perception = v,
             EqBranch::Facilitation => self.facilitation = v,
@@ -112,18 +113,16 @@ impl EqProfile {
     /// Classify the overall EQ level.
     #[must_use]
     pub fn level(&self) -> EqLevel {
-        let o = self.overall();
-        if o >= 0.8 {
-            EqLevel::Exceptional
-        } else if o >= 0.6 {
-            EqLevel::High
-        } else if o >= 0.4 {
-            EqLevel::Average
-        } else if o >= 0.2 {
-            EqLevel::Low
-        } else {
-            EqLevel::Minimal
-        }
+        const CLASSIFIER: ThresholdClassifier<EqLevel> = ThresholdClassifier::new(
+            &[
+                (0.8, EqLevel::Exceptional),
+                (0.6, EqLevel::High),
+                (0.4, EqLevel::Average),
+                (0.2, EqLevel::Low),
+            ],
+            EqLevel::Minimal,
+        );
+        CLASSIFIER.classify(self.overall())
     }
 
     /// Micro-expression detection bonus from perception.
@@ -132,7 +131,7 @@ impl EqProfile {
     /// Returns a multiplier: 0.5 (low perception) to 1.5 (high perception).
     #[must_use]
     pub fn perception_bonus(&self) -> f32 {
-        0.5 + self.perception
+        0.5 + self.perception.get()
     }
 
     /// Creativity/flow facilitation bonus.
@@ -141,7 +140,7 @@ impl EqProfile {
     /// Returns a multiplier: 0.5 to 1.5.
     #[must_use]
     pub fn facilitation_bonus(&self) -> f32 {
-        0.5 + self.facilitation
+        0.5 + self.facilitation.get()
     }
 
     /// Emotion regulation effectiveness bonus from management.
@@ -150,7 +149,7 @@ impl EqProfile {
     /// Returns a multiplier: 0.5 to 1.5.
     #[must_use]
     pub fn management_bonus(&self) -> f32 {
-        0.5 + self.management
+        0.5 + self.management.get()
     }
 
     /// Stress recovery rate bonus from management.
@@ -159,7 +158,7 @@ impl EqProfile {
     /// Returns a multiplier: 0.8 to 1.5.
     #[must_use]
     pub fn stress_recovery_bonus(&self) -> f32 {
-        0.8 + self.management * 0.7
+        0.8 + self.management.get() * 0.7
     }
 
     /// Contagion resistance from management.
@@ -168,7 +167,7 @@ impl EqProfile {
     /// Returns a resistance factor: 0.0 (fully susceptible) to 0.5 (resistant).
     #[must_use]
     pub fn contagion_resistance(&self) -> f32 {
-        self.management * 0.5
+        self.management.get() * 0.5
     }
 
     /// Appraisal accuracy bonus from understanding.
@@ -177,7 +176,7 @@ impl EqProfile {
     /// Returns a multiplier: 0.5 to 1.5.
     #[must_use]
     pub fn appraisal_bonus(&self) -> f32 {
-        0.5 + self.understanding
+        0.5 + self.understanding.get()
     }
 }
 
@@ -205,17 +204,12 @@ impl EqBranch {
     ];
 }
 
-impl fmt::Display for EqBranch {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Perception => "perception",
-            Self::Facilitation => "facilitation",
-            Self::Understanding => "understanding",
-            Self::Management => "management",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(EqBranch {
+    Perception => "perception",
+    Facilitation => "facilitation",
+    Understanding => "understanding",
+    Management => "management",
+});
 
 /// Named EQ classification level.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -233,18 +227,13 @@ pub enum EqLevel {
     Exceptional,
 }
 
-impl fmt::Display for EqLevel {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Minimal => "minimal",
-            Self::Low => "low",
-            Self::Average => "average",
-            Self::High => "high",
-            Self::Exceptional => "exceptional",
-        };
-        f.write_str(s)
-    }
-}
+impl_display!(EqLevel {
+    Minimal => "minimal",
+    Low => "low",
+    Average => "average",
+    High => "high",
+    Exceptional => "exceptional",
+});
 
 /// Derive a baseline EQ profile from personality traits.
 ///
@@ -271,10 +260,10 @@ pub fn eq_from_personality(profile: &crate::traits::PersonalityProfile) -> EqPro
     let to_score = |v: f32| ((v + 1.0) / 2.0).clamp(0.0, 1.0);
 
     EqProfile {
-        perception: to_score((empathy + curiosity) / 2.0),
-        facilitation: to_score((creativity + confidence) / 2.0),
-        understanding: to_score((empathy + patience + pedagogy) / 3.0),
-        management: to_score((patience + confidence + formality) / 3.0),
+        perception: Normalized01::new(to_score((empathy + curiosity) / 2.0)),
+        facilitation: Normalized01::new(to_score((creativity + confidence) / 2.0)),
+        understanding: Normalized01::new(to_score((empathy + patience + pedagogy) / 3.0)),
+        management: Normalized01::new(to_score((patience + confidence + formality) / 3.0)),
     }
 }
 
@@ -312,18 +301,18 @@ mod tests {
     #[test]
     fn test_default() {
         let eq = EqProfile::new();
-        assert!((eq.perception - 0.5).abs() < f32::EPSILON);
-        assert!((eq.facilitation - 0.5).abs() < f32::EPSILON);
-        assert!((eq.understanding - 0.5).abs() < f32::EPSILON);
-        assert!((eq.management - 0.5).abs() < f32::EPSILON);
+        assert!((eq.perception.get() - 0.5).abs() < f32::EPSILON);
+        assert!((eq.facilitation.get() - 0.5).abs() < f32::EPSILON);
+        assert!((eq.understanding.get() - 0.5).abs() < f32::EPSILON);
+        assert!((eq.management.get() - 0.5).abs() < f32::EPSILON);
     }
 
     #[test]
     fn test_with_scores_clamps() {
         let eq = EqProfile::with_scores(1.5, -0.5, 0.7, 0.3);
-        assert!((eq.perception - 1.0).abs() < f32::EPSILON);
-        assert!(eq.facilitation.abs() < f32::EPSILON);
-        assert!((eq.understanding - 0.7).abs() < f32::EPSILON);
+        assert!((eq.perception.get() - 1.0).abs() < f32::EPSILON);
+        assert!(eq.facilitation.get().abs() < f32::EPSILON);
+        assert!((eq.understanding.get() - 0.7).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -437,8 +426,8 @@ mod tests {
         let eq = EqProfile::with_scores(0.8, 0.6, 0.7, 0.9);
         let json = serde_json::to_string(&eq).unwrap();
         let eq2: EqProfile = serde_json::from_str(&json).unwrap();
-        assert!((eq2.perception - eq.perception).abs() < f32::EPSILON);
-        assert!((eq2.management - eq.management).abs() < f32::EPSILON);
+        assert!((eq2.perception.get() - eq.perception.get()).abs() < f32::EPSILON);
+        assert!((eq2.management.get() - eq.management.get()).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -474,11 +463,15 @@ mod tests {
             crate::traits::TraitLevel::High,
         );
         let eq = eq_from_personality(&p);
-        assert!(eq.perception > 0.6, "perception: {}", eq.perception);
         assert!(
-            eq.understanding > 0.6,
+            eq.perception.get() > 0.6,
+            "perception: {}",
+            eq.perception.get()
+        );
+        assert!(
+            eq.understanding.get() > 0.6,
             "understanding: {}",
-            eq.understanding
+            eq.understanding.get()
         );
     }
 
@@ -501,10 +494,10 @@ mod tests {
         let eq = eq_from_personality(&p);
         // High management (formality + confidence), low perception (low empathy)
         assert!(
-            eq.management > eq.perception,
+            eq.management.get() > eq.perception.get(),
             "mgmt={} perc={}",
-            eq.management,
-            eq.perception
+            eq.management.get(),
+            eq.perception.get()
         );
     }
 

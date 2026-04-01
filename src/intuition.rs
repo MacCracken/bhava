@@ -30,7 +30,6 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fmt;
 
 use crate::mood::Emotion;
 use crate::salience::SalienceScore;
@@ -74,18 +73,14 @@ impl SignalSource {
     ];
 }
 
-impl fmt::Display for SignalSource {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::MemoryActivation => f.write_str("memory_activation"),
-            Self::SomaticMarker => f.write_str("somatic_marker"),
-            Self::MicroExpressionLeak => f.write_str("micro_expression_leak"),
-            Self::EmotionalComplexity => f.write_str("emotional_complexity"),
-            Self::PerceptualSensitivity => f.write_str("perceptual_sensitivity"),
-            Self::AestheticSensitivity => f.write_str("aesthetic_sensitivity"),
-        }
-    }
-}
+impl_display!(SignalSource {
+    MemoryActivation => "memory_activation",
+    SomaticMarker => "somatic_marker",
+    MicroExpressionLeak => "micro_expression_leak",
+    EmotionalComplexity => "emotional_complexity",
+    PerceptualSensitivity => "perceptual_sensitivity",
+    AestheticSensitivity => "aesthetic_sensitivity",
+});
 
 // ---------------------------------------------------------------------------
 // KnowingLayer
@@ -151,17 +146,13 @@ impl KnowingLayer {
     }
 }
 
-impl fmt::Display for KnowingLayer {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Instinct => f.write_str("instinct"),
-            Self::Conditioning => f.write_str("conditioning"),
-            Self::Belief => f.write_str("belief"),
-            Self::Intuition => f.write_str("intuition"),
-            Self::Insight => f.write_str("insight"),
-        }
-    }
-}
+impl_display!(KnowingLayer {
+    Instinct => "instinct",
+    Conditioning => "conditioning",
+    Belief => "belief",
+    Intuition => "intuition",
+    Insight => "insight",
+});
 
 /// Speed, accuracy, and explainability characteristics of a knowing layer.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]

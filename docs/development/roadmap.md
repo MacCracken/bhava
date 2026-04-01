@@ -8,7 +8,7 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 ## Status
 
-**v1.8.0 released** (2026-04-01). 40 modules, 1188 tests, 157 benchmarks, zero unsafe, zero unwrap. API surface locked under semver. Completed versions in [CHANGELOG.md](../../CHANGELOG.md).
+**v2.0.0 in development**. 43 modules, 1234 tests, 157 benchmarks, zero unsafe, zero unwrap. Completed versions in [CHANGELOG.md](../../CHANGELOG.md).
 
 ## Research
 
@@ -18,40 +18,28 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 - **Dependency**: requires v3.0 (cosmic scales) for complete mathematical specification
 - **Target**: Nature Computational Science / PNAS after formal verification
 
-## Engineering Backlog
+## v2.0.0 Scope
 
-- **Release benchmark artifacts** — release workflow should run full `bench-history.sh` (100 samples) and attach `bench-history.csv` + `BENCHMARKS.md` as release assets. Every tagged version gets a permanent, reproducible performance snapshot. CI smoke test stays at `--sample-size 10`.
+### Infrastructure
+- ~~**Release benchmark artifacts**~~ ✓ — release workflow runs `bench-history.sh`, attaches CSV + MD as release assets
 
-## Future Features (demand-gated)
+### Type Safety & Abstractions
+- ~~**Normalized number types**~~ ✓ — `Normalized01(f32)` and `Balanced11(f32)` in `types` module. Adopted in EnergyState, StressState, SalienceScore, EqProfile, PreferenceEntry. MoodVector fields deferred (360 touch points, already guarded by set/get API).
+- ~~**Generic capacity-bounded store**~~ ✓ — `evict_min()` helper function (not full trait — only 2 stores, insufficient justification for trait). Adopted in ActivationStore and PreferenceStore.
+- ~~**Threshold classifier**~~ ✓ — `ThresholdClassifier<L>` in `types` module. Adopted in EnergyLevel, SalienceLevel, EqLevel. StressLevel skipped (dynamic thresholds).
+- ~~**Enum display macro**~~ ✓ — `impl_display!` macro. 22 enum Display impls migrated.
+- ~~**Decay/recovery curve abstraction**~~ ✓ — `DecayCurve` trait + `ExponentialDecay` + `LogisticCurve` in `curves` module. Available for new modules; existing one-liner decay formulas left as-is.
+- ~~**MoodVector iterator**~~ ✓ — `iter()`, `dot()`, `magnitude()` added. `dominant_emotion()` refactored.
+- **State machine base trait** — deferred (only 1 implementor; CLAUDE.md rule of three)
 
-These abstractions are not needed today but may become worthwhile if the crate grows or consumers request them. Gate on concrete demand — do not build speculatively.
+### Zodiac Manifestation Engine
+See detailed design below.
 
-### Normalized Number Types
-Wrapper types `Normalized01(f32)` (0.0..=1.0) and `Balanced11(f32)` (-1.0..=1.0) to replace 100+ `.clamp()` calls with compile-time range safety. Build when: a consumer reports an out-of-range bug, or a new module would benefit from enforced ranges at the type level.
+## Future Features (post-v2.0)
 
-### Generic Capacity-Bounded Store
-Trait `Evictable` + `CapacityBoundedStore<T>` to unify eviction logic in `ActivationStore`, `PreferenceStore`, `MoodHistory`, `EmotionalMemoryBank`. Build when: a 5th bounded store is needed, or eviction bugs surface from inconsistent implementations.
+### Neuroscience Bridge Expansion (Biochemistry Layer)
 
-### Threshold Classifier
-Generic `ThresholdClassifier<T>` to replace ad-hoc `level()` methods in `EnergyLevel`, `StressLevel`, `EqLevel`, `SalienceLevel`. Build when: a consumer needs runtime-configurable thresholds, or a new level enum is added.
-
-### Enum Display Macro
-Derive macro or `impl_display!` to eliminate 16+ manual `Display` match blocks. Build when: enum count exceeds 20, or a derive macro is already in the build for another reason.
-
-### Decay/Recovery Curve Abstraction
-`CurveModel` trait with `ExponentialDecay`, `LogisticCurve` implementations to unify decay math across `EmotionalState`, `EnergyState`, `actr`, `circadian`. Build when: a consumer needs pluggable decay curves (e.g., Gompertz for aging NPCs).
-
-### MoodVector Iterator
-`MoodVector::iter() -> impl Iterator<Item = (Emotion, f32)>` plus `magnitude()` and `fold` helpers. Build when: a new module needs mood aggregation and the `for e in Emotion::ALL` pattern appears a 7th+ time.
-
-### State Machine Base Trait
-Generic `StateMachine { type State; type Input; fn tick(); fn state(); }` for `FlowState`, `CircadianRhythm`, and future phase-based systems. Build when: a 3rd state machine module is added.
-
-### Neuroscience Bridge — v1.8 (Brain Chemistry Pressing on Emotion)
-
-The brain's neurochemistry presses on emotion constantly: serotonin sets mood baseline, dopamine drives reward and preference, cortisol amplifies stress, norepinephrine modulates arousal, GABA/glutamate balance affects anxiety, and sleep neuroscience feeds circadian. Same bridge pattern as physiology (sharira) and microbiology (jivanu).
-
-**Prerequisites**: mastishk (neuroscience), rasayan (biochemistry) — to be scaffolded after brahmanda publishes
+The v1.8 neuroscience bridge consumes mastishk. A future expansion could add rasayan (biochemistry) for the biochemical pathways that produce/regulate neurotransmitters — deeper fidelity on the same bridge pattern.
 
 #### Bridge Functions (`neuroscience` feature → mastishk + rasayan)
 
@@ -357,13 +345,13 @@ Cultural zodiac/calendar systems live in the **sankhya** crate (ancient mathemat
 
 Systems are composable. A character can have Western Sun in Scorpio, Vedic Moon in Pushya nakshatra, Chinese Year of the Dragon (Wood), and Mayan day sign Cimi — each contributing a layer to the same unified bhava profile. Cultural context determines which system has primary weight.
 
-Build order: sankhya hardening (blocked on lipi) → bhava cultural overlay bridge (post-v2.0).
+Build order: sankhya hardening (blocked on varna) → bhava cultural overlay bridge (post-v2.0).
 
-### Multilingual Emotion & Sentiment — post-v2.0 (lipi bridge)
+### Multilingual Emotion & Sentiment — post-v2.0 (varna bridge)
 
-Bhava's sentiment, mood, and archetype modules are currently English-centric. A lipi bridge would internalize multilingual emotion vocabulary and cultural expression patterns — feelings that don't translate directly but map to specific MoodVector regions.
+Bhava's sentiment, mood, and archetype modules are currently English-centric. A varna bridge would internalize multilingual emotion vocabulary and cultural expression patterns — feelings that don't translate directly but map to specific MoodVector regions.
 
-**Prerequisite**: lipi (multilingual language engine)
+**Prerequisite**: varna (multilingual language engine)
 
 #### Capabilities
 
@@ -372,14 +360,14 @@ Bhava's sentiment, mood, and archetype modules are currently English-centric. A 
   - Japanese *mono no aware* → transient beauty awareness (joy↑, arousal↓, interest↑)
   - German *Schadenfreude* → pleasure at misfortune (joy↑, trust↓, dominance↑)
   - Danish *hygge* → cozy contentment (joy↑, trust↑, arousal↓)
-  - Filipino *gigil* → overwhelming cuteness urge (arousal↑, joy↑)
+  - Fivarnano *gigil* → overwhelming cuteness urge (arousal↑, joy↑)
 - **Multilingual sentiment analysis**: sentiment module operates across languages, not just English keywords
-- **Cultural display rules**: lipi script/language detection → display_rules cultural context selection
+- **Cultural display rules**: varna script/language detection → display_rules cultural context selection
 - **Archetype localization**: personality archetypes expressed in culturally appropriate terms
 
-Sits alongside sankhya cultural overlay — both are "culture pressing on personality" at the same layer. lipi provides the linguistic dimension, sankhya provides the calendrical/mathematical dimension.
+Sits alongside sankhya cultural overlay — both are "culture pressing on personality" at the same layer. varna provides the linguistic dimension, sankhya provides the calendrical/mathematical dimension.
 
-Build when: lipi is stable and bhava has at least one non-English consumer.
+Build when: varna is stable and bhava has at least one non-English consumer.
 
 ### Divine Archetype Overlay — post-v2.0 (avatara crate)
 
@@ -647,8 +635,8 @@ v2.0 prerequisite chain:
     → bhava v2.0 (zodiac manifestation engine)
 
 v2.0+ cultural + linguistic overlay:
-  lipi (stable) → sankhya (hardened) → bhava cultural bridge (post-v2.0)
-  lipi (stable) → bhava multilingual emotion/sentiment (post-v2.0)
+  varna (stable) → sankhya (hardened) → bhava cultural bridge (post-v2.0)
+  varna (stable) → bhava multilingual emotion/sentiment (post-v2.0)
 
 v3.0 prerequisite chain:
   brahmanda (galactic structure, Laniakea)
