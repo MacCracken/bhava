@@ -1518,6 +1518,21 @@ mod tests {
         let _ = profile.reasoning_strategy;
     }
 
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    #[test]
+    fn mercury_all_signs_produce_valid_strategy() {
+        use crate::reasoning::ReasoningStrategy;
+        for &sign in ZodiacSign::ALL {
+            let chart = NatalChart::new().sun(ZodiacSign::Aries).mercury(sign);
+            let profile = chart.manifest();
+            // Every sign must map to one of the 5 strategies
+            assert!(
+                ReasoningStrategy::ALL.contains(&profile.reasoning_strategy),
+                "{sign} mercury should produce a valid strategy"
+            );
+        }
+    }
+
     // ── Venus → spirit ────────────────────────────────────────────────
 
     #[cfg(feature = "archetype")]
@@ -1749,5 +1764,63 @@ mod tests {
             profile.growth.decay_rate < default.decay_rate,
             "earth jupiter should have slower pressure decay"
         );
+    }
+
+    // ── Exhaustiveness: all signs through outer planets ────────────────
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn all_signs_through_mars() {
+        for &sign in ZodiacSign::ALL {
+            let chart = NatalChart::new().sun(ZodiacSign::Aries).mars(sign);
+            let profile = chart.manifest();
+            assert!(
+                profile.energy.drain_rate > 0.0,
+                "{sign} mars should produce valid energy"
+            );
+        }
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn all_signs_through_saturn() {
+        for &sign in ZodiacSign::ALL {
+            let chart = NatalChart::new().sun(ZodiacSign::Aries).saturn(sign);
+            let profile = chart.manifest();
+            assert!(
+                profile.stress.threshold_burnout > profile.stress.threshold_fatigue,
+                "{sign} saturn: burnout threshold must exceed fatigue threshold"
+            );
+        }
+    }
+
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    #[test]
+    fn all_signs_through_jupiter() {
+        for &sign in ZodiacSign::ALL {
+            let chart = NatalChart::new().sun(ZodiacSign::Aries).jupiter(sign);
+            let profile = chart.manifest();
+            assert!(
+                profile.growth.threshold > 0.0,
+                "{sign} jupiter should produce valid growth"
+            );
+        }
+    }
+
+    // ── Full chart manifestation ──────────────────────────────────────
+
+    #[test]
+    fn full_chart_manifests_without_panic() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Scorpio)
+            .moon(ZodiacSign::Cancer)
+            .rising(ZodiacSign::Gemini)
+            .mercury(ZodiacSign::Sagittarius)
+            .venus(ZodiacSign::Libra)
+            .mars(ZodiacSign::Aries)
+            .jupiter(ZodiacSign::Sagittarius)
+            .saturn(ZodiacSign::Capricorn);
+        let profile = chart.manifest();
+        assert_eq!(profile.personality.name, "Scorpio");
     }
 }
