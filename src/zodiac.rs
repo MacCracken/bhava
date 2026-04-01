@@ -439,7 +439,10 @@ impl NatalChart {
     /// Set a placement for any planet.
     #[must_use]
     pub fn place(mut self, planet: Planet, sign: ZodiacSign) -> Self {
-        self.placements[planet as usize] = Some(sign);
+        let idx = planet as usize;
+        if idx < self.placements.len() {
+            self.placements[idx] = Some(sign);
+        }
         self
     }
 
@@ -447,7 +450,7 @@ impl NatalChart {
     #[must_use]
     #[inline]
     pub fn get(&self, planet: Planet) -> Option<ZodiacSign> {
-        self.placements[planet as usize]
+        self.placements.get(planet as usize).copied().flatten()
     }
 
     /// Sun placement — core personality (Soul).
@@ -878,6 +881,14 @@ mod tests {
     #[test]
     fn all_planets_counted() {
         assert_eq!(Planet::ALL.len(), Planet::COUNT);
+    }
+
+    #[test]
+    fn planet_discriminants_are_contiguous() {
+        // Ensures `planet as usize` is safe for array indexing
+        for (i, &planet) in Planet::ALL.iter().enumerate() {
+            assert_eq!(planet as usize, i, "{planet} discriminant should be {i}");
+        }
     }
 
     #[test]
