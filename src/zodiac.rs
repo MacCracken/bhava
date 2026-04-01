@@ -564,10 +564,46 @@ impl NatalChart {
             }
         };
 
+        // Mercury selects reasoning strategy
+        #[cfg(all(feature = "mood", feature = "traits"))]
+        let reasoning_strategy = {
+            if let Some(mercury_sign) = self.get(Planet::Mercury) {
+                mercury_reasoning_strategy(mercury_sign)
+            } else {
+                crate::reasoning::select_reasoning_strategy(&personality)
+            }
+        };
+
+        // Venus shapes spirit (passions, inspirations, pains)
+        #[cfg(feature = "archetype")]
+        let spirit = {
+            if let Some(venus_sign) = self.get(Planet::Venus) {
+                venus_spirit(venus_sign)
+            } else {
+                crate::spirit::Spirit::new()
+            }
+        };
+
+        // Rising shapes display rules
+        #[cfg(feature = "mood")]
+        let display_context = {
+            if let Some(rising_sign) = self.get(Planet::Rising) {
+                rising_display_context(rising_sign)
+            } else {
+                crate::display_rules::CulturalContext::new("default")
+            }
+        };
+
         ManifestedProfile {
             personality,
             #[cfg(feature = "mood")]
             mood_baseline,
+            #[cfg(all(feature = "mood", feature = "traits"))]
+            reasoning_strategy,
+            #[cfg(feature = "archetype")]
+            spirit,
+            #[cfg(feature = "mood")]
+            display_context,
         }
     }
 }
@@ -580,6 +616,15 @@ pub struct ManifestedProfile {
     /// Mood baseline from personality + Moon sign modifier.
     #[cfg(feature = "mood")]
     pub mood_baseline: MoodVector,
+    /// Preferred reasoning strategy from Mercury sign.
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    pub reasoning_strategy: crate::reasoning::ReasoningStrategy,
+    /// Spirit (passions, inspirations, pains) from Venus sign.
+    #[cfg(feature = "archetype")]
+    pub spirit: crate::spirit::Spirit,
+    /// Display rules context from Rising sign.
+    #[cfg(feature = "mood")]
+    pub display_context: crate::display_rules::CulturalContext,
 }
 
 // ── Moon modifier ─────────────────────────────────────────────────────────
@@ -628,6 +673,181 @@ fn moon_mood_modifier(moon: ZodiacSign, mut baseline: MoodVector) -> MoodVector 
     }
 
     baseline
+}
+
+// ── Mercury modifier ──────────────────────────────────────────────────────
+
+/// Select a reasoning strategy based on the Mercury sign placement.
+///
+/// Mercury governs communication and cognition. The sign's modality
+/// determines the primary reasoning approach:
+/// - Cardinal signs → Analytical (initiating, direct)
+/// - Fixed signs → Systematic (persistent, structured)
+/// - Mutable signs → Intuitive (adaptive, fluid)
+///
+/// The element adds a secondary bias:
+/// - Water Mercury → Empathetic tilt
+/// - Air Mercury → Creative tilt
+#[cfg(all(feature = "mood", feature = "traits"))]
+#[must_use]
+fn mercury_reasoning_strategy(mercury: ZodiacSign) -> crate::reasoning::ReasoningStrategy {
+    use crate::reasoning::ReasoningStrategy;
+
+    match (sign_modality(mercury), sign_element(mercury)) {
+        // Water signs override modality — empathetic reasoning dominates
+        (_, Element::Water) => ReasoningStrategy::Empathetic,
+        // Air mutable = creative (Gemini archetype)
+        (Modality::Mutable, Element::Air) => ReasoningStrategy::Creative,
+        // Cardinal = analytical
+        (Modality::Cardinal, _) => ReasoningStrategy::Analytical,
+        // Fixed = systematic
+        (Modality::Fixed, _) => ReasoningStrategy::Systematic,
+        // Mutable (non-water, non-air) = intuitive
+        (Modality::Mutable, _) => ReasoningStrategy::Intuitive,
+    }
+}
+
+// ── Venus modifier ────────────────────────────────────────────────────────
+
+/// Produce a Spirit from the Venus sign placement.
+///
+/// Venus governs passions, aesthetics, and relationship style.
+/// The element determines the motivational theme; the sign adds specificity.
+#[cfg(feature = "archetype")]
+#[must_use]
+fn venus_spirit(venus: ZodiacSign) -> crate::spirit::Spirit {
+    let mut spirit = crate::spirit::Spirit::new();
+
+    match sign_element(venus) {
+        Element::Fire => {
+            spirit.add_passion(
+                "creative expression",
+                "Driven to create, perform, and inspire",
+                0.8,
+            );
+            spirit.add_inspiration("bold action", "Inspired by courage and decisive moves", 0.7);
+            spirit.add_pain(
+                "stagnation",
+                "Pained by creative suppression or boredom",
+                0.6,
+            );
+        }
+        Element::Water => {
+            spirit.add_passion(
+                "deep connection",
+                "Driven to form profound emotional bonds",
+                0.9,
+            );
+            spirit.add_inspiration(
+                "vulnerability",
+                "Inspired by authentic emotional expression",
+                0.8,
+            );
+            spirit.add_pain(
+                "emotional betrayal",
+                "Pained by broken trust or superficiality",
+                0.7,
+            );
+        }
+        Element::Earth => {
+            spirit.add_passion(
+                "craftsmanship",
+                "Driven to build lasting, beautiful things",
+                0.8,
+            );
+            spirit.add_inspiration("natural beauty", "Inspired by elegance in simplicity", 0.7);
+            spirit.add_pain(
+                "waste",
+                "Pained by carelessness or squandered resources",
+                0.6,
+            );
+        }
+        Element::Air => {
+            spirit.add_passion("harmony", "Driven to create balance and fairness", 0.8);
+            spirit.add_inspiration(
+                "intellectual beauty",
+                "Inspired by elegant ideas and wit",
+                0.7,
+            );
+            spirit.add_pain("discord", "Pained by conflict and injustice", 0.6);
+        }
+    }
+
+    spirit
+}
+
+// ── Rising modifier ──────────────────────────────────────────────────────
+
+/// Produce display rules from the Rising (Ascendant) sign placement.
+///
+/// The Rising sign governs how emotions are expressed vs felt — the social
+/// mask. Fire risings amplify; Earth risings de-amplify; Water risings
+/// mask with socially appropriate substitutes; Air risings qualify with humor.
+#[cfg(feature = "mood")]
+#[must_use]
+fn rising_display_context(rising: ZodiacSign) -> crate::display_rules::CulturalContext {
+    use crate::display_rules::{CulturalContext, DisplayRule};
+    use crate::mood::Emotion;
+
+    let name = format!("{} rising", rising);
+    let mut ctx = CulturalContext::new(name);
+
+    match sign_element(rising) {
+        Element::Fire => {
+            // Fire risings: amplify emotional expression — what you see is what they feel, but louder
+            ctx.add_rule(DisplayRule::Amplify {
+                target: Emotion::Joy,
+                factor: 1.4,
+            });
+            ctx.add_rule(DisplayRule::Amplify {
+                target: Emotion::Arousal,
+                factor: 1.3,
+            });
+            ctx.add_rule(DisplayRule::Amplify {
+                target: Emotion::Dominance,
+                factor: 1.3,
+            });
+        }
+        Element::Water => {
+            // Water risings: mask vulnerability with warmth, de-amplify frustration
+            ctx.add_rule(DisplayRule::DeAmplify {
+                target: Emotion::Frustration,
+                factor: 0.5,
+            });
+            ctx.add_rule(DisplayRule::Amplify {
+                target: Emotion::Trust,
+                factor: 1.3,
+            });
+        }
+        Element::Earth => {
+            // Earth risings: understated, composed — de-amplify everything
+            ctx.add_rule(DisplayRule::DeAmplify {
+                target: Emotion::Arousal,
+                factor: 0.6,
+            });
+            ctx.add_rule(DisplayRule::DeAmplify {
+                target: Emotion::Frustration,
+                factor: 0.5,
+            });
+            ctx.add_rule(DisplayRule::DeAmplify {
+                target: Emotion::Joy,
+                factor: 0.8,
+            });
+        }
+        Element::Air => {
+            // Air risings: intellectualize emotion — qualify with interest/humor
+            ctx.add_rule(DisplayRule::Qualify {
+                qualifier: Emotion::Interest,
+                intensity: 0.2,
+            });
+            ctx.add_rule(DisplayRule::DeAmplify {
+                target: Emotion::Frustration,
+                factor: 0.7,
+            });
+        }
+    }
+
+    ctx
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────
@@ -1070,5 +1290,168 @@ mod tests {
                 > sun_only.mood_baseline.get(Emotion::Interest),
             "air moon should raise interest"
         );
+    }
+
+    // ── Mercury → reasoning strategy ──────────────────────────────────
+
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    #[test]
+    fn mercury_cardinal_is_analytical() {
+        use crate::reasoning::ReasoningStrategy;
+        // Aries = Cardinal Fire
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mercury(ZodiacSign::Capricorn); // Cardinal Earth
+        let profile = chart.manifest();
+        assert_eq!(profile.reasoning_strategy, ReasoningStrategy::Analytical);
+    }
+
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    #[test]
+    fn mercury_fixed_is_systematic() {
+        use crate::reasoning::ReasoningStrategy;
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mercury(ZodiacSign::Taurus); // Fixed Earth
+        let profile = chart.manifest();
+        assert_eq!(profile.reasoning_strategy, ReasoningStrategy::Systematic);
+    }
+
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    #[test]
+    fn mercury_water_is_empathetic() {
+        use crate::reasoning::ReasoningStrategy;
+        // Water overrides modality
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mercury(ZodiacSign::Cancer); // Cardinal Water → Empathetic
+        let profile = chart.manifest();
+        assert_eq!(profile.reasoning_strategy, ReasoningStrategy::Empathetic);
+    }
+
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    #[test]
+    fn mercury_mutable_air_is_creative() {
+        use crate::reasoning::ReasoningStrategy;
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mercury(ZodiacSign::Gemini); // Mutable Air → Creative
+        let profile = chart.manifest();
+        assert_eq!(profile.reasoning_strategy, ReasoningStrategy::Creative);
+    }
+
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    #[test]
+    fn mercury_mutable_fire_is_intuitive() {
+        use crate::reasoning::ReasoningStrategy;
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mercury(ZodiacSign::Sagittarius); // Mutable Fire → Intuitive
+        let profile = chart.manifest();
+        assert_eq!(profile.reasoning_strategy, ReasoningStrategy::Intuitive);
+    }
+
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    #[test]
+    fn no_mercury_derives_from_personality() {
+        let chart = NatalChart::new().sun(ZodiacSign::Virgo);
+        let profile = chart.manifest();
+        // Should derive from personality traits, not crash
+        let _ = profile.reasoning_strategy;
+    }
+
+    // ── Venus → spirit ────────────────────────────────────────────────
+
+    #[cfg(feature = "archetype")]
+    #[test]
+    fn venus_produces_spirit() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .venus(ZodiacSign::Libra); // Air Venus
+        let profile = chart.manifest();
+        assert!(
+            !profile.spirit.passions.is_empty(),
+            "Venus should create passions"
+        );
+        assert!(
+            !profile.spirit.inspirations.is_empty(),
+            "Venus should create inspirations"
+        );
+        assert!(
+            !profile.spirit.pains.is_empty(),
+            "Venus should create pains"
+        );
+    }
+
+    #[cfg(feature = "archetype")]
+    #[test]
+    fn venus_elements_produce_different_spirits() {
+        let fire = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .venus(ZodiacSign::Leo)
+            .manifest();
+        let water = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .venus(ZodiacSign::Pisces)
+            .manifest();
+        // Different elements should produce different passion themes
+        assert_ne!(fire.spirit.passions[0].name, water.spirit.passions[0].name,);
+    }
+
+    #[cfg(feature = "archetype")]
+    #[test]
+    fn no_venus_produces_empty_spirit() {
+        let chart = NatalChart::new().sun(ZodiacSign::Aries);
+        let profile = chart.manifest();
+        assert!(profile.spirit.passions.is_empty());
+    }
+
+    // ── Rising → display rules ────────────────────────────────────────
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn rising_produces_display_context() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .rising(ZodiacSign::Leo); // Fire Rising
+        let profile = chart.manifest();
+        assert!(
+            profile.display_context.rule_count() > 0,
+            "Rising should create display rules"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn fire_rising_amplifies() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .rising(ZodiacSign::Aries); // Fire Rising
+        let profile = chart.manifest();
+        assert!(
+            profile.display_context.rule_count() >= 3,
+            "fire rising should have amplification rules"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn earth_rising_deamplifies() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .rising(ZodiacSign::Taurus); // Earth Rising
+        let profile = chart.manifest();
+        assert!(
+            profile.display_context.rule_count() >= 3,
+            "earth rising should have de-amplification rules"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn no_rising_produces_empty_context() {
+        let chart = NatalChart::new().sun(ZodiacSign::Aries);
+        let profile = chart.manifest();
+        assert_eq!(profile.display_context.rule_count(), 0);
     }
 }
