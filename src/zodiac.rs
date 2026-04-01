@@ -624,6 +624,46 @@ impl NatalChart {
             g
         };
 
+        // Neptune modifies EQ profile
+        #[cfg(feature = "mood")]
+        let eq = {
+            let mut eq = crate::eq::EqProfile::new();
+            if let Some(neptune_sign) = self.get(Planet::Neptune) {
+                neptune_eq_modifier(neptune_sign, &mut eq);
+            }
+            eq
+        };
+
+        // Uranus modifies flow thresholds
+        #[cfg(feature = "mood")]
+        let flow = {
+            let mut f = crate::flow::FlowState::default();
+            if let Some(uranus_sign) = self.get(Planet::Uranus) {
+                uranus_flow_modifier(uranus_sign, &mut f);
+            }
+            f
+        };
+
+        // North Node modifies preference bias
+        #[cfg(feature = "mood")]
+        let preference_bias = {
+            let mut bias = crate::preference::PreferenceBias::neutral();
+            if let Some(nn_sign) = self.get(Planet::NorthNode) {
+                north_node_preference_modifier(nn_sign, &mut bias);
+            }
+            bias
+        };
+
+        // South Node modifies ACT-R memory parameters
+        #[cfg(feature = "mood")]
+        let (actr_decay, actr_recency_half_life) = {
+            if let Some(sn_sign) = self.get(Planet::SouthNode) {
+                south_node_actr_params(sn_sign)
+            } else {
+                (0.5, 300.0)
+            }
+        };
+
         ManifestedProfile {
             personality,
             #[cfg(feature = "mood")]
@@ -640,6 +680,16 @@ impl NatalChart {
             stress,
             #[cfg(all(feature = "mood", feature = "traits"))]
             growth,
+            #[cfg(feature = "mood")]
+            eq,
+            #[cfg(feature = "mood")]
+            flow,
+            #[cfg(feature = "mood")]
+            preference_bias,
+            #[cfg(feature = "mood")]
+            actr_decay,
+            #[cfg(feature = "mood")]
+            actr_recency_half_life,
         }
     }
 }
@@ -670,6 +720,21 @@ pub struct ManifestedProfile {
     /// Growth configuration from Jupiter sign.
     #[cfg(all(feature = "mood", feature = "traits"))]
     pub growth: crate::growth::GrowthLedger,
+    /// EQ profile from Neptune sign.
+    #[cfg(feature = "mood")]
+    pub eq: crate::eq::EqProfile,
+    /// Flow state configuration from Uranus sign.
+    #[cfg(feature = "mood")]
+    pub flow: crate::flow::FlowState,
+    /// Preference bias from North Node sign.
+    #[cfg(feature = "mood")]
+    pub preference_bias: crate::preference::PreferenceBias,
+    /// ACT-R memory parameters from South Node sign.
+    #[cfg(feature = "mood")]
+    pub actr_decay: f64,
+    /// ACT-R recency half-life from South Node sign.
+    #[cfg(feature = "mood")]
+    pub actr_recency_half_life: f64,
 }
 
 // ── Moon modifier ─────────────────────────────────────────────────────────
@@ -1004,6 +1069,154 @@ fn jupiter_growth_modifier(jupiter: ZodiacSign, growth: &mut crate::growth::Grow
             // Air Jupiter: intellectually driven — moderate threshold, moderate decay
             growth.threshold = 3.0;
             growth.decay_rate = 0.06;
+        }
+    }
+}
+
+// ── Neptune modifier ──────────────────────────────────────────────────────
+
+/// Modify EQ branch weights based on the Neptune sign placement.
+///
+/// Neptune governs emotional intelligence style. Water Neptune = perception-dominant
+/// (intuitive reading). Earth Neptune = management-dominant (practical coping).
+/// Fire Neptune = facilitation-dominant (emotions fuel action). Air Neptune =
+/// understanding-dominant (intellectual comprehension).
+#[cfg(feature = "mood")]
+fn neptune_eq_modifier(neptune: ZodiacSign, eq: &mut crate::eq::EqProfile) {
+    use crate::eq::EqBranch;
+
+    match sign_element(neptune) {
+        Element::Water => {
+            // Water Neptune: intuitive perception, deep feeling
+            eq.set(EqBranch::Perception, 0.75);
+            eq.set(EqBranch::Understanding, 0.6);
+        }
+        Element::Earth => {
+            // Earth Neptune: practical emotional management
+            eq.set(EqBranch::Management, 0.75);
+            eq.set(EqBranch::Facilitation, 0.6);
+        }
+        Element::Fire => {
+            // Fire Neptune: emotions fuel cognitive performance
+            eq.set(EqBranch::Facilitation, 0.75);
+            eq.set(EqBranch::Perception, 0.6);
+        }
+        Element::Air => {
+            // Air Neptune: intellectual emotional understanding
+            eq.set(EqBranch::Understanding, 0.75);
+            eq.set(EqBranch::Management, 0.6);
+        }
+    }
+}
+
+// ── Uranus modifier ──────────────────────────────────────────────────────
+
+/// Modify flow thresholds based on the Uranus sign placement.
+///
+/// Uranus governs the relationship with flow states. Fire Uranus = easy entry,
+/// low disruption resistance. Earth Uranus = hard entry, high disruption resistance.
+/// Water Uranus = emotionally triggered flow. Air Uranus = novelty-seeking flow.
+#[cfg(feature = "mood")]
+fn uranus_flow_modifier(uranus: ZodiacSign, flow: &mut crate::flow::FlowState) {
+    match sign_element(uranus) {
+        Element::Fire => {
+            // Fire Uranus: easy to enter flow, but also easy to disrupt
+            flow.interest_threshold = 0.3;
+            flow.entry_threshold = 0.8;
+            flow.build_rate = 0.07;
+            flow.frustration_ceiling = 0.25;
+        }
+        Element::Earth => {
+            // Earth Uranus: hard to enter, but deeply stable once there
+            flow.interest_threshold = 0.5;
+            flow.entry_threshold = 1.2;
+            flow.build_rate = 0.03;
+            flow.frustration_ceiling = 0.5;
+        }
+        Element::Water => {
+            // Water Uranus: emotionally catalyzed flow — passion-driven entry
+            flow.interest_threshold = 0.35;
+            flow.dominance_floor = 0.0;
+            flow.arousal_floor = 0.2;
+            flow.build_rate = 0.06;
+        }
+        Element::Air => {
+            // Air Uranus: novelty-seeking — curiosity lowers threshold
+            flow.interest_threshold = 0.25;
+            flow.entry_threshold = 0.9;
+            flow.arousal_ceiling = 0.8;
+            flow.build_rate = 0.06;
+        }
+    }
+}
+
+// ── North Node modifier ──────────────────────────────────────────────────
+
+/// Modify preference bias based on the North Node sign placement.
+///
+/// The North Node represents what the entity gravitates toward over time.
+/// Fire NN = strong positive preference formation (drawn to action).
+/// Water NN = strong negative sensitivity (avoids emotional harm).
+/// Earth NN = balanced, conservative preference formation.
+/// Air NN = novelty bias (positive toward new, less weight on negative).
+#[cfg(feature = "mood")]
+fn north_node_preference_modifier(
+    north_node: ZodiacSign,
+    bias: &mut crate::preference::PreferenceBias,
+) {
+    match sign_element(north_node) {
+        Element::Fire => {
+            // Fire NN: enthusiastic — forms positive preferences quickly
+            bias.positive_gain = 1.4;
+            bias.negative_gain = 0.8;
+        }
+        Element::Water => {
+            // Water NN: protective — weights negative experiences heavily
+            bias.positive_gain = 1.0;
+            bias.negative_gain = 1.4;
+        }
+        Element::Earth => {
+            // Earth NN: conservative — slow, balanced preference formation
+            bias.positive_gain = 0.9;
+            bias.negative_gain = 0.9;
+        }
+        Element::Air => {
+            // Air NN: novelty-seeking — drawn to new, forgets bad quickly
+            bias.positive_gain = 1.3;
+            bias.negative_gain = 0.7;
+        }
+    }
+}
+
+// ── South Node modifier ─────────────────────────────────────────────────
+
+/// Compute ACT-R memory parameters from the South Node sign placement.
+///
+/// The South Node represents pre-existing knowledge patterns and comfort zones.
+/// Earth SN = slow decay (strong long-term memory). Fire SN = fast decay (lives
+/// in the present). Water SN = long recency (emotional memories linger).
+/// Air SN = short recency (quick mental turnover).
+///
+/// Returns `(decay, recency_half_life)`.
+#[cfg(feature = "mood")]
+#[must_use]
+fn south_node_actr_params(south_node: ZodiacSign) -> (f64, f64) {
+    match sign_element(south_node) {
+        Element::Earth => {
+            // Earth SN: deep roots — slow decay, long recency
+            (0.35, 450.0)
+        }
+        Element::Fire => {
+            // Fire SN: lives in the present — fast decay, short recency
+            (0.7, 180.0)
+        }
+        Element::Water => {
+            // Water SN: emotional memories linger — moderate decay, very long recency
+            (0.45, 600.0)
+        }
+        Element::Air => {
+            // Air SN: quick mental turnover — moderate decay, short recency
+            (0.55, 200.0)
         }
     }
 }
@@ -1807,10 +2020,160 @@ mod tests {
         }
     }
 
+    // ── Neptune → EQ ────────────────────────────────────────────────
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn water_neptune_perception_dominant() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .neptune(ZodiacSign::Pisces); // Water Neptune
+        let profile = chart.manifest();
+        let default = crate::eq::EqProfile::new();
+        assert!(
+            profile.eq.get(crate::eq::EqBranch::Perception)
+                > default.get(crate::eq::EqBranch::Perception),
+            "water neptune should raise perception"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn earth_neptune_management_dominant() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .neptune(ZodiacSign::Capricorn); // Earth Neptune
+        let profile = chart.manifest();
+        let default = crate::eq::EqProfile::new();
+        assert!(
+            profile.eq.get(crate::eq::EqBranch::Management)
+                > default.get(crate::eq::EqBranch::Management),
+            "earth neptune should raise management"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn all_signs_through_neptune() {
+        for &sign in ZodiacSign::ALL {
+            let chart = NatalChart::new().sun(ZodiacSign::Aries).neptune(sign);
+            let profile = chart.manifest();
+            assert!(
+                profile.eq.overall() > 0.0,
+                "{sign} neptune should produce valid EQ"
+            );
+        }
+    }
+
+    // ── Uranus → flow ─────────────────────────────────────────────────
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn fire_uranus_easy_flow_entry() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .uranus(ZodiacSign::Aries); // Fire Uranus
+        let profile = chart.manifest();
+        let default = crate::flow::FlowState::default();
+        assert!(
+            profile.flow.entry_threshold < default.entry_threshold,
+            "fire uranus should lower flow entry threshold"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn earth_uranus_hard_flow_entry() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .uranus(ZodiacSign::Taurus); // Earth Uranus
+        let profile = chart.manifest();
+        let default = crate::flow::FlowState::default();
+        assert!(
+            profile.flow.entry_threshold > default.entry_threshold,
+            "earth uranus should raise flow entry threshold"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn all_signs_through_uranus() {
+        for &sign in ZodiacSign::ALL {
+            let chart = NatalChart::new().sun(ZodiacSign::Aries).uranus(sign);
+            let profile = chart.manifest();
+            assert!(
+                profile.flow.entry_threshold > 0.0,
+                "{sign} uranus should produce valid flow"
+            );
+        }
+    }
+
+    // ── North Node → preference bias ──────────────────────────────────
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn fire_nn_positive_bias() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .north_node(ZodiacSign::Leo); // Fire NN
+        let profile = chart.manifest();
+        assert!(
+            profile.preference_bias.positive_gain > 1.0,
+            "fire NN should boost positive gain"
+        );
+        assert!(
+            profile.preference_bias.negative_gain < 1.0,
+            "fire NN should dampen negative gain"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn water_nn_negative_bias() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .north_node(ZodiacSign::Cancer); // Water NN
+        let profile = chart.manifest();
+        assert!(
+            profile.preference_bias.negative_gain > 1.0,
+            "water NN should boost negative gain"
+        );
+    }
+
+    // ── South Node → ACT-R params ─────────────────────────────────────
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn earth_sn_slow_decay() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .south_node(ZodiacSign::Taurus); // Earth SN
+        let profile = chart.manifest();
+        assert!(profile.actr_decay < 0.5, "earth SN should have slow decay");
+        assert!(
+            profile.actr_recency_half_life > 300.0,
+            "earth SN should have long recency"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn fire_sn_fast_decay() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .south_node(ZodiacSign::Aries); // Fire SN
+        let profile = chart.manifest();
+        assert!(profile.actr_decay > 0.5, "fire SN should have fast decay");
+        assert!(
+            profile.actr_recency_half_life < 300.0,
+            "fire SN should have short recency"
+        );
+    }
+
     // ── Full chart manifestation ──────────────────────────────────────
 
     #[test]
-    fn full_chart_manifests_without_panic() {
+    fn full_chart_all_planets() {
         let chart = NatalChart::new()
             .sun(ZodiacSign::Scorpio)
             .moon(ZodiacSign::Cancer)
@@ -1819,7 +2182,12 @@ mod tests {
             .venus(ZodiacSign::Libra)
             .mars(ZodiacSign::Aries)
             .jupiter(ZodiacSign::Sagittarius)
-            .saturn(ZodiacSign::Capricorn);
+            .saturn(ZodiacSign::Capricorn)
+            .neptune(ZodiacSign::Pisces)
+            .uranus(ZodiacSign::Aquarius)
+            .north_node(ZodiacSign::Leo)
+            .south_node(ZodiacSign::Aquarius)
+            .chiron(ZodiacSign::Virgo);
         let profile = chart.manifest();
         assert_eq!(profile.personality.name, "Scorpio");
     }
