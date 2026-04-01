@@ -35,6 +35,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::traits::{PersonalityProfile, TraitKind, TraitLevel};
 
+#[cfg(feature = "mood")]
+use crate::mood::MoodVector;
+
 /// The twelve zodiac signs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[non_exhaustive]
@@ -309,6 +312,321 @@ pub fn sign_profile(sign: ZodiacSign) -> PersonalityProfile {
     p
 }
 
+// ── Planets ───────────────────────────────────────────────────────────────
+
+/// Celestial bodies used in natal chart composition.
+///
+/// Each planet governs a specific bhava module:
+/// - Inner planets (Sun–Venus) map to identity layers (Soul/Heart/Body/Brain/Spirit)
+/// - Outer planets (Mars–Pluto) map to behavioral modules (energy/growth/stress/eq/appraisal/flow)
+/// - Lunar nodes map to preference and memory patterns
+/// - Chiron maps to regulation wounds
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[non_exhaustive]
+pub enum Planet {
+    /// Core personality — maps to `traits` (Soul layer).
+    Sun,
+    /// Emotional baseline — maps to `mood` (Heart layer).
+    Moon,
+    /// Social presentation — maps to `display_rules` (Body layer).
+    Rising,
+    /// Communication and reasoning — maps to `reasoning` (Brain layer).
+    Mercury,
+    /// Passions and relationship approach — maps to `spirit` (Spirit layer).
+    Venus,
+    /// Drive intensity — maps to `energy`.
+    Mars,
+    /// Growth direction — maps to `growth`.
+    Jupiter,
+    /// Stress resistance — maps to `stress`.
+    Saturn,
+    /// Emotional intelligence — maps to `eq`.
+    Neptune,
+    /// Emotional intensity — maps to `appraisal`.
+    Pluto,
+    /// Flow sensitivity — maps to `flow`.
+    Uranus,
+    /// Long-term preference — maps to `preference`.
+    NorthNode,
+    /// Default activation patterns — maps to `actr`.
+    SouthNode,
+    /// Regulation wounds — maps to `regulation`.
+    Chiron,
+}
+
+impl Planet {
+    /// All planets in traditional order.
+    pub const ALL: &'static [Planet] = &[
+        Self::Sun,
+        Self::Moon,
+        Self::Rising,
+        Self::Mercury,
+        Self::Venus,
+        Self::Mars,
+        Self::Jupiter,
+        Self::Saturn,
+        Self::Neptune,
+        Self::Pluto,
+        Self::Uranus,
+        Self::NorthNode,
+        Self::SouthNode,
+        Self::Chiron,
+    ];
+
+    /// Number of planets.
+    pub const COUNT: usize = 14;
+
+    /// Whether this is an inner (personal) planet.
+    #[must_use]
+    #[inline]
+    pub fn is_inner(self) -> bool {
+        matches!(
+            self,
+            Self::Sun | Self::Moon | Self::Rising | Self::Mercury | Self::Venus
+        )
+    }
+}
+
+impl_display!(Planet {
+    Sun => "Sun",
+    Moon => "Moon",
+    Rising => "Rising",
+    Mercury => "Mercury",
+    Venus => "Venus",
+    Mars => "Mars",
+    Jupiter => "Jupiter",
+    Saturn => "Saturn",
+    Neptune => "Neptune",
+    Pluto => "Pluto",
+    Uranus => "Uranus",
+    NorthNode => "North Node",
+    SouthNode => "South Node",
+    Chiron => "Chiron",
+});
+
+// ── Natal Chart ───────────────────────────────────────────────────────────
+
+/// A natal chart — zodiac sign placements for each planet.
+///
+/// Build with the fluent API, then call [`manifest()`](Self::manifest)
+/// to produce a [`ManifestedProfile`].
+///
+/// # Examples
+///
+/// ```
+/// use bhava::zodiac::{NatalChart, ZodiacSign};
+///
+/// let chart = NatalChart::new()
+///     .sun(ZodiacSign::Scorpio)
+///     .moon(ZodiacSign::Cancer)
+///     .rising(ZodiacSign::Gemini);
+///
+/// let profile = chart.manifest();
+/// assert_eq!(profile.personality.name, "Scorpio");
+/// ```
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct NatalChart {
+    placements: [Option<ZodiacSign>; Planet::COUNT],
+}
+
+impl NatalChart {
+    /// Create an empty chart with no placements.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set a placement for any planet.
+    #[must_use]
+    pub fn place(mut self, planet: Planet, sign: ZodiacSign) -> Self {
+        self.placements[planet as usize] = Some(sign);
+        self
+    }
+
+    /// Get the sign placed for a planet, if any.
+    #[must_use]
+    #[inline]
+    pub fn get(&self, planet: Planet) -> Option<ZodiacSign> {
+        self.placements[planet as usize]
+    }
+
+    /// Sun placement — core personality (Soul).
+    #[must_use]
+    pub fn sun(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::Sun, sign)
+    }
+
+    /// Moon placement — emotional baseline (Heart).
+    #[must_use]
+    pub fn moon(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::Moon, sign)
+    }
+
+    /// Rising (Ascendant) — social presentation (Body).
+    #[must_use]
+    pub fn rising(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::Rising, sign)
+    }
+
+    /// Mercury — reasoning strategy (Brain).
+    #[must_use]
+    pub fn mercury(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::Mercury, sign)
+    }
+
+    /// Venus — passions and aesthetics (Spirit).
+    #[must_use]
+    pub fn venus(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::Venus, sign)
+    }
+
+    /// Mars — energy and drive.
+    #[must_use]
+    pub fn mars(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::Mars, sign)
+    }
+
+    /// Jupiter — growth direction.
+    #[must_use]
+    pub fn jupiter(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::Jupiter, sign)
+    }
+
+    /// Saturn — stress resistance.
+    #[must_use]
+    pub fn saturn(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::Saturn, sign)
+    }
+
+    /// Neptune — emotional intelligence style.
+    #[must_use]
+    pub fn neptune(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::Neptune, sign)
+    }
+
+    /// Pluto — emotional intensity.
+    #[must_use]
+    pub fn pluto(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::Pluto, sign)
+    }
+
+    /// Uranus — flow sensitivity.
+    #[must_use]
+    pub fn uranus(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::Uranus, sign)
+    }
+
+    /// North Node — long-term preference direction.
+    #[must_use]
+    pub fn north_node(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::NorthNode, sign)
+    }
+
+    /// South Node — default activation patterns.
+    #[must_use]
+    pub fn south_node(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::SouthNode, sign)
+    }
+
+    /// Chiron — regulation wounds.
+    #[must_use]
+    pub fn chiron(self, sign: ZodiacSign) -> Self {
+        self.place(Planet::Chiron, sign)
+    }
+
+    /// Number of planets that have placements.
+    #[must_use]
+    pub fn placement_count(&self) -> usize {
+        self.placements.iter().filter(|p| p.is_some()).count()
+    }
+
+    /// Manifest the chart into a full personality/emotion profile.
+    ///
+    /// Uses the Sun sign for the base personality. If no Sun placement
+    /// exists, defaults to Aries.
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
+    #[must_use]
+    pub fn manifest(&self) -> ManifestedProfile {
+        let sun_sign = self.get(Planet::Sun).unwrap_or(ZodiacSign::Aries);
+        let personality = sign_profile(sun_sign);
+
+        // Moon modifies mood baseline
+        #[cfg(feature = "mood")]
+        let mood_baseline = {
+            let base = crate::mood::derive_mood_baseline(&personality);
+            if let Some(moon_sign) = self.get(Planet::Moon) {
+                moon_mood_modifier(moon_sign, base)
+            } else {
+                base
+            }
+        };
+
+        ManifestedProfile {
+            personality,
+            #[cfg(feature = "mood")]
+            mood_baseline,
+        }
+    }
+}
+
+/// The output of manifesting a natal chart — personality and emotion configuration.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ManifestedProfile {
+    /// Core personality from Sun sign.
+    pub personality: PersonalityProfile,
+    /// Mood baseline from personality + Moon sign modifier.
+    #[cfg(feature = "mood")]
+    pub mood_baseline: MoodVector,
+}
+
+// ── Moon modifier ─────────────────────────────────────────────────────────
+
+/// Modify a mood baseline based on the Moon sign placement.
+///
+/// The Moon governs emotional reactivity — how intensely and in which
+/// direction the baseline mood leans.
+#[cfg(feature = "mood")]
+#[must_use]
+fn moon_mood_modifier(moon: ZodiacSign, mut baseline: MoodVector) -> MoodVector {
+    use crate::mood::Emotion;
+
+    match sign_element(moon) {
+        Element::Fire => {
+            // Fire moons: elevated arousal, higher joy baseline
+            baseline.nudge(Emotion::Arousal, 0.15);
+            baseline.nudge(Emotion::Joy, 0.1);
+            baseline.nudge(Emotion::Dominance, 0.1);
+        }
+        Element::Water => {
+            // Water moons: deep emotional sensitivity, higher trust
+            baseline.nudge(Emotion::Trust, 0.15);
+            baseline.nudge(Emotion::Joy, 0.05);
+            baseline.nudge(Emotion::Arousal, -0.1);
+        }
+        Element::Earth => {
+            // Earth moons: stable, low arousal, grounded
+            baseline.nudge(Emotion::Arousal, -0.15);
+            baseline.nudge(Emotion::Trust, 0.1);
+            baseline.nudge(Emotion::Frustration, -0.1);
+        }
+        Element::Air => {
+            // Air moons: curious, mentally stimulated, variable
+            baseline.nudge(Emotion::Interest, 0.15);
+            baseline.nudge(Emotion::Arousal, 0.05);
+            baseline.nudge(Emotion::Joy, 0.05);
+        }
+    }
+
+    // Modality fine-tuning
+    match sign_modality(moon) {
+        Modality::Cardinal => baseline.nudge(Emotion::Dominance, 0.05),
+        Modality::Fixed => baseline.nudge(Emotion::Trust, 0.05),
+        Modality::Mutable => baseline.nudge(Emotion::Interest, 0.05),
+    }
+
+    baseline
+}
+
 // ── Tests ─────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -553,5 +871,193 @@ mod tests {
             let back: ZodiacSign = serde_json::from_str(&json).unwrap();
             assert_eq!(back, sign);
         }
+    }
+
+    // ── Planet enum ───────────────────────────────────────────────────
+
+    #[test]
+    fn all_planets_counted() {
+        assert_eq!(Planet::ALL.len(), Planet::COUNT);
+    }
+
+    #[test]
+    fn inner_planets() {
+        assert!(Planet::Sun.is_inner());
+        assert!(Planet::Moon.is_inner());
+        assert!(Planet::Rising.is_inner());
+        assert!(Planet::Mercury.is_inner());
+        assert!(Planet::Venus.is_inner());
+        assert!(!Planet::Mars.is_inner());
+        assert!(!Planet::Chiron.is_inner());
+    }
+
+    #[test]
+    fn planet_display() {
+        assert_eq!(Planet::Sun.to_string(), "Sun");
+        assert_eq!(Planet::NorthNode.to_string(), "North Node");
+        assert_eq!(Planet::Chiron.to_string(), "Chiron");
+    }
+
+    #[test]
+    fn planet_serde_roundtrip() {
+        for &planet in Planet::ALL {
+            let json = serde_json::to_string(&planet).unwrap();
+            let back: Planet = serde_json::from_str(&json).unwrap();
+            assert_eq!(back, planet);
+        }
+    }
+
+    // ── NatalChart builder ────────────────────────────────────────────
+
+    #[test]
+    fn empty_chart() {
+        let chart = NatalChart::new();
+        assert_eq!(chart.placement_count(), 0);
+        assert_eq!(chart.get(Planet::Sun), None);
+    }
+
+    #[test]
+    fn chart_builder_fluent() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Scorpio)
+            .moon(ZodiacSign::Cancer)
+            .rising(ZodiacSign::Gemini);
+        assert_eq!(chart.placement_count(), 3);
+        assert_eq!(chart.get(Planet::Sun), Some(ZodiacSign::Scorpio));
+        assert_eq!(chart.get(Planet::Moon), Some(ZodiacSign::Cancer));
+        assert_eq!(chart.get(Planet::Rising), Some(ZodiacSign::Gemini));
+    }
+
+    #[test]
+    fn chart_generic_place() {
+        let chart = NatalChart::new().place(Planet::Mars, ZodiacSign::Aries);
+        assert_eq!(chart.get(Planet::Mars), Some(ZodiacSign::Aries));
+    }
+
+    #[test]
+    fn full_chart() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Scorpio)
+            .moon(ZodiacSign::Cancer)
+            .rising(ZodiacSign::Gemini)
+            .mercury(ZodiacSign::Sagittarius)
+            .venus(ZodiacSign::Libra)
+            .mars(ZodiacSign::Aries)
+            .jupiter(ZodiacSign::Sagittarius)
+            .saturn(ZodiacSign::Capricorn)
+            .neptune(ZodiacSign::Pisces)
+            .pluto(ZodiacSign::Scorpio)
+            .uranus(ZodiacSign::Aquarius)
+            .north_node(ZodiacSign::Leo)
+            .south_node(ZodiacSign::Aquarius)
+            .chiron(ZodiacSign::Virgo);
+        assert_eq!(chart.placement_count(), Planet::COUNT);
+    }
+
+    #[test]
+    fn chart_serde_roundtrip() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Leo)
+            .moon(ZodiacSign::Pisces);
+        let json = serde_json::to_string(&chart).unwrap();
+        let back: NatalChart = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.get(Planet::Sun), Some(ZodiacSign::Leo));
+        assert_eq!(back.get(Planet::Moon), Some(ZodiacSign::Pisces));
+        assert_eq!(back.get(Planet::Mars), None);
+    }
+
+    // ── Manifestation ─────────────────────────────────────────────────
+
+    #[test]
+    fn manifest_sun_only() {
+        let chart = NatalChart::new().sun(ZodiacSign::Aries);
+        let profile = chart.manifest();
+        assert_eq!(profile.personality.name, "Aries");
+        assert_eq!(
+            profile.personality.get_trait(TraitKind::Confidence),
+            TraitLevel::Highest
+        );
+    }
+
+    #[test]
+    fn manifest_empty_defaults_to_aries() {
+        let chart = NatalChart::new();
+        let profile = chart.manifest();
+        assert_eq!(profile.personality.name, "Aries");
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn manifest_moon_modifies_baseline() {
+        use crate::mood::Emotion;
+
+        let sun_only = NatalChart::new().sun(ZodiacSign::Taurus).manifest();
+        let with_fire_moon = NatalChart::new()
+            .sun(ZodiacSign::Taurus)
+            .moon(ZodiacSign::Aries)
+            .manifest();
+
+        // Fire moon should raise arousal above the personality-derived baseline
+        assert!(
+            with_fire_moon.mood_baseline.get(Emotion::Arousal)
+                > sun_only.mood_baseline.get(Emotion::Arousal),
+            "fire moon should raise arousal: {} vs {}",
+            with_fire_moon.mood_baseline.get(Emotion::Arousal),
+            sun_only.mood_baseline.get(Emotion::Arousal),
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn manifest_water_moon_raises_trust() {
+        use crate::mood::Emotion;
+
+        let sun_only = NatalChart::new().sun(ZodiacSign::Aries).manifest();
+        let with_water_moon = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .moon(ZodiacSign::Cancer)
+            .manifest();
+
+        assert!(
+            with_water_moon.mood_baseline.get(Emotion::Trust)
+                > sun_only.mood_baseline.get(Emotion::Trust),
+            "water moon should raise trust"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn manifest_earth_moon_lowers_arousal() {
+        use crate::mood::Emotion;
+
+        let sun_only = NatalChart::new().sun(ZodiacSign::Gemini).manifest();
+        let with_earth_moon = NatalChart::new()
+            .sun(ZodiacSign::Gemini)
+            .moon(ZodiacSign::Taurus)
+            .manifest();
+
+        assert!(
+            with_earth_moon.mood_baseline.get(Emotion::Arousal)
+                < sun_only.mood_baseline.get(Emotion::Arousal),
+            "earth moon should lower arousal"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn manifest_air_moon_raises_interest() {
+        use crate::mood::Emotion;
+
+        let sun_only = NatalChart::new().sun(ZodiacSign::Capricorn).manifest();
+        let with_air_moon = NatalChart::new()
+            .sun(ZodiacSign::Capricorn)
+            .moon(ZodiacSign::Gemini)
+            .manifest();
+
+        assert!(
+            with_air_moon.mood_baseline.get(Emotion::Interest)
+                > sun_only.mood_baseline.get(Emotion::Interest),
+            "air moon should raise interest"
+        );
     }
 }
