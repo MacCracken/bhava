@@ -83,7 +83,7 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 
 [[package]]
 name = "bhava"
-version = "1.7.0"
+version = "1.8.0"
 dependencies = [
  "bodh",
  "chrono",
@@ -981,7 +981,9 @@ checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
 
 [[package]]
 name = "mastishk"
-version = "0.7.0"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86a45cf6362a00d0bb848a622fabc3ff021a09801ed04270508df3bcc054456d"
 dependencies = [
  "serde",
  "thiserror 2.0.18",

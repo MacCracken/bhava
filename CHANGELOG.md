@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.8.0] — 2026-04-01
+
+Neuroscience bridge — brain chemistry pressing on emotion and personality.
+
+### Added
+
+- **`neuroscience` feature** — optional mastishk neuroscience integration via `neuroscience` module
+  - `mood_from_brain()` — serotonin→joy baseline, NE→arousal, amygdala fear→trust/dominance, anxiety→frustration, seasonal modifier (SAD)
+  - `stress_from_brain()` — cortisol amplifier (1.0–3.0×) + rumination chronic input + endorphin recovery boost (1.0–2.0×)
+  - `energy_from_brain()` — sleep debt→drain, sickness→fatigue, sympathetic→short-term boost, sleep stage→recovery rate
+  - `flow_from_brain()` — ACh + PFC executive control + working memory lower flow threshold; anxiety/drowsiness/sickness raise it
+  - `growth_from_brain()` — BDNF neuroplasticity + hippocampus learning rate + sleep consolidation → trait pressure multiplier
+  - `regulation_from_brain()` — meditation boost (1.0–2.0×) + PFC executive control + HRV vagal tone → regulation effectiveness
+  - `salience_from_brain()` — amygdala emotional salience + NE arousal → salience sensitivity amplifier
+  - `apply_brain_state()` — convenience function applying all brain effects to EnergyState, StressState, MoodVector in one call
+  - Consumes mastishk's `BrainMoodEffect` (27 neural outputs) via pure mapping functions
+  - 18 unit tests + 7 doc tests covering all bridge functions, clamping, edge cases, serde roundtrips
+  - 5 criterion benchmarks: mood (~2.3 ns), stress (~2 ns), energy (~2.3 ns), flow (~1.7 ns), apply_all (~11 ns)
+  - New dependency: `mastishk = "1"` (feature-gated, optional)
+
+### Changed
+
+- **presets** — removed BlueShirtGuy, Friday, Oracle, Scout consumer presets; added AGNOS system voice preset. Presets now: AGNOS + T.Ron (ecosystem personalities only, consumers define their own)
+
 ## [1.7.0] — 2026-03-31
 
 Atomic time awareness — physical time grounding for simulation-aware modules.

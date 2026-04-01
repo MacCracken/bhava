@@ -1,6 +1,6 @@
 [package]
 name = "bhava"
-version = "1.7.0"
+version = "1.8.0"
 edition = "2024"
 rust-version = "1.89"
 license = "GPL-3.0-only"
@@ -64,7 +64,7 @@ jivanu = { version = "1", optional = true, default-features = false }
 tanmatra = { version = "1.2", optional = true, default-features = false }
 
 # Optional (neuroscience feature — mastishk brain/neurotransmitter dynamics)
-mastishk = { version = "0.7", path = "../mastishk", optional = true, default-features = false }
+mastishk = { version = "1", optional = true, default-features = false }
 
 # Optional (sqlite feature)
 rusqlite = { version = "0.39", features = ["bundled"], optional = true }
