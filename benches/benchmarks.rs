@@ -1124,8 +1124,95 @@ fn bench_belief(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_types(c: &mut Criterion) {
+    use bhava::types::{Balanced11, Normalized01};
+
+    let mut group = c.benchmark_group("types");
+
+    group.bench_function("normalized01_new", |b| {
+        b.iter(|| Normalized01::new(black_box(0.7)))
+    });
+    group.bench_function("balanced11_new", |b| {
+        b.iter(|| Balanced11::new(black_box(-0.3)))
+    });
+    group.bench_function("normalized01_get", |b| {
+        let n = Normalized01::new(0.5);
+        b.iter(|| black_box(n).get())
+    });
+
+    group.finish();
+}
+
+fn bench_zodiac(c: &mut Criterion) {
+    use bhava::zodiac::{
+        NatalChart, ZodiacSign, detect_aspects, sign_element, sign_modality, sign_profile,
+    };
+
+    let mut group = c.benchmark_group("zodiac");
+
+    group.bench_function("sign_profile", |b| {
+        b.iter(|| sign_profile(black_box(ZodiacSign::Scorpio)))
+    });
+    group.bench_function("sign_element", |b| {
+        b.iter(|| sign_element(black_box(ZodiacSign::Scorpio)))
+    });
+    group.bench_function("sign_modality", |b| {
+        b.iter(|| sign_modality(black_box(ZodiacSign::Scorpio)))
+    });
+
+    let full_chart = NatalChart::new()
+        .sun(ZodiacSign::Scorpio)
+        .moon(ZodiacSign::Cancer)
+        .rising(ZodiacSign::Gemini)
+        .mercury(ZodiacSign::Sagittarius)
+        .venus(ZodiacSign::Libra)
+        .mars(ZodiacSign::Aries)
+        .jupiter(ZodiacSign::Sagittarius)
+        .saturn(ZodiacSign::Capricorn)
+        .neptune(ZodiacSign::Pisces)
+        .uranus(ZodiacSign::Aquarius)
+        .north_node(ZodiacSign::Leo)
+        .south_node(ZodiacSign::Aquarius)
+        .chiron(ZodiacSign::Virgo);
+
+    group.bench_function("detect_aspects", |b| {
+        b.iter(|| detect_aspects(black_box(&full_chart)))
+    });
+    group.bench_function("manifest_full", |b| {
+        b.iter(|| black_box(&full_chart).manifest())
+    });
+
+    let sun_only = NatalChart::new().sun(ZodiacSign::Aries);
+    group.bench_function("manifest_sun_only", |b| {
+        b.iter(|| black_box(&sun_only).manifest())
+    });
+
+    group.finish();
+}
+
+fn bench_curves(c: &mut Criterion) {
+    use bhava::curves::{DecayCurve, ExponentialDecay, LogisticCurve};
+
+    let mut group = c.benchmark_group("curves");
+
+    let decay = ExponentialDecay::new(300.0);
+    group.bench_function("exponential_decay", |b| {
+        b.iter(|| decay.decay_factor(black_box(150.0)))
+    });
+
+    let logistic = LogisticCurve::new(0.0, 4.0);
+    group.bench_function("logistic_evaluate", |b| {
+        b.iter(|| logistic.evaluate(black_box(0.5)))
+    });
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
+    bench_types,
+    bench_zodiac,
+    bench_curves,
     bench_trait_behavior,
     bench_personality_prompt,
     bench_mood_operations,

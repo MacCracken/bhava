@@ -8,7 +8,7 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 
 ## Status
 
-**v2.0.0 in development**. 43 modules, 1237 tests, 157 benchmarks, zero unsafe, zero unwrap. Completed versions in [CHANGELOG.md](../../CHANGELOG.md).
+**v2.0.0 in development**. 44 modules, 1331 tests, 168 benchmarks, zero unsafe, zero unwrap. Completed versions in [CHANGELOG.md](../../CHANGELOG.md).
 
 ## Research
 
@@ -33,7 +33,9 @@ Bhava owns personality modeling, emotional state, and sentiment analysis for AGN
 - **State machine base trait** — deferred (only 1 implementor; CLAUDE.md rule of three)
 
 ### Zodiac Manifestation Engine
-See detailed design below.
+~~**Core engine**~~ ✓ — 12 signs, 4 elements, 3 modalities, 14 planets, 6 aspect types. `NatalChart` builder with `manifest()` producing full `ManifestedProfile`. 12 planetary modifier functions, aspect detection + cross-module effects. Sub-microsecond full chart manifestation (~923 ns). Pluto (appraisal) and Chiron (regulation) deferred — target modules lack config structs.
+
+See detailed design below for future extensions (houses, transits, Chinese zodiac, deep sky).
 
 ## Future Features (post-v2.0)
 

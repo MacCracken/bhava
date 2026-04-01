@@ -4,11 +4,14 @@
 
 ```
 bhava
+├── types         — Normalized01, Balanced11, ThresholdClassifier, evict_min                         [always]
+├── curves        — DecayCurve trait, ExponentialDecay, LogisticCurve                                [always]
 ├── traits        — PersonalityProfile, TraitKind (15), TraitLevel (5), 4 groups, cosine similarity  [feature: traits]
+├── zodiac        — ZodiacSign (12), Element, Modality, Planet (14), NatalChart, aspects             [feature: traits]
 ├── mood          — MoodVector (6D), EmotionalState, decay, triggers, history, baseline derivation   [feature: mood]
 ├── archetype     — IdentityLayer (5), IdentityContent, templates, validation, crew composition      [feature: archetype]
 ├── sentiment     — SentimentResult, negation, intensity modifiers, sentence-level analysis           [feature: sentiment]
-├── presets       — 5 built-in personalities (BlueShirtGuy, T.Ron, Friday, Oracle, Scout)            [feature: presets]
+├── presets       — AGNOS + T.Ron ecosystem personality templates                                    [feature: presets]
 ├── spirit        — Spirit (passions, inspirations, pains) with prompt composition                    [feature: archetype]
 ├── relationship  — RelationshipGraph, affinity, trust, interaction tracking, decay                   [feature: mood]
 ├── appraisal     — OCC appraisal model, 12 emotions, goal-aware generation                          [feature: mood]
@@ -36,6 +39,9 @@ bhava
 ├── sociology     — Sangha sociology math integration (12 bridge functions)                          [feature: sociology]
 ├── physiology   — Sharira body/biomechanics integration (12 bridge functions)                      [feature: physiology]
 ├── microbiology — Jivanu microbial/immune system integration (10 bridge functions)                 [feature: microbiology]
+├── environment  — Environmental reactivity (temperature, light, noise, weather)                    [feature: mood]
+├── atomic_time  — Tanmatra simulation clock bridge                                                [feature: atomic_time]
+├── neuroscience — Mastishk brain chemistry bridge                                                 [feature: neuroscience]
 ├── store         — BhavaStore trait for pluggable persistence backends                              [all core features]
 ├── storage       — SqliteStore implementation of BhavaStore                                         [feature: sqlite]
 └── error         — BhavaError (9 variants, #[non_exhaustive])                                      [always]
@@ -139,6 +145,27 @@ SentimentMonitor::new(scale)
   → feed_and_apply(chunk, state)    — feed + apply results to EmotionalState
   → flush()                         — analyze remaining buffered text
   → summary()                       — positive/negative/neutral counts + average valence
+```
+
+### Zodiac Manifestation
+
+```
+NatalChart::new()
+  → .sun(sign)         → sign_profile() → PersonalityProfile
+  → .moon(sign)        → derive_mood_baseline() + moon_mood_modifier() → MoodVector
+  → .rising(sign)      → rising_display_context() → CulturalContext
+  → .mercury(sign)     → mercury_reasoning_strategy() → ReasoningStrategy
+  → .venus(sign)       → venus_spirit() → Spirit
+  → .mars(sign)        → mars_energy_modifier() → EnergyState
+  → .jupiter(sign)     → jupiter_growth_modifier() → GrowthLedger
+  → .saturn(sign)      → saturn_stress_modifier() → StressState
+  → .neptune(sign)     → neptune_eq_modifier() → EqProfile
+  → .uranus(sign)      → uranus_flow_modifier() → FlowState
+  → .north_node(sign)  → north_node_preference_modifier() → PreferenceBias
+  → .south_node(sign)  → south_node_actr_params() → (decay, recency_half_life)
+  → detect_aspects()   → Vec<Aspect> (cross-module dynamics)
+  → apply_aspects()    → modifies energy/stress/mood/growth/flow based on aspect pairs
+  → ManifestedProfile  — complete entity configuration (~923 ns for 13-planet chart)
 ```
 
 ### Persistence

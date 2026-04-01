@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-Type safety, abstractions, and infrastructure hardening for v2.0.
+Zodiac manifestation engine, type safety, and infrastructure hardening for v2.0.
 
 ### Breaking
 
@@ -11,9 +11,35 @@ Type safety, abstractions, and infrastructure hardening for v2.0.
 - **salience** — `SalienceScore.urgency` and `SalienceScore.importance` field types changed from `f32` to `Normalized01`. Same migration.
 - **eq** — `EqProfile` branch fields (`perception`, `facilitation`, `understanding`, `management`) changed from `f32` to `Normalized01`. Same migration. Return types of `overall()`, `get()`, and bonus methods unchanged (still `f32`).
 - **preference** — `PreferenceEntry.valence` field type changed from `f32` to `Balanced11`. Migration: use `.get()` to extract f32, `Balanced11::new(v)` to construct.
+- **presets** — BlueShirtGuy, Friday, Oracle, Scout removed in v1.8; AGNOS + T.Ron remain
 
 ### Added
 
+- **`zodiac` module** — zodiac manifestation engine (feature: `traits`)
+  - `ZodiacSign` enum (12 signs) with `ALL`, `COUNT`, `index()`, `midpoint_degrees()`
+  - `Element` enum (Fire/Water/Earth/Air) with `sign_element()` mapping
+  - `Modality` enum (Cardinal/Fixed/Mutable) with `sign_modality()` mapping
+  - `sign_profile()` — produce a `PersonalityProfile` from any zodiac sign (12 presets)
+  - `Planet` enum (14 planets) with `ALL`, `COUNT`, `is_inner()`
+  - `NatalChart` — builder with fluent API (`.sun()`, `.moon()`, ..., `.chiron()`) + generic `.place()`
+  - `ManifestedProfile` — full output struct from chart manifestation:
+    - Sun → `PersonalityProfile` (core traits)
+    - Moon → `MoodVector` baseline (element-based emotional reactivity)
+    - Rising → `CulturalContext` display rules (element-based expression style)
+    - Mercury → `ReasoningStrategy` (modality/element-based cognition)
+    - Venus → `Spirit` (element-based passions/inspirations/pains)
+    - Mars → `EnergyState` (element-based drive/drain/recovery)
+    - Jupiter → `GrowthLedger` (element-based adaptation speed)
+    - Saturn → `StressState` (element-based endurance/thresholds)
+    - Neptune → `EqProfile` (element-based EQ branch emphasis)
+    - Uranus → `FlowState` (element-based flow entry/disruption)
+    - North Node → `PreferenceBias` (element-based preference formation)
+    - South Node → ACT-R memory params (element-based decay/recency)
+  - `AspectKind` enum (Conjunction/Sextile/Square/Trine/Quincunx/Opposition)
+  - `Aspect` struct with planet pair, kind, orb, and strength
+  - `detect_aspects()` — whole-sign aspect detection between all placed planets
+  - `apply_aspects()` — cross-module effects (Mars-Saturn energy/stress tension, Sun-Moon harmony, Mercury-Jupiter learning, Venus-Moon trust, Mars-Uranus flow, Saturn-Neptune recovery)
+  - 8 criterion benchmarks: sign_profile (~21 ns), sign_element (~0.5 ns), sign_modality (~0.5 ns), detect_aspects (~577 ns), manifest_full (~923 ns), manifest_sun_only (~119 ns)
 - **types** — new `types` module with type-safety primitives (always available, no feature gate)
   - `Normalized01(f32)` — value clamped to [0.0, 1.0] with `new()`, `get()`, serde-transparent, constants `ZERO`/`HALF`/`ONE`
   - `Balanced11(f32)` — value clamped to [-1.0, 1.0] with `new()`, `get()`, serde-transparent, constants `MIN`/`ZERO`/`MAX`
@@ -44,6 +70,16 @@ Type safety, abstractions, and infrastructure hardening for v2.0.
 - **types** — `Normalized01::new()` and `Balanced11::new()` now handle NaN and infinite inputs (mapped to 0.0 instead of propagating)
 - **types** — `Normalized01` and `Balanced11` deserialization now clamps out-of-range values (previously raw f32 could bypass invariant via `#[serde(transparent)]`)
 - **curves** — `ExponentialDecay` deserialization now recomputes `lambda` from `half_life` (previously could deserialize inconsistent state)
+
+### Performance
+
+- types/normalized01_new: ~1.7 ns
+- types/balanced11_new: ~0.7 ns
+- zodiac/sign_profile: ~21 ns
+- zodiac/detect_aspects (13 planets): ~577 ns
+- zodiac/manifest_full (13 planets + aspects): ~923 ns
+- curves/exponential_decay: ~4.5 ns
+- curves/logistic_evaluate: ~4.5 ns
 
 ### Infrastructure
 
