@@ -75,6 +75,20 @@ impl ZodiacSign {
 
     /// Number of zodiac signs.
     pub const COUNT: usize = 12;
+
+    /// Position index (0 = Aries, 11 = Pisces). Each sign spans 30°.
+    #[must_use]
+    #[inline]
+    pub fn index(self) -> usize {
+        self as usize
+    }
+
+    /// Midpoint degree on the ecliptic (Aries 0° = 15°, Taurus = 45°, etc.).
+    #[must_use]
+    #[inline]
+    pub fn midpoint_degrees(self) -> f32 {
+        self.index() as f32 * 30.0 + 15.0
+    }
 }
 
 impl_display!(ZodiacSign {
@@ -664,7 +678,9 @@ impl NatalChart {
             }
         };
 
-        ManifestedProfile {
+        let aspects = detect_aspects(self);
+
+        let mut result = ManifestedProfile {
             personality,
             #[cfg(feature = "mood")]
             mood_baseline,
@@ -690,7 +706,15 @@ impl NatalChart {
             actr_decay,
             #[cfg(feature = "mood")]
             actr_recency_half_life,
-        }
+            aspects: Vec::new(),
+        };
+
+        // Apply aspect cross-module effects, then store
+        #[cfg(feature = "mood")]
+        apply_aspects(&aspects, &mut result);
+        result.aspects = aspects;
+
+        result
     }
 }
 
@@ -735,6 +759,8 @@ pub struct ManifestedProfile {
     /// ACT-R recency half-life from South Node sign.
     #[cfg(feature = "mood")]
     pub actr_recency_half_life: f64,
+    /// Detected aspects between planets (cross-module dynamics).
+    pub aspects: Vec<Aspect>,
 }
 
 // ── Moon modifier ─────────────────────────────────────────────────────────
@@ -1217,6 +1243,243 @@ fn south_node_actr_params(south_node: ZodiacSign) -> (f64, f64) {
         Element::Air => {
             // Air SN: quick mental turnover — moderate decay, short recency
             (0.55, 200.0)
+        }
+    }
+}
+
+// ── Aspects ───────────────────────────────────────────────────────────────
+
+/// The type of angular relationship between two planets.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[non_exhaustive]
+pub enum AspectKind {
+    /// 0° — modules amplify each other.
+    Conjunction,
+    /// 60° — modules complement, mild boost.
+    Sextile,
+    /// 90° — modules create productive tension.
+    Square,
+    /// 120° — modules flow harmoniously.
+    Trine,
+    /// 150° — modules misalign, require constant adjustment.
+    Quincunx,
+    /// 180° — modules pull in opposite directions.
+    Opposition,
+}
+
+impl AspectKind {
+    /// The exact angle for this aspect type.
+    #[must_use]
+    #[inline]
+    pub fn angle(self) -> f32 {
+        match self {
+            Self::Conjunction => 0.0,
+            Self::Sextile => 60.0,
+            Self::Square => 90.0,
+            Self::Trine => 120.0,
+            Self::Quincunx => 150.0,
+            Self::Opposition => 180.0,
+        }
+    }
+
+    /// Default maximum orb (tolerance in degrees) for this aspect.
+    #[must_use]
+    #[inline]
+    pub fn default_max_orb(self) -> f32 {
+        match self {
+            Self::Conjunction | Self::Opposition => 8.0,
+            Self::Trine | Self::Square => 7.0,
+            Self::Sextile => 6.0,
+            Self::Quincunx => 3.0,
+        }
+    }
+
+    /// Whether this aspect is harmonious (trine, sextile, conjunction)
+    /// or challenging (square, opposition, quincunx).
+    #[must_use]
+    #[inline]
+    pub fn is_harmonious(self) -> bool {
+        matches!(self, Self::Conjunction | Self::Sextile | Self::Trine)
+    }
+}
+
+impl_display!(AspectKind {
+    Conjunction => "conjunction",
+    Sextile => "sextile",
+    Square => "square",
+    Trine => "trine",
+    Quincunx => "quincunx",
+    Opposition => "opposition",
+});
+
+/// An aspect between two planets — an angular relationship that creates
+/// cross-module dynamics within a single entity.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct Aspect {
+    /// First planet.
+    pub planet_a: Planet,
+    /// Second planet.
+    pub planet_b: Planet,
+    /// Type of aspect.
+    pub kind: AspectKind,
+    /// Actual angular deviation from the exact aspect angle (degrees).
+    pub orb: f32,
+    /// Aspect strength: 1.0 = exact, 0.0 = at the edge of the orb.
+    pub strength: f32,
+}
+
+/// Compute the angular separation between two zodiac sign midpoints (0–180°).
+#[must_use]
+#[inline]
+fn angular_separation(a: ZodiacSign, b: ZodiacSign) -> f32 {
+    let diff = (a.midpoint_degrees() - b.midpoint_degrees()).abs();
+    if diff > 180.0 { 360.0 - diff } else { diff }
+}
+
+/// Detect all aspects between placed planets in a chart.
+///
+/// Uses whole-sign positions (sign midpoints) with default orbs.
+/// Returns aspects sorted by strength (strongest first).
+#[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
+#[must_use]
+pub fn detect_aspects(chart: &NatalChart) -> Vec<Aspect> {
+    let mut aspects = Vec::new();
+    let aspect_kinds = [
+        AspectKind::Conjunction,
+        AspectKind::Sextile,
+        AspectKind::Square,
+        AspectKind::Trine,
+        AspectKind::Quincunx,
+        AspectKind::Opposition,
+    ];
+
+    // Check all unique planet pairs
+    for i in 0..Planet::COUNT {
+        let planet_a = Planet::ALL[i];
+        let Some(sign_a) = chart.get(planet_a) else {
+            continue;
+        };
+
+        for j in (i + 1)..Planet::COUNT {
+            let planet_b = Planet::ALL[j];
+            let Some(sign_b) = chart.get(planet_b) else {
+                continue;
+            };
+
+            let sep = angular_separation(sign_a, sign_b);
+
+            for &kind in &aspect_kinds {
+                let orb = (sep - kind.angle()).abs();
+                let max_orb = kind.default_max_orb();
+                if orb <= max_orb {
+                    let strength = 1.0 - (orb / max_orb);
+                    aspects.push(Aspect {
+                        planet_a,
+                        planet_b,
+                        kind,
+                        orb,
+                        strength,
+                    });
+                    break; // Each pair gets at most one aspect (tightest match)
+                }
+            }
+        }
+    }
+
+    aspects.sort_by(|a, b| {
+        b.strength
+            .partial_cmp(&a.strength)
+            .unwrap_or(core::cmp::Ordering::Equal)
+    });
+    aspects
+}
+
+/// Apply aspect effects to a manifested profile.
+///
+/// Harmonious aspects (trine, sextile, conjunction) amplify shared parameters.
+/// Challenging aspects (square, opposition) create tension — boosting some
+/// parameters while constraining others.
+#[cfg(feature = "mood")]
+pub fn apply_aspects(aspects: &[Aspect], profile: &mut ManifestedProfile) {
+    for aspect in aspects {
+        let s = aspect.strength;
+        let factor = if aspect.kind.is_harmonious() {
+            s * 0.15 // harmonious: mild positive modifier
+        } else {
+            s * 0.2 // challenging: stronger but mixed modifier
+        };
+
+        match (aspect.planet_a, aspect.planet_b) {
+            // Mars–Saturn: energy vs stress tension
+            (Planet::Mars, Planet::Saturn) | (Planet::Saturn, Planet::Mars) => {
+                if aspect.kind.is_harmonious() {
+                    // Disciplined endurance
+                    profile.energy.recovery_rate *= 1.0 + factor;
+                    profile.stress.threshold_burnout =
+                        (profile.stress.threshold_burnout + factor * 0.1).min(1.0);
+                } else {
+                    // Burns hot, breaks fast
+                    profile.energy.drain_rate *= 1.0 + factor;
+                    // Ensure burnout stays above fatigue threshold
+                    profile.stress.threshold_burnout = (profile.stress.threshold_burnout
+                        - factor * 0.1)
+                        .max(profile.stress.threshold_fatigue + 0.05);
+                }
+            }
+            // Sun–Moon: personality–emotion alignment
+            (Planet::Sun, Planet::Moon) | (Planet::Moon, Planet::Sun) => {
+                if aspect.kind.is_harmonious() {
+                    // Inner harmony — mood baseline nudged toward joy
+                    profile
+                        .mood_baseline
+                        .nudge(crate::mood::Emotion::Joy, factor * 0.5);
+                } else {
+                    // Inner tension — mood baseline nudged toward frustration
+                    profile
+                        .mood_baseline
+                        .nudge(crate::mood::Emotion::Frustration, factor * 0.3);
+                }
+            }
+            // Mercury–Jupiter: reasoning meets growth
+            (Planet::Mercury, Planet::Jupiter) | (Planet::Jupiter, Planet::Mercury) => {
+                #[cfg(all(feature = "mood", feature = "traits"))]
+                if aspect.kind.is_harmonious() {
+                    // Learning accelerates
+                    profile.growth.threshold *= 1.0 - factor;
+                } else {
+                    // Overthinking slows growth
+                    profile.growth.threshold *= 1.0 + factor;
+                }
+            }
+            // Venus–Moon: spirit meets emotion
+            (Planet::Venus, Planet::Moon) | (Planet::Moon, Planet::Venus) => {
+                if aspect.kind.is_harmonious() {
+                    // Emotional stability from aligned passions
+                    profile
+                        .mood_baseline
+                        .nudge(crate::mood::Emotion::Trust, factor * 0.5);
+                }
+            }
+            // Mars–Uranus: energy meets flow
+            (Planet::Mars, Planet::Uranus) | (Planet::Uranus, Planet::Mars) => {
+                if aspect.kind.is_harmonious() {
+                    // Drive fuels flow
+                    profile.flow.build_rate *= 1.0 + factor;
+                } else {
+                    // Restless energy disrupts flow
+                    profile.flow.frustration_ceiling *= 1.0 - factor * 0.5;
+                }
+            }
+            // Saturn–Neptune: discipline meets intuition
+            (Planet::Saturn, Planet::Neptune) | (Planet::Neptune, Planet::Saturn) => {
+                if aspect.kind.is_harmonious() {
+                    profile.stress.recovery_rate *= 1.0 + factor;
+                } else {
+                    profile.stress.recovery_rate *= 1.0 - factor * 0.5;
+                }
+            }
+            // All other combinations: no specific effect (yet)
+            _ => {}
         }
     }
 }
@@ -2172,6 +2435,160 @@ mod tests {
 
     // ── Full chart manifestation ──────────────────────────────────────
 
+    // ── Aspects ────────────────────────────────────────────────────────
+
+    #[test]
+    fn same_sign_is_conjunction() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mars(ZodiacSign::Aries);
+        let aspects = detect_aspects(&chart);
+        assert!(
+            aspects.iter().any(|a| a.kind == AspectKind::Conjunction),
+            "same sign should produce conjunction"
+        );
+    }
+
+    #[test]
+    fn signs_4_apart_is_trine() {
+        // Aries (0) and Leo (4) = 120° = trine
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mars(ZodiacSign::Leo);
+        let aspects = detect_aspects(&chart);
+        assert!(
+            aspects.iter().any(|a| a.kind == AspectKind::Trine),
+            "4 signs apart should produce trine"
+        );
+    }
+
+    #[test]
+    fn signs_3_apart_is_square() {
+        // Aries (0) and Cancer (3) = 90° = square
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mars(ZodiacSign::Cancer);
+        let aspects = detect_aspects(&chart);
+        assert!(
+            aspects.iter().any(|a| a.kind == AspectKind::Square),
+            "3 signs apart should produce square"
+        );
+    }
+
+    #[test]
+    fn signs_6_apart_is_opposition() {
+        // Aries (0) and Libra (6) = 180° = opposition
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mars(ZodiacSign::Libra);
+        let aspects = detect_aspects(&chart);
+        assert!(
+            aspects.iter().any(|a| a.kind == AspectKind::Opposition),
+            "6 signs apart should produce opposition"
+        );
+    }
+
+    #[test]
+    fn signs_2_apart_is_sextile() {
+        // Aries (0) and Gemini (2) = 60° = sextile
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mars(ZodiacSign::Gemini);
+        let aspects = detect_aspects(&chart);
+        assert!(
+            aspects.iter().any(|a| a.kind == AspectKind::Sextile),
+            "2 signs apart should produce sextile"
+        );
+    }
+
+    #[test]
+    fn conjunction_has_max_strength() {
+        let chart = NatalChart::new().sun(ZodiacSign::Leo).moon(ZodiacSign::Leo);
+        let aspects = detect_aspects(&chart);
+        let conjunction = aspects.iter().find(|a| a.kind == AspectKind::Conjunction);
+        assert!(conjunction.is_some());
+        assert!(
+            (conjunction.unwrap().strength - 1.0).abs() < f32::EPSILON,
+            "same sign conjunction should have strength 1.0"
+        );
+    }
+
+    #[test]
+    fn aspects_sorted_by_strength() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .moon(ZodiacSign::Aries) // conjunction (strength 1.0)
+            .mars(ZodiacSign::Cancer); // square (strength varies)
+        let aspects = detect_aspects(&chart);
+        if aspects.len() >= 2 {
+            assert!(aspects[0].strength >= aspects[1].strength);
+        }
+    }
+
+    #[test]
+    fn empty_chart_no_aspects() {
+        let chart = NatalChart::new();
+        assert!(detect_aspects(&chart).is_empty());
+    }
+
+    #[test]
+    fn single_planet_no_aspects() {
+        let chart = NatalChart::new().sun(ZodiacSign::Aries);
+        assert!(detect_aspects(&chart).is_empty());
+    }
+
+    #[test]
+    fn aspect_kind_properties() {
+        assert!(AspectKind::Conjunction.is_harmonious());
+        assert!(AspectKind::Trine.is_harmonious());
+        assert!(AspectKind::Sextile.is_harmonious());
+        assert!(!AspectKind::Square.is_harmonious());
+        assert!(!AspectKind::Opposition.is_harmonious());
+        assert!(!AspectKind::Quincunx.is_harmonious());
+    }
+
+    #[test]
+    fn angular_separation_wraps() {
+        // Aries (15°) and Pisces (345°) = 30° apart, not 330°
+        let sep = angular_separation(ZodiacSign::Aries, ZodiacSign::Pisces);
+        assert!((sep - 30.0).abs() < f32::EPSILON, "separation={sep}");
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn mars_saturn_square_affects_energy() {
+        // Mars in Aries, Saturn in Cancer = square (3 signs = 90°)
+        let without = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mars(ZodiacSign::Aries)
+            .manifest();
+        let with_square = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mars(ZodiacSign::Aries)
+            .saturn(ZodiacSign::Cancer)
+            .manifest();
+        // Square should increase drain (challenging aspect)
+        assert!(
+            with_square.energy.drain_rate >= without.energy.drain_rate,
+            "mars-saturn square should increase energy drain"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn aspects_in_manifested_profile() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .moon(ZodiacSign::Aries);
+        let profile = chart.manifest();
+        assert!(
+            !profile.aspects.is_empty(),
+            "same-sign sun-moon should produce aspects"
+        );
+    }
+
+    // ── Full chart with aspects ───────────────────────────────────────
+
     #[test]
     fn full_chart_all_planets() {
         let chart = NatalChart::new()
@@ -2190,5 +2607,9 @@ mod tests {
             .chiron(ZodiacSign::Virgo);
         let profile = chart.manifest();
         assert_eq!(profile.personality.name, "Scorpio");
+        assert!(
+            !profile.aspects.is_empty(),
+            "full chart should have aspects"
+        );
     }
 }
