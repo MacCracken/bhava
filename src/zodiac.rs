@@ -594,6 +594,36 @@ impl NatalChart {
             }
         };
 
+        // Mars modifies energy parameters
+        #[cfg(feature = "mood")]
+        let energy = {
+            let mut e = crate::energy::EnergyState::new();
+            if let Some(mars_sign) = self.get(Planet::Mars) {
+                mars_energy_modifier(mars_sign, &mut e);
+            }
+            e
+        };
+
+        // Saturn modifies stress parameters
+        #[cfg(feature = "mood")]
+        let stress = {
+            let mut s = crate::stress::StressState::new();
+            if let Some(saturn_sign) = self.get(Planet::Saturn) {
+                saturn_stress_modifier(saturn_sign, &mut s);
+            }
+            s
+        };
+
+        // Jupiter modifies growth parameters
+        #[cfg(all(feature = "mood", feature = "traits"))]
+        let growth = {
+            let mut g = crate::growth::GrowthLedger::new();
+            if let Some(jupiter_sign) = self.get(Planet::Jupiter) {
+                jupiter_growth_modifier(jupiter_sign, &mut g);
+            }
+            g
+        };
+
         ManifestedProfile {
             personality,
             #[cfg(feature = "mood")]
@@ -604,6 +634,12 @@ impl NatalChart {
             spirit,
             #[cfg(feature = "mood")]
             display_context,
+            #[cfg(feature = "mood")]
+            energy,
+            #[cfg(feature = "mood")]
+            stress,
+            #[cfg(all(feature = "mood", feature = "traits"))]
+            growth,
         }
     }
 }
@@ -625,6 +661,15 @@ pub struct ManifestedProfile {
     /// Display rules context from Rising sign.
     #[cfg(feature = "mood")]
     pub display_context: crate::display_rules::CulturalContext,
+    /// Energy configuration from Mars sign.
+    #[cfg(feature = "mood")]
+    pub energy: crate::energy::EnergyState,
+    /// Stress configuration from Saturn sign.
+    #[cfg(feature = "mood")]
+    pub stress: crate::stress::StressState,
+    /// Growth configuration from Jupiter sign.
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    pub growth: crate::growth::GrowthLedger,
 }
 
 // ── Moon modifier ─────────────────────────────────────────────────────────
@@ -848,6 +893,119 @@ fn rising_display_context(rising: ZodiacSign) -> crate::display_rules::CulturalC
     }
 
     ctx
+}
+
+// ── Mars modifier ─────────────────────────────────────────────────────────
+
+/// Modify energy parameters based on the Mars sign placement.
+///
+/// Mars governs drive intensity. Fire Mars = explosive drive, fast drain/recovery.
+/// Earth Mars = steady, enduring. Water Mars = emotionally driven, variable.
+/// Air Mars = mentally energized, moderate.
+#[cfg(feature = "mood")]
+fn mars_energy_modifier(mars: ZodiacSign, energy: &mut crate::energy::EnergyState) {
+    match sign_element(mars) {
+        Element::Fire => {
+            // Fire Mars: explosive drive — higher drain, higher recovery, fast fatigue
+            energy.drain_rate = 0.035;
+            energy.recovery_rate = 0.045;
+            energy.fatigue_gain = 0.04;
+            energy.fitness_gain = 0.015;
+        }
+        Element::Earth => {
+            // Earth Mars: enduring — low drain, steady recovery, slow fatigue buildup
+            energy.drain_rate = 0.015;
+            energy.recovery_rate = 0.025;
+            energy.fatigue_tau = 20.0; // slower fatigue decay = lingers longer
+            energy.fitness_tau = 80.0; // slower fitness decay = retains gains
+        }
+        Element::Water => {
+            // Water Mars: emotionally driven — moderate drain, recovery tied to emotional state
+            energy.drain_rate = 0.025;
+            energy.recovery_rate = 0.03;
+            energy.fatigue_gain = 0.035;
+        }
+        Element::Air => {
+            // Air Mars: mentally energized — low physical drain, moderate recovery
+            energy.drain_rate = 0.018;
+            energy.recovery_rate = 0.035;
+            energy.fitness_gain = 0.012;
+        }
+    }
+}
+
+// ── Saturn modifier ───────────────────────────────────────────────────────
+
+/// Modify stress parameters based on the Saturn sign placement.
+///
+/// Saturn governs discipline and endurance under pressure. Earth Saturn = high
+/// burnout resistance. Fire Saturn = fast accumulation but also fast recovery.
+/// Water Saturn = low thresholds but deep recovery. Air Saturn = intellectual coping.
+#[cfg(feature = "mood")]
+fn saturn_stress_modifier(saturn: ZodiacSign, stress: &mut crate::stress::StressState) {
+    match sign_element(saturn) {
+        Element::Earth => {
+            // Earth Saturn: fortress — high thresholds, slow but deep
+            stress.threshold_fatigue = 0.7;
+            stress.threshold_burnout = 0.95;
+            stress.recovery_rate = 0.015;
+            stress.accumulation_rate = 0.04;
+        }
+        Element::Fire => {
+            // Fire Saturn: burns hot, recovers fast
+            stress.threshold_fatigue = 0.5;
+            stress.threshold_burnout = 0.85;
+            stress.recovery_rate = 0.035;
+            stress.accumulation_rate = 0.06;
+        }
+        Element::Water => {
+            // Water Saturn: absorbs deeply, slow to release
+            stress.threshold_fatigue = 0.5;
+            stress.threshold_burnout = 0.8;
+            stress.recovery_rate = 0.01;
+            stress.accumulation_rate = 0.04;
+        }
+        Element::Air => {
+            // Air Saturn: intellectualizes stress — moderate thresholds, moderate recovery
+            stress.threshold_fatigue = 0.6;
+            stress.threshold_burnout = 0.9;
+            stress.recovery_rate = 0.025;
+            stress.accumulation_rate = 0.045;
+        }
+    }
+}
+
+// ── Jupiter modifier ──────────────────────────────────────────────────────
+
+/// Modify growth parameters based on the Jupiter sign placement.
+///
+/// Jupiter governs expansion and adaptation speed. Fire Jupiter = rapid growth,
+/// low threshold. Earth Jupiter = slow but lasting. Water Jupiter = emotionally
+/// catalyzed growth. Air Jupiter = intellectually driven adaptation.
+#[cfg(all(feature = "mood", feature = "traits"))]
+fn jupiter_growth_modifier(jupiter: ZodiacSign, growth: &mut crate::growth::GrowthLedger) {
+    match sign_element(jupiter) {
+        Element::Fire => {
+            // Fire Jupiter: rapid evolution — low threshold, fast decay (needs reinforcement)
+            growth.threshold = 2.0;
+            growth.decay_rate = 0.08;
+        }
+        Element::Earth => {
+            // Earth Jupiter: slow but permanent — high threshold, very slow decay
+            growth.threshold = 4.0;
+            growth.decay_rate = 0.02;
+        }
+        Element::Water => {
+            // Water Jupiter: emotionally catalyzed — moderate threshold, moderate decay
+            growth.threshold = 2.5;
+            growth.decay_rate = 0.04;
+        }
+        Element::Air => {
+            // Air Jupiter: intellectually driven — moderate threshold, moderate decay
+            growth.threshold = 3.0;
+            growth.decay_rate = 0.06;
+        }
+    }
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────
@@ -1453,5 +1611,143 @@ mod tests {
         let chart = NatalChart::new().sun(ZodiacSign::Aries);
         let profile = chart.manifest();
         assert_eq!(profile.display_context.rule_count(), 0);
+    }
+
+    // ── Mars → energy ─────────────────────────────────────────────────
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn fire_mars_high_drain_high_recovery() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mars(ZodiacSign::Aries); // Fire Mars
+        let profile = chart.manifest();
+        let default = crate::energy::EnergyState::new();
+        assert!(
+            profile.energy.drain_rate > default.drain_rate,
+            "fire mars drain: {} vs default: {}",
+            profile.energy.drain_rate,
+            default.drain_rate
+        );
+        assert!(
+            profile.energy.recovery_rate > default.recovery_rate,
+            "fire mars recovery should be higher"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn earth_mars_low_drain() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .mars(ZodiacSign::Taurus); // Earth Mars
+        let profile = chart.manifest();
+        let default = crate::energy::EnergyState::new();
+        assert!(
+            profile.energy.drain_rate < default.drain_rate,
+            "earth mars should drain slowly"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn no_mars_uses_defaults() {
+        let chart = NatalChart::new().sun(ZodiacSign::Aries);
+        let profile = chart.manifest();
+        let default = crate::energy::EnergyState::new();
+        assert!(
+            (profile.energy.drain_rate - default.drain_rate).abs() < f32::EPSILON,
+            "no mars should use default drain rate"
+        );
+    }
+
+    // ── Saturn → stress ───────────────────────────────────────────────
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn earth_saturn_high_thresholds() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .saturn(ZodiacSign::Capricorn); // Earth Saturn
+        let profile = chart.manifest();
+        let default = crate::stress::StressState::new();
+        assert!(
+            profile.stress.threshold_burnout > default.threshold_burnout,
+            "earth saturn should have higher burnout threshold"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn fire_saturn_fast_recovery() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .saturn(ZodiacSign::Aries); // Fire Saturn
+        let profile = chart.manifest();
+        let default = crate::stress::StressState::new();
+        assert!(
+            profile.stress.recovery_rate > default.recovery_rate,
+            "fire saturn should recover faster"
+        );
+    }
+
+    #[cfg(feature = "mood")]
+    #[test]
+    fn water_saturn_slow_recovery() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .saturn(ZodiacSign::Cancer); // Water Saturn
+        let profile = chart.manifest();
+        let default = crate::stress::StressState::new();
+        assert!(
+            profile.stress.recovery_rate < default.recovery_rate,
+            "water saturn should recover slowly"
+        );
+    }
+
+    // ── Jupiter → growth ──────────────────────────────────────────────
+
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    #[test]
+    fn fire_jupiter_low_threshold() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .jupiter(ZodiacSign::Sagittarius); // Fire Jupiter
+        let profile = chart.manifest();
+        let default = crate::growth::GrowthLedger::new();
+        assert!(
+            profile.growth.threshold < default.threshold,
+            "fire jupiter should lower growth threshold: {} vs {}",
+            profile.growth.threshold,
+            default.threshold,
+        );
+    }
+
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    #[test]
+    fn earth_jupiter_high_threshold() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .jupiter(ZodiacSign::Taurus); // Earth Jupiter
+        let profile = chart.manifest();
+        let default = crate::growth::GrowthLedger::new();
+        assert!(
+            profile.growth.threshold > default.threshold,
+            "earth jupiter should raise growth threshold"
+        );
+    }
+
+    #[cfg(all(feature = "mood", feature = "traits"))]
+    #[test]
+    fn earth_jupiter_slow_decay() {
+        let chart = NatalChart::new()
+            .sun(ZodiacSign::Aries)
+            .jupiter(ZodiacSign::Virgo); // Earth Jupiter
+        let profile = chart.manifest();
+        let default = crate::growth::GrowthLedger::new();
+        assert!(
+            profile.growth.decay_rate < default.decay_rate,
+            "earth jupiter should have slower pressure decay"
+        );
     }
 }
